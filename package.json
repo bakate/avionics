@@ -1,5 +1,5 @@
 {
-  "name": "turborepo_template-org",
+  "name": "avionics",
   "private": true,
   "scripts": {
     "build": "turbo run build",
