@@ -1,0 +1,30 @@
+{
+	"name": "@workspace/domain",
+	"version": "0.1.0",
+	"type": "module",
+	"exports": {
+		"./todos": "./src/todos.ts"
+	},
+	"scripts": {
+		"build": "tsc --noEmit",
+		"clean": "git clean -xdf .cache .turbo dist node_modules",
+		"check": "biome check --write .",
+		"format": "biome format --write .",
+		"lint": "biome lint .",
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest --watch",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"effect": "catalog:"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "catalog:",
+		"@vitest/coverage-v8": "catalog:vitest3",
+		"@workspace/biome-config": "workspace:*",
+		"@workspace/tsconfig": "workspace:*",
+		"@workspace/vitest-config": "workspace:*",
+		"typescript": "catalog:",
+		"vitest": "catalog:vitest3"
+	}
+}

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          # Remove pnpm cache here because pnpm isn't installed yet
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm turbo run test
+        env:
+          CI: true
+  # uncomment the following lines if you want to deploy to vercel and only if the test job is successful
+  # deploy:
+  #   needs: test
+  #   runs-on: ubuntu-latest
+  #   if: needs.test.result == 'success'
+  #   steps:
+  #     - name: Trigger Vercel Preview deploy (staging)
+  #       if: github.ref == 'refs/heads/staging'
+  #       run: curl -X POST "$VERCEL_DEPLOY_STAGING_HOOK"
+  #       env:
+  #         VERCEL_DEPLOY_STAGING_HOOK: ${{ secrets.VERCEL_DEPLOY_STAGING_HOOK }}
+
+  #     - name: Trigger Vercel Production deploy (main)
+  #       if: github.ref == 'refs/heads/main'
+  #       run: curl -X POST "$VERCEL_DEPLOY_MAIN_HOOK"
+  #       env:
+  #         VERCEL_DEPLOY_MAIN_HOOK: ${{ secrets.VERCEL_DEPLOY_MAIN_HOOK }}
