@@ -23,6 +23,7 @@ catalog:
   "react-hook-form": ^7.71.1
   "@hookform/resolvers": ^5.2.2
   "@biomejs/biome": ^2.3.11
+  "@faker-js/faker": "10.2.0"
 
 catalogs:
   react19:
@@ -36,6 +37,9 @@ catalogs:
     "@vitest/coverage-istanbul": 4.0.17
     "@vitest/coverage-v8": 4.0.17
     "@vitest/ui": 4.0.17
+
+  node25:
+    "@types/node": "^25.0.9"
 
 onlyBuiltDependencies:
   - esbuild
