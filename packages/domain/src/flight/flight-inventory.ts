@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { FlightId } from "../flight-entity/flight.js";
+import { FlightId } from "../flight/flight.js";
 
 const SeatCount = Schema.Number.pipe(Schema.int(), Schema.nonNegative());
 

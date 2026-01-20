@@ -29,7 +29,7 @@ classDiagram
         }
 
         class FlightInventory {
-            +Buckets buckets
+            +Buckets availability
             +int version
         }
     }
@@ -39,17 +39,21 @@ classDiagram
             +PnrCode pnrCode
             +BookingStatus status
             +Date expiresAt
+            +isPayable(): boolean
         }
 
         class BookingSegment {
             +Money price
-            +CabinClass class
+            +CabinClass cabin
         }
 
         class Passenger {
             +String firstName
             +String lastName
             +Email email
+            +Date dateOfBirth
+            +Gender gender
+            +PassengerType passengerType
         }
     }
 
