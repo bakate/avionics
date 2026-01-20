@@ -1,0 +1,147 @@
+/**
+ * @file kernel.ts
+ * @module @workspace/domain/kernel
+ * @description The "Shared Kernel" (DDD Pattern).
+ *
+ * This file contains the ubiquitous language definitions that are shared across
+ * multiple Bounded Contexts (Supply, Demand, Contract).
+ *
+ * Why not "utils.ts"?
+ * - Utils are usually generic helpers (date formatting, string manipulation).
+ * - Kernel contains DOMAIN CONCEPTS (Money, CabinClass, AirportCode).
+ * - These types have business rules (e.g., Money cannot be negative, AirportCode is 3 chars).
+ * - Changes here ripple across the entire system.
+ */
+
+import { Schema } from "effect";
+
+// =============================================================================
+// PRIMITIVE VALUE OBJECTS (Scalars with Rules)
+// =============================================================================
+
+// --- Airport Code (IATA) ---
+export const AirportCodeSchema = Schema.String.pipe(
+	Schema.pattern(/^[A-Z]{3}$/),
+	Schema.brand("AirportCode"),
+);
+export type AirportCode = typeof AirportCodeSchema.Type;
+
+// --- Email Address ---
+export const EmailSchema = Schema.String.pipe(
+	Schema.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+	Schema.brand("Email"),
+);
+export type Email = typeof EmailSchema.Type;
+
+// --- PNR Code (Booking Reference) ---
+export const PnrCodeSchema = Schema.String.pipe(
+	Schema.pattern(/^[A-Z0-9]{6}$/),
+	Schema.brand("PnrCode"),
+);
+export type PnrCode = typeof PnrCodeSchema.Type;
+
+// =============================================================================
+// DOMAIN ENUMS (Finite Sets)
+// =============================================================================
+
+// --- Cabin Class ---
+export const CabinClass = {
+	ECONOMY: "ECONOMY",
+	BUSINESS: "BUSINESS",
+	FIRST: "FIRST",
+} as const;
+
+export type CabinClass = (typeof CabinClass)[keyof typeof CabinClass];
+
+export const CabinClassSchema = Schema.Enums(CabinClass);
+
+// --- Passenger Type ---
+export const PassengerType = {
+	INFANT: "INFANT", // 0-23 months
+	CHILD: "CHILD", // 2-11 years
+	YOUNG_ADULT: "YOUNG_ADULT", // 12-17 years
+	ADULT: "ADULT", // 18-64 years
+	SENIOR: "SENIOR", // 65+ years
+} as const;
+
+export type PassengerType = (typeof PassengerType)[keyof typeof PassengerType];
+
+export const PassengerTypeSchema = Schema.Enums(PassengerType);
+
+// --- Gender ---
+export const Gender = {
+	MALE: "MALE",
+	FEMALE: "FEMALE",
+} as const;
+
+export type Gender = (typeof Gender)[keyof typeof Gender];
+
+export const GenderSchema = Schema.Enums(Gender);
+
+// =============================================================================
+// COMPLEX VALUE OBJECTS (Structs with Invariants)
+// =============================================================================
+
+// --- Currency Code (ISO 4217) ---
+export const CurrencyCodeSchema = Schema.String.pipe(
+	Schema.pattern(/^[A-Z]{3}$/),
+	Schema.brand("CurrencyCode"),
+);
+export type CurrencyCode = typeof CurrencyCodeSchema.Type;
+
+// --- Money ---
+export class Money extends Schema.Class<Money>("Money")({
+	amount: Schema.Number.pipe(Schema.nonNegative()),
+	currency: CurrencyCodeSchema,
+}) {
+	static readonly zero = (currency: string) => {
+		const validCurrency = Schema.decodeSync(CurrencyCodeSchema)(currency);
+		return new Money({ amount: 0, currency: validCurrency });
+	};
+}
+
+// --- Route (Origin -> Destination) ---
+export class Route extends Schema.Class<Route>("Route")({
+	origin: AirportCodeSchema,
+	destination: AirportCodeSchema,
+}) {
+	static readonly schema = this.pipe(
+		Schema.filter((r) => r.origin !== r.destination, {
+			message: () => "Origin and Destination must be different",
+		}),
+	);
+
+	private constructor(props: {
+		origin: AirportCode;
+		destination: AirportCode;
+	}) {
+		super(props);
+	}
+
+	static create(props: {
+		origin: AirportCode;
+		destination: AirportCode;
+	}): Route {
+		return Schema.validateSync(Route.schema)(new Route(props));
+	}
+}
+
+// --- Schedule (Time Window) ---
+export class Schedule extends Schema.Class<Schedule>("Schedule")({
+	departure: Schema.Date,
+	arrival: Schema.Date,
+}) {
+	static readonly schema = this.pipe(
+		Schema.filter((s) => s.arrival > s.departure, {
+			message: () => "Arrival must be after departure",
+		}),
+	);
+
+	private constructor(props: { departure: Date; arrival: Date }) {
+		super(props);
+	}
+
+	static create(props: { departure: Date; arrival: Date }): Schedule {
+		return Schema.validateSync(Schedule.schema)(new Schedule(props));
+	}
+}
