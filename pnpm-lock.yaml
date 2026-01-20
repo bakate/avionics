@@ -9,6 +9,9 @@ catalogs:
     '@biomejs/biome':
       specifier: ^2.3.11
       version: 2.3.11
+    '@faker-js/faker':
+      specifier: 10.2.0
+      version: 10.2.0
     effect:
       specifier: ^3.19.14
       version: 3.19.14
@@ -85,6 +88,9 @@ importers:
 
   packages/domain:
     dependencies:
+      '@faker-js/faker':
+        specifier: 'catalog:'
+        version: 10.2.0
       effect:
         specifier: 'catalog:'
         version: 3.19.14
@@ -512,6 +518,10 @@ packages:
     peerDependenciesMeta:
       '@exodus/crypto':
         optional: true
+
+  '@faker-js/faker@10.2.0':
+    resolution: {integrity: sha512-rTXwAsIxpCqzUnZvrxVh3L0QA0NzToqWBLAhV+zDV3MIIwiQhAZHMdPCIaj5n/yADu/tyk12wIPgL6YHGXJP+g==}
+    engines: {node: ^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0, npm: '>=10'}
 
   '@isaacs/balanced-match@4.0.1':
     resolution: {integrity: sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ==}
@@ -1926,6 +1936,8 @@ snapshots:
     optional: true
 
   '@exodus/bytes@1.8.0': {}
+
+  '@faker-js/faker@10.2.0': {}
 
   '@isaacs/balanced-match@4.0.1': {}
 

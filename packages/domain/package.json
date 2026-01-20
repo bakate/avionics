@@ -16,7 +16,8 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"effect": "catalog:"
+		"effect": "catalog:",
+		"@faker-js/faker": "catalog:"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
