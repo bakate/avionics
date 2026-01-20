@@ -1,20 +1,102 @@
-# Enhanced Turborepo Template
+# Avionics
 
-A robust, production-ready Turborepo template designed for scalablity and developer experience.
+> **High-Assurance Airline Reservation System** demonstrating "Robust TypeScript" with [Effect](https://effect.website/).
 
-Maintained by [Bakate](https://github.com/bakate/turborepo-template).
+## Overview
 
-## Features
+Avionics simulates the critical lifecycle of a commercial airline reservation system, focusing on reliability and correctness in a high-concurrency environment.
 
-- **Monorepo Structure**: Powered by [Turborepo](https://turbo.build/).
-- **Package Manager**: [pnpm](https://pnpm.io/) for efficient dependency management.
-- **Architecture**: Domain-Driven Design (DDD) & Hexagonal Architecture ready.
-- **Strict TypeScript**: Configured for safety with `noImplicitOverride` and strict mode.
-- **Tools**: [Vitest](https://vitest.dev/) for testing, [Effect Schema](https://effect.website/) for validation.
-- **Code Quality**:
-  - **[Biome.js](https://biomejs.dev/)**: Unified, high-performance toolchain for linting and formatting.
-  - **Git Hooks**: Husky, Commitlint (Conventional commits), and Lint-Staged pre-configured.
-- **CI/CD**: GitHub Actions workflow for automated testing.
+### Core Concepts
+
+- **Inventory Management**: Real-time seat availability with strict consistency (Zero Overbooking).
+- **Complex Booking Lifecycle**: PassengerNameRecord (PNR) orchestration (Hold → Payment → Ticketing).
+- **Resiliency**: Recovery from distributed failures using Sagas.
+- **Zero-Throw Policy**: All business and technical errors are typed values (`Effect<A, E, R>`).
+
+## Architecture
+
+The project follows **Hexagonal Architecture** (Ports & Adapters) to decouple business logic from infrastructure.
+
+### Domain Entities Diagram
+
+```mermaid
+classDiagram
+    namespace Supply {
+        class Flight {
+            +FlightNumber flightNumber
+            +Schedule schedule
+            +Route route
+        }
+
+        class FlightInventory {
+            +Buckets buckets
+            +int version
+        }
+    }
+
+    namespace Demand {
+        class Booking {
+            +PnrCode pnrCode
+            +BookingStatus status
+            +Date expiresAt
+        }
+
+        class BookingSegment {
+            +Money price
+            +CabinClass class
+        }
+
+        class Passenger {
+            +String firstName
+            +String lastName
+            +Email email
+        }
+    }
+
+    namespace Contract {
+        class Ticket {
+            +TicketNumber ticketNumber
+            +TicketStatus status
+            +PnrCode pnrCode
+            +String passengerName
+            +Coupon[] coupons
+            +Date issuedAt
+        }
+    }
+
+    %% Relationships
+    FlightInventory --> Flight : Belongs To
+    Booking ..> FlightInventory : Holds Seat
+    Booking --> Ticket : Issues
+
+    Booking *-- BookingSegment : Composition
+    Booking *-- Passenger : Composition
+
+    Ticket ..> Booking : References
+
+    %% Styling
+    style Flight fill:#4f4f4f,stroke:#fff
+    style FlightInventory fill:#4f4f4f,stroke:#fff
+    style Booking fill:#0ea5e9,stroke:#fff,color:#fff
+    style BookingSegment fill:#0ea5e9,stroke:#fff,color:#fff
+    style Passenger fill:#0ea5e9,stroke:#fff,color:#fff
+    style Ticket fill:#10b981,stroke:#fff,color:#fff
+```
+
+### Workspace Structure
+
+- **`packages/domain`**: The Core. Pure business logic, Entities, and Value Objects. **Dependencies**: `effect` and `@faker-js/faker` only.
+- **`packages/application`**: The Orchestrator. Use Cases, Ports (Repository Interfaces), and Sagas.
+- **`packages/infrastructure`**: The Adapters. Database implementation (Postgres), External APIs (Polar, Resend).
+- **`apps/web`**: The Interface. Vite application consuming the core via adapters.
+
+## Tech Stack
+
+- **Runtime**: Node.js >=24
+- **Monorepo**: Turborepo + pnpm (Strict Mode)
+- **Framework**: Effect 3.x (Schema, Concurrency, Error Handling)
+- **Testing**: Vitest + Faker
+- **Linting**: Biome.js
 
 ## Quick Start
 
@@ -24,83 +106,29 @@ Maintained by [Bakate](https://github.com/bakate/turborepo-template).
     pnpm install
     ```
 
-2.  **Start Development Server**
+2.  **Start Development**
 
     ```sh
     pnpm dev
     ```
 
-## Scripts
+3.  **Run Tests**
+    ```sh
+    pnpm test
+    # or
+    pnpm test -F <packageName or appName>
+    ```
+
+## Development Commands
 
 | Command              | Description                                      |
 | :------------------- | :----------------------------------------------- |
 | `pnpm build`         | Build all apps and packages                      |
-| `pnpm dev`           | Start development mode for all apps              |
-| `pnpm test`          | Run tests across the monorepo                    |
 | `pnpm test:coverage` | Run tests with V8 coverage reports               |
-| `pnpm lint`          | Lint all packages (Biome)                        |
-| `pnpm format`        | Check formatting (Biome)                         |
-| `pnpm check`         | Run lint and format checks (Biome)               |
+| `pnpm check`         | Run Biome lint and format checks                 |
 | `pnpm clean`         | Clean generic `node_modules` and build artifacts |
 | `pnpm typecheck`     | Run TypeScript type checking                     |
 
-## Architecture
+---
 
-This monorepo follows a clean architecture pattern, adaptable to any frontend framework.
-
-### Apps (`apps/*`)
-
-- **Role**: Entry points/Adapters for the UI.
-- **Examples**: Includes Next.js applications (`docs`, `web`) as references.
-
-### Packages (`packages/*`)
-
-- **`domain`**: The core business logic. Pure TypeScript, no framework dependencies.
-  - _Example_: See `src/todos.ts` for an `Effect.Schema` model.
-- **`application`**: Use cases and orchestration (Future implementation).
-- **`infrastructure`**: External services, database connections (Future implementation).
-- **`ui`**: Shared UI component library (React example included).
-
-### Tooling (`tooling/*`)
-
-Shared configuration packages to ensure consistency:
-
-- **`biome-config`**: Shared Biome config.
-- **`typescript`**: Shared `tsconfig` bases.
-- **`vitest-config`**: Shared Vitest and Coverage configurations.
-
-## Quality Assurance
-
-### Git Hooks
-
-We use `husky` to enforce quality checks before commits:
-
-- **Commit Message**: Must follow [Conventional Commits](https://www.conventionalcommits.org/) (e.g., `feat: add user login`, `fix: resolve auth bug`).
-- **Pre-commit**: Runs `lint-staged` to ensure committed files are formatted and linted.
-
-### CI Workflow
-
-GitHub Actions are configured in `.github/workflows/test.yml` to run:
-
-- Installation
-- Build
-- Lint
-- Typecheck
-- Tests
-
-## Remote Caching
-
-Turborepo remote caching allows you to share build artifacts across your team and CI.
-
-To enable it:
-
-```sh
-npx turbo login
-npx turbo link
-```
-
-## Useful Links
-
-- [Turborepo Documentation](https://turbo.build/repo/docs)
-- [Effect Website](https://effect.website/)
-- [Vitest](https://vitest.dev/)
+Maintained by **Bakate**.

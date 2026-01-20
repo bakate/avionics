@@ -3,7 +3,12 @@
 	"version": "0.1.0",
 	"type": "module",
 	"exports": {
-		"./todos": "./src/todos.ts"
+		"./errors": "./src/errors.ts",
+		"./flight": "./src/flight/flight.ts",
+		"./inventory": "./src/flight/flight-inventory.ts",
+		"./kernel": "./src/kernel.ts",
+		"./booking": "./src/booking/booking.ts",
+		"./ticket": "./src/ticket/ticket.ts"
 	},
 	"scripts": {
 		"build": "tsc --noEmit",
@@ -16,8 +21,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"effect": "catalog:",
-		"@faker-js/faker": "catalog:"
+		"effect": "catalog:"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
@@ -26,6 +30,7 @@
 		"@workspace/tsconfig": "workspace:*",
 		"@workspace/vitest-config": "workspace:*",
 		"typescript": "catalog:",
+		"@faker-js/faker": "catalog:",
 		"vitest": "catalog:vitest3"
 	}
 }
