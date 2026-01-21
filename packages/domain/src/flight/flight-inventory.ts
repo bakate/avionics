@@ -1,10 +1,11 @@
 import { Effect, Schema } from "effect";
-import { FlightFullError } from "../errors.js";
+import { FlightFullError, InvalidAmountError } from "../errors.js";
 import { FlightId } from "../flight/flight.js";
 import { type CabinClass, Money } from "../kernel.js";
 
 export class SeatBucket extends Schema.Class<SeatBucket>("SeatBucket")({
 	available: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+	capacity: Schema.Number.pipe(Schema.int(), Schema.positive()),
 	price: Money,
 }) {}
 
@@ -22,8 +23,14 @@ export class FlightInventory extends Schema.Class<FlightInventory>(
 	holdSeats(
 		cabin: CabinClass,
 		amount: number,
-	): Effect.Effect<readonly [FlightInventory, Money], FlightFullError> {
+	): Effect.Effect<
+		readonly [FlightInventory, Money],
+		FlightFullError | InvalidAmountError
+	> {
 		return Effect.gen(this, function* () {
+			if (amount <= 0 || !Number.isInteger(amount)) {
+				return yield* Effect.fail(new InvalidAmountError({ amount }));
+			}
 			// 1. Identify the bucket
 			const checkKey = cabin.toLowerCase() as keyof typeof this.availability;
 			const bucket = this.availability[checkKey];
@@ -62,24 +69,45 @@ export class FlightInventory extends Schema.Class<FlightInventory>(
 	releaseSeats(
 		cabin: CabinClass,
 		amount: number,
-	): Effect.Effect<FlightInventory> {
-		// 1. Identify the bucket
-		const checkKey = cabin.toLowerCase() as keyof typeof this.availability;
-		const bucket = this.availability[checkKey];
+	): Effect.Effect<
+		FlightInventory,
+		InvalidAmountError | InventoryOvercapacityError
+	> {
+		return Effect.gen(this, function* () {
+			if (amount <= 0 || !Number.isInteger(amount)) {
+				return yield* Effect.fail(new InvalidAmountError({ amount }));
+			}
+			// 1. Identify the bucket
+			const checkKey = cabin.toLowerCase() as keyof typeof this.availability;
+			const bucket = this.availability[checkKey];
 
-		// 2. New Inventory State
-		const nextBucket = new SeatBucket({
-			...bucket,
-			available: bucket.available + amount,
+			// 2. Check Capacity
+			if (bucket.available + amount > bucket.capacity) {
+				return yield* Effect.fail(
+					new InventoryOvercapacityError({
+						flightId: this.flightId,
+						cabin,
+						requested: amount,
+						available: bucket.available,
+						capacity: bucket.capacity,
+					}),
+				);
+			}
+
+			// 3. New Inventory State
+			const nextBucket = new SeatBucket({
+				...bucket,
+				available: bucket.available + amount,
+			});
+			const nextInventory = new FlightInventory({
+				...this,
+				availability: {
+					...this.availability,
+					[checkKey]: nextBucket,
+				},
+				version: this.version + 1,
+			});
+			return nextInventory;
 		});
-		const nextInventory = new FlightInventory({
-			...this,
-			availability: {
-				...this.availability,
-				[checkKey]: nextBucket,
-			},
-			version: this.version + 1,
-		});
-		return Effect.succeed(nextInventory);
 	}
 }
