@@ -1,18 +1,7 @@
 {
-	"name": "@workspace/domain",
+	"name": "@workspace/application",
 	"version": "0.1.0",
 	"type": "module",
-	"exports": {
-		"./errors": "./src/errors.ts",
-		"./flight": "./src/flight/flight.ts",
-		"./inventory": "./src/flight/flight-inventory.ts",
-		"./kernel": "./src/kernel.ts",
-		"./booking": "./src/booking/booking.ts",
-		"./passenger": "./src/booking/passenger.ts",
-		"./segment": "./src/booking/segment.ts",
-		"./coupon": "./src/ticket/coupon.ts",
-		"./ticket": "./src/ticket/ticket.ts"
-	},
 	"scripts": {
 		"build": "tsc --noEmit",
 		"clean": "git clean -xdf .cache .turbo dist node_modules",
@@ -24,7 +13,8 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"effect": "catalog:"
+		"effect": "catalog:",
+		"@workspace/domain": "workspace:*"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",

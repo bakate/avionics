@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { FlightId } from "../flight-entity/flight.js";
+import { FlightId } from "../flight/flight.js";
 import { CabinClassSchema, Money } from "../kernel.js";
 
 // --- Booking Segment Entity ---

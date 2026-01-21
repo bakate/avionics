@@ -14,6 +14,7 @@
  */
 
 import { Schema } from "effect";
+import { CurrencyMismatchError } from "./errors";
 
 // =============================================================================
 // PRIMITIVE VALUE OBJECTS (Scalars with Rules)
@@ -83,10 +84,8 @@ export const GenderSchema = Schema.Enums(Gender);
 // =============================================================================
 
 // --- Currency Code (ISO 4217) ---
-export const CurrencyCodeSchema = Schema.String.pipe(
-	Schema.pattern(/^[A-Z]{3}$/),
-	Schema.brand("CurrencyCode"),
-);
+export const SupportedCurrencies = ["EUR", "USD", "GBP", "CHF"] as const;
+export const CurrencyCodeSchema = Schema.Literal(...SupportedCurrencies);
 export type CurrencyCode = typeof CurrencyCodeSchema.Type;
 
 // --- Money ---
@@ -94,10 +93,23 @@ export class Money extends Schema.Class<Money>("Money")({
 	amount: Schema.Number.pipe(Schema.nonNegative()),
 	currency: CurrencyCodeSchema,
 }) {
-	static readonly zero = (currency: string) => {
-		const validCurrency = Schema.decodeSync(CurrencyCodeSchema)(currency);
-		return new Money({ amount: 0, currency: validCurrency });
+	static readonly zero = (currency: CurrencyCode) => {
+		return new Money({ amount: 0, currency });
 	};
+
+	static of(amount: number, currency: CurrencyCode) {
+		return new Money({ amount, currency });
+	}
+
+	add(other: Money) {
+		if (this.currency !== other.currency) {
+			throw new CurrencyMismatchError({
+				expected: this.currency,
+				actual: other.currency,
+			});
+		}
+		return Money.of(this.amount + other.amount, this.currency);
+	}
 }
 
 // --- Route (Origin -> Destination) ---
