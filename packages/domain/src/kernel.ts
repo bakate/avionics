@@ -90,7 +90,7 @@ export type CurrencyCode = typeof CurrencyCodeSchema.Type;
 
 // --- Money ---
 export class Money extends Schema.Class<Money>("Money")({
-	amount: Schema.Number.pipe(Schema.nonNegative()),
+	amount: Schema.Number.pipe(Schema.positive()),
 	currency: CurrencyCodeSchema,
 }) {
 	static readonly zero = (currency: CurrencyCode) => {
@@ -98,6 +98,9 @@ export class Money extends Schema.Class<Money>("Money")({
 	};
 
 	static of(amount: number, currency: CurrencyCode) {
+		if (amount < 0) {
+			throw new Error("Money amount cannot be negative");
+		}
 		return new Money({ amount, currency });
 	}
 
@@ -109,6 +112,10 @@ export class Money extends Schema.Class<Money>("Money")({
 			});
 		}
 		return Money.of(this.amount + other.amount, this.currency);
+	}
+
+	multiply(factor: number) {
+		return Money.of(Math.round(this.amount * factor), this.currency);
 	}
 }
 

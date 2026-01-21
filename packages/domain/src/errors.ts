@@ -9,6 +9,16 @@ export class CurrencyMismatchError extends Data.TaggedError(
 	readonly actual: string;
 }> {}
 
+export class InventoryOvercapacityError extends Data.TaggedError(
+	"InventoryOvercapacityError",
+)<{
+	readonly flightId: string;
+	readonly cabin: string;
+	readonly requested: number;
+	readonly available: number;
+	readonly capacity: number;
+}> {}
+
 export class OptimisticLockingError extends Data.TaggedError(
 	"OptimisticLockingError",
 )<{
@@ -25,6 +35,10 @@ export class FlightFullError extends Data.TaggedError("FlightFullError")<{
 	readonly cabin: string;
 	readonly requested: number;
 	readonly available: number;
+}> {}
+
+export class InvalidAmountError extends Data.TaggedError("InvalidAmountError")<{
+	readonly amount: number;
 }> {}
 
 export class FlightNotFoundError extends Data.TaggedError(
