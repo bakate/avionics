@@ -86,11 +86,11 @@ importers:
         specifier: 'catalog:'
         version: 7.3.1(@types/node@22.19.6)(jiti@2.6.1)(yaml@2.8.2)
 
-  packages/domain:
+  packages/application:
     dependencies:
-      '@faker-js/faker':
-        specifier: 'catalog:'
-        version: 10.2.0
+      '@workspace/domain':
+        specifier: workspace:*
+        version: link:../domain
       effect:
         specifier: 'catalog:'
         version: 3.19.14
@@ -98,6 +98,40 @@ importers:
       '@biomejs/biome':
         specifier: 'catalog:'
         version: 2.3.11
+      '@faker-js/faker':
+        specifier: 'catalog:'
+        version: 10.2.0
+      '@vitest/coverage-v8':
+        specifier: catalog:vitest3
+        version: 4.0.17(vitest@4.0.17)
+      '@workspace/biome-config':
+        specifier: workspace:*
+        version: link:../../tooling/biome-config
+      '@workspace/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      '@workspace/vitest-config':
+        specifier: workspace:*
+        version: link:../../tooling/vitest-config
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: catalog:vitest3
+        version: 4.0.17(@types/node@22.19.6)(@vitest/ui@4.0.17)(jiti@2.6.1)(jsdom@27.4.0)(yaml@2.8.2)
+
+  packages/domain:
+    dependencies:
+      effect:
+        specifier: 'catalog:'
+        version: 3.19.14
+    devDependencies:
+      '@biomejs/biome':
+        specifier: 'catalog:'
+        version: 2.3.11
+      '@faker-js/faker':
+        specifier: 'catalog:'
+        version: 10.2.0
       '@vitest/coverage-v8':
         specifier: catalog:vitest3
         version: 4.0.17(vitest@4.0.17)

@@ -1,16 +1,85 @@
-import { Schema } from "effect";
+import { Effect, Schema } from "effect";
+import { FlightFullError } from "../errors.js";
 import { FlightId } from "../flight/flight.js";
+import { type CabinClass, Money } from "../kernel.js";
 
-const SeatCount = Schema.Number.pipe(Schema.int(), Schema.nonNegative());
+export class SeatBucket extends Schema.Class<SeatBucket>("SeatBucket")({
+	available: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+	price: Money,
+}) {}
 
 export class FlightInventory extends Schema.Class<FlightInventory>(
 	"FlightInventory",
 )({
 	flightId: FlightId, // Link to Flight
 	availability: Schema.Struct({
-		economy: SeatCount,
-		business: SeatCount,
-		first: SeatCount,
+		economy: SeatBucket,
+		business: SeatBucket,
+		first: SeatBucket,
 	}),
 	version: Schema.Number.pipe(Schema.int(), Schema.nonNegative()), // Optimistic Concurrency
-}) {}
+}) {
+	holdSeats(
+		cabin: CabinClass,
+		amount: number,
+	): Effect.Effect<readonly [FlightInventory, Money], FlightFullError> {
+		return Effect.gen(this, function* () {
+			// 1. Identify the bucket
+			const checkKey = cabin.toLowerCase() as keyof typeof this.availability;
+			const bucket = this.availability[checkKey];
+
+			// 2. Check if there are enough seats
+			if (bucket.available < amount) {
+				return yield* Effect.fail(
+					new FlightFullError({
+						flightId: this.flightId,
+						cabin,
+						requested: amount,
+						available: bucket.available,
+					}),
+				);
+			}
+
+			// 3. New Inventory State
+			const nextBucket = new SeatBucket({
+				...bucket,
+				available: bucket.available - amount,
+				// (Optional) : We could apply the Management Yield, for instance (e.g. +10% if "available" is less than 50)
+				// for now, we will keep it simple
+			});
+			const nextInventory = new FlightInventory({
+				...this,
+				availability: {
+					...this.availability,
+					[checkKey]: nextBucket,
+				},
+				version: this.version + 1,
+			});
+			return [nextInventory, bucket.price] as const;
+		});
+	}
+
+	releaseSeats(
+		cabin: CabinClass,
+		amount: number,
+	): Effect.Effect<FlightInventory> {
+		// 1. Identify the bucket
+		const checkKey = cabin.toLowerCase() as keyof typeof this.availability;
+		const bucket = this.availability[checkKey];
+
+		// 2. New Inventory State
+		const nextBucket = new SeatBucket({
+			...bucket,
+			available: bucket.available + amount,
+		});
+		const nextInventory = new FlightInventory({
+			...this,
+			availability: {
+				...this.availability,
+				[checkKey]: nextBucket,
+			},
+			version: this.version + 1,
+		});
+		return Effect.succeed(nextInventory);
+	}
+}
