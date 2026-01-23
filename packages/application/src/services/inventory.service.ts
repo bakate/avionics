@@ -3,13 +3,13 @@ import type {
 	FlightNotFoundError,
 	InvalidAmountError,
 	InventoryOvercapacityError,
+	InventoryPersistenceError,
 	OptimisticLockingError,
 } from "@workspace/domain/errors";
-
-import type { FlightId } from "@workspace/domain/flight";
 import type { FlightInventory } from "@workspace/domain/inventory";
-import type { CabinClass, Money } from "@workspace/domain/kernel";
+import type { CabinClass, FlightId } from "@workspace/domain/kernel";
 import { Effect } from "effect";
+import { HoldSeatsResult, ReleaseSeatsResult } from "../models/results.js";
 import { InventoryRepository } from "../repositories/inventory.repository.js";
 
 export type HoldSeatsInput = {
@@ -17,24 +17,27 @@ export type HoldSeatsInput = {
 	cabin: CabinClass;
 	numberOfSeats: number;
 };
+
 export interface InventoryServiceSignature {
 	holdSeats: (
 		params: HoldSeatsInput,
 	) => Effect.Effect<
-		{ inventory: FlightInventory; price: Money },
+		HoldSeatsResult,
 		| FlightFullError
 		| FlightNotFoundError
 		| OptimisticLockingError
 		| InvalidAmountError
+		| InventoryPersistenceError
 	>;
 	releaseSeats: (
 		params: HoldSeatsInput,
 	) => Effect.Effect<
-		FlightInventory,
+		ReleaseSeatsResult,
 		| FlightNotFoundError
 		| OptimisticLockingError
 		| InvalidAmountError
 		| InventoryOvercapacityError
+		| InventoryPersistenceError
 	>;
 	getAvailability: (
 		flightId: FlightId,
@@ -57,11 +60,18 @@ export class InventoryService extends Effect.Service<InventoryServiceSignature>(
 							cabin,
 							numberOfSeats,
 						);
-						// optimistic locking
-						yield* repo.save(nextInventory);
+
+						// Save with optimistic locking - returns updated entity
+						const savedInventory = yield* repo.save(nextInventory);
 						const totalPrice = unitPrice.multiply(numberOfSeats);
 
-						return { inventory: nextInventory, price: totalPrice };
+						return new HoldSeatsResult({
+							inventory: savedInventory,
+							totalPrice,
+							unitPrice,
+							seatsHeld: numberOfSeats,
+							holdExpiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 min
+						});
 					}),
 
 				releaseSeats: ({ flightId, cabin, numberOfSeats }: HoldSeatsInput) =>
@@ -73,9 +83,14 @@ export class InventoryService extends Effect.Service<InventoryServiceSignature>(
 							cabin,
 							numberOfSeats,
 						);
-						// optimistic locking
-						yield* repo.save(nextInventory);
-						return nextInventory;
+
+						// Save with optimistic locking - returns updated entity
+						const savedInventory = yield* repo.save(nextInventory);
+
+						return new ReleaseSeatsResult({
+							inventory: savedInventory,
+							seatsReleased: numberOfSeats,
+						});
 					}),
 
 				getAvailability: (flightId: FlightId) => repo.getByFlightId(flightId),
