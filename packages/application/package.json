@@ -2,6 +2,19 @@
 	"name": "@workspace/application",
 	"version": "0.1.0",
 	"type": "module",
+	"exports": {
+		"./booking.service": "./src/services/booking.service.ts",
+		"./inventory.service": "./src/services/inventory.service.ts",
+		"./inventory.repository": "./src/repositories/inventory.repository.ts",
+		"./booking.repository": "./src/repositories/booking.repository.ts",
+		"./payment.gateway": "./src/gateways/payment.gateway.ts",
+		"./notification.gateway": "./src/gateways/notification.gateway.ts",
+		"./unit-of-work": "./src/ports/unit-of-work.ts",
+		"./results": "./src/models/results.ts",
+		"./read-models": "./src/models/read-models.ts",
+		"./booking-queries": "./src/queries/booking-queries.ts",
+		"./inventory-queries": "./src/queries/inventory-queries.ts"
+	},
 	"scripts": {
 		"build": "tsc --noEmit",
 		"clean": "git clean -xdf .cache .turbo dist node_modules",
