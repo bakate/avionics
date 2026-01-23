@@ -142,8 +142,13 @@ export class BookingService extends Effect.Service<BookingService>()(
 								),
 							);
 
-						// 4. Confirm Booking using aggregate method (emits BookingConfirmed event)
-						const confirmedBooking = yield* booking.confirm();
+						// 4. Confirm Booking
+						// We must re-fetch the booking to ensure we have the latest version
+						// (Optimistic Locking) as payment might have taken some time.
+						const freshBooking = yield* bookingRepo.findById(booking.id);
+
+						// Confirm using aggregate method (emits BookingConfirmed event)
+						const confirmedBooking = yield* freshBooking.confirm();
 
 						// Save confirmed booking within transaction
 						yield* unitOfWork.transaction(bookingRepo.save(confirmedBooking));
@@ -156,8 +161,10 @@ export class BookingService extends Effect.Service<BookingService>()(
 							status: "OPEN",
 						});
 
+						const ticketNumber = yield* generateTicketNumber();
+
 						const ticket = new Ticket({
-							ticketNumber: TicketNumber.make("1234567890123"),
+							ticketNumber,
 							pnrCode: pnr,
 							status: TicketStatus.ISSUED,
 							passengerId: passenger.id,
@@ -188,40 +195,62 @@ const generateUniquePnr = (
 	bookingRepo: BookingRepositoryPort,
 ): Effect.Effect<PnrCode> => {
 	return Effect.gen(function* () {
-		// 1. Generate candidate
-		const randomBytes = Crypto.randomBytes(4); // 4 bytes = 8 hex chars, ample for 6 char alphanumeric
-		// We want uppercase alphanumeric.
-		// A simple way is to map random bytes to charset.
-		const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-		let candidate = "";
-		for (const byte of randomBytes) {
-			candidate += charset[byte % charset.length];
-		}
-		// Ensure exactly 6 chars
-		if (candidate.length > 6) candidate = candidate.slice(0, 6);
-		while (candidate.length < 6) {
-			// Pad if somehow short (unlikely with this logic, but good for safety)
-			const byte = Crypto.randomBytes(1)[0];
-			if (byte === undefined) continue;
-			candidate += charset[byte % charset.length];
+		const MAX_RETRIES = 5;
+		let attempt = 0;
+
+		while (attempt < MAX_RETRIES) {
+			// 1. Generate candidate
+			const randomBytes = Crypto.randomBytes(4); // 4 bytes = 8 hex chars, ample for 6 char alphanumeric
+			// We want uppercase alphanumeric.
+			// A simple way is to map random bytes to charset.
+			const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+			let candidate = "";
+			for (const byte of randomBytes) {
+				candidate += charset[byte % charset.length];
+			}
+			// Ensure exactly 6 chars
+			if (candidate.length > 6) candidate = candidate.slice(0, 6);
+			while (candidate.length < 6) {
+				// Pad if somehow short (unlikely with this logic, but good for safety)
+				const byte = Crypto.randomBytes(1)[0];
+				if (byte === undefined) continue;
+				candidate += charset[byte % charset.length];
+			}
+
+			// 2. Validate format (Fail fast if logic is wrong)
+			const pnr = Schema.decodeSync(PnrCodeSchema)(candidate);
+
+			// 3. Check uniqueness
+			// findByPnr succeeds if found, fails if not found.
+			// We want it to NOT be found.
+			const existing = yield* bookingRepo.findByPnr(pnr).pipe(
+				Effect.map(() => true), // Found matches
+				Effect.catchTag("BookingNotFoundError", () => Effect.succeed(false)), // Not found
+			);
+
+			if (!existing) {
+				return pnr;
+			}
+			attempt++;
 		}
 
-		// 2. Validate format (Fail fast if logic is wrong)
-		const pnr = Schema.decodeSync(PnrCodeSchema)(candidate);
-
-		// 3. Check uniqueness
-		// findByPnr succeeds if found, fails if not found.
-		// We want it to NOT be found.
-		const existing = yield* bookingRepo.findByPnr(pnr).pipe(
-			Effect.map(() => true), // Found matches
-			Effect.catchTag("BookingNotFoundError", () => Effect.succeed(false)), // Not found
+		return yield* Effect.die(
+			new Error("Failed to generate unique PNR after max retries"),
 		);
+	});
+};
 
-		if (existing) {
-			// Collision - retry recursively
-			return yield* generateUniquePnr(bookingRepo);
+const generateTicketNumber = (): Effect.Effect<TicketNumber> => {
+	return Effect.sync(() => {
+		// 13 digits (3 prefix + 10 serial)
+		const prefix = "176"; // Example Airline Code
+		let serial = "";
+		// Generate 10 random digits
+		const bytes = Crypto.randomBytes(10);
+		for (const byte of bytes) {
+			serial += (byte % 10).toString();
 		}
-
-		return pnr;
+		// In a real system, we would check uniqueness against DB here.
+		return TicketNumber.make(prefix + serial);
 	});
 };

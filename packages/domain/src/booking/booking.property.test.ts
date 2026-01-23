@@ -84,10 +84,9 @@ const arbBooking = fc
 		passengers: fc.array(arbPassenger, { minLength: 1, maxLength: 3 }),
 		segments: fc.array(arbBookingSegment, { minLength: 1, maxLength: 2 }),
 		expiresAt: fc.option(
-			fc.date({
-				min: new Date(Date.now() + 1000), // At least 1 second in future
-				max: new Date(Date.now() + 3600000), // Up to 1 hour in future
-			}),
+			fc
+				.integer({ min: 1000, max: 3600000 })
+				.map((offset) => new Date(Date.now() + offset)),
 			{ nil: undefined },
 		),
 	})
