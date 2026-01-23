@@ -12,6 +12,9 @@ catalogs:
     '@faker-js/faker':
       specifier: 10.2.0
       version: 10.2.0
+    '@fast-check/vitest':
+      specifier: ^0.2.4
+      version: 0.2.4
     effect:
       specifier: ^3.19.14
       version: 3.19.14
@@ -132,6 +135,9 @@ importers:
       '@faker-js/faker':
         specifier: 'catalog:'
         version: 10.2.0
+      '@fast-check/vitest':
+        specifier: 'catalog:'
+        version: 0.2.4(vitest@4.0.17)
       '@vitest/coverage-v8':
         specifier: catalog:vitest3
         version: 4.0.17(vitest@4.0.17)
@@ -556,6 +562,11 @@ packages:
   '@faker-js/faker@10.2.0':
     resolution: {integrity: sha512-rTXwAsIxpCqzUnZvrxVh3L0QA0NzToqWBLAhV+zDV3MIIwiQhAZHMdPCIaj5n/yADu/tyk12wIPgL6YHGXJP+g==}
     engines: {node: ^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0, npm: '>=10'}
+
+  '@fast-check/vitest@0.2.4':
+    resolution: {integrity: sha512-Ilcr+JAIPhb1s6FRm4qoglQYSGXXrS+zAupZeNuWAA3qHVGDA1d1Gb84Hb/+otL3GzVZjFJESg5/1SfIvrgssA==}
+    peerDependencies:
+      vitest: ^1 || ^2 || ^3 || ^4
 
   '@isaacs/balanced-match@4.0.1':
     resolution: {integrity: sha512-yzMTt9lEb8Gv7zRioUilSglI0c0smZ9k5D65677DLWLtWJaXIS3CqcGyUFByYKlnUj6TkjLVs54fBl6+TiGQDQ==}
@@ -1972,6 +1983,11 @@ snapshots:
   '@exodus/bytes@1.8.0': {}
 
   '@faker-js/faker@10.2.0': {}
+
+  '@fast-check/vitest@0.2.4(vitest@4.0.17)':
+    dependencies:
+      fast-check: 3.23.2
+      vitest: 4.0.17(@types/node@22.19.6)(@vitest/ui@4.0.17)(jiti@2.6.1)(jsdom@27.4.0)(yaml@2.8.2)
 
   '@isaacs/balanced-match@4.0.1': {}
 

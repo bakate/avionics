@@ -4,6 +4,7 @@
 	"type": "module",
 	"exports": {
 		"./errors": "./src/errors.ts",
+		"./events": "./src/events.ts",
 		"./flight": "./src/flight/flight.ts",
 		"./inventory": "./src/flight/flight-inventory.ts",
 		"./kernel": "./src/kernel.ts",
@@ -28,12 +29,13 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
+		"@faker-js/faker": "catalog:",
+		"@fast-check/vitest": "catalog:",
 		"@vitest/coverage-v8": "catalog:vitest3",
 		"@workspace/biome-config": "workspace:*",
 		"@workspace/tsconfig": "workspace:*",
 		"@workspace/vitest-config": "workspace:*",
 		"typescript": "catalog:",
-		"@faker-js/faker": "catalog:",
 		"vitest": "catalog:vitest3"
 	}
 }
