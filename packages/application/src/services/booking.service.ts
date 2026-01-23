@@ -194,50 +194,44 @@ export class BookingService extends Effect.Service<BookingService>()(
 const generateUniquePnr = (
 	bookingRepo: BookingRepositoryPort,
 ): Effect.Effect<PnrCode> => {
-	return Effect.gen(function* () {
-		const MAX_RETRIES = 5;
-		let attempt = 0;
+	// Operation that generates a PNR and fails if it collides
+	const generate = Effect.gen(function* () {
+		// 1. Generate candidate
+		const candidate = generatePnrCandidate();
 
-		while (attempt < MAX_RETRIES) {
-			// 1. Generate candidate
-			const randomBytes = Crypto.randomBytes(4); // 4 bytes = 8 hex chars, ample for 6 char alphanumeric
-			// We want uppercase alphanumeric.
-			// A simple way is to map random bytes to charset.
-			const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-			let candidate = "";
-			for (const byte of randomBytes) {
-				candidate += charset[byte % charset.length];
-			}
-			// Ensure exactly 6 chars
-			if (candidate.length > 6) candidate = candidate.slice(0, 6);
-			while (candidate.length < 6) {
-				// Pad if somehow short (unlikely with this logic, but good for safety)
-				const byte = Crypto.randomBytes(1)[0];
-				if (byte === undefined) continue;
-				candidate += charset[byte % charset.length];
-			}
+		const pnr = Schema.decodeSync(PnrCodeSchema)(candidate);
 
-			// 2. Validate format (Fail fast if logic is wrong)
-			const pnr = Schema.decodeSync(PnrCodeSchema)(candidate);
-
-			// 3. Check uniqueness
-			// findByPnr succeeds if found, fails if not found.
-			// We want it to NOT be found.
-			const existing = yield* bookingRepo.findByPnr(pnr).pipe(
-				Effect.map(() => true), // Found matches
-				Effect.catchTag("BookingNotFoundError", () => Effect.succeed(false)), // Not found
-			);
-
-			if (!existing) {
-				return pnr;
-			}
-			attempt++;
-		}
-
-		return yield* Effect.die(
-			new Error("Failed to generate unique PNR after max retries"),
+		// 2. Check collision
+		// findByPnr returns Success(Booking) if found (Collision!) -> We fail to trigger retry
+		// returns Fail(BookingNotFound) if free -> We recover and return PNR
+		return yield* bookingRepo.findByPnr(pnr).pipe(
+			Effect.flatMap(() => Effect.fail(new Error("Collision"))),
+			Effect.catchTag("BookingNotFoundError", () => Effect.succeed(pnr)),
 		);
 	});
+
+	return generate.pipe(
+		Effect.retry({ times: 5 }),
+		Effect.catchAll(() =>
+			Effect.die(new Error("Failed to generate unique PNR after max retries")),
+		),
+	);
+};
+
+const generatePnrCandidate = (): string => {
+	const randomBytes = Crypto.randomBytes(4);
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	let candidate = "";
+	for (const byte of randomBytes) {
+		candidate += charset[byte % charset.length];
+	}
+	if (candidate.length > 6) candidate = candidate.slice(0, 6);
+	while (candidate.length < 6) {
+		const byte = Crypto.randomBytes(1)[0];
+		if (byte === undefined) continue;
+		candidate += charset[byte % charset.length];
+	}
+	return candidate;
 };
 
 const generateTicketNumber = (): Effect.Effect<TicketNumber> => {
