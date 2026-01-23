@@ -719,7 +719,7 @@ describe("BookingService", () => {
 
 **Trade-offs**:
 
-- ⚠️ Learning curve (but who cares why the AI everywhere)
+- ⚠️ Learning curve
 - ⚠️ Different from standard JavaScript patterns
 - ⚠️ Requires Effect runtime
 

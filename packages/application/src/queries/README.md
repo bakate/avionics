@@ -4,7 +4,7 @@ This directory contains query services that implement the **read side** of the C
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                     Application Layer                        │
 ├──────────────────────────┬──────────────────────────────────┤

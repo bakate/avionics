@@ -1,7 +1,7 @@
 {
 	"extends": "@workspace/tsconfig/internal-package.json",
 	"compilerOptions": {
-		"lib": ["ES2024", "DOM", "DOM.Iterable"],
+		"lib": ["ES2024"],
 		"types": ["node"]
 	},
 	"include": ["src"],
