@@ -156,21 +156,27 @@ export class Booking extends Schema.Class<Booking>("Booking")({
 	}
 
 	// Mark as expired
+	// Mark as expired
 	markExpired(): Booking {
-		const event = new BookingExpired({
-			eventId: `evt-${crypto.randomUUID()}` as EventId,
-			occurredAt: new Date(),
-			aggregateId: this.id,
-			aggregateType: "Booking",
-			bookingId: this.id,
-			pnrCode: this.pnrCode,
-			expiredAt: O.getOrThrow(this.expiresAt),
-		});
+		return O.match(this.expiresAt, {
+			onNone: () => this,
+			onSome: (expiredAt) => {
+				const event = new BookingExpired({
+					eventId: `evt-${crypto.randomUUID()}` as EventId,
+					occurredAt: new Date(),
+					aggregateId: this.id,
+					aggregateType: "Booking",
+					bookingId: this.id,
+					pnrCode: this.pnrCode,
+					expiredAt: expiredAt,
+				});
 
-		return new Booking({
-			...this,
-			status: PnrStatus.EXPIRED,
-			domainEvents: [...this.domainEvents, event],
+				return new Booking({
+					...this,
+					status: PnrStatus.EXPIRED,
+					domainEvents: [...this.domainEvents, event],
+				});
+			},
 		});
 	}
 

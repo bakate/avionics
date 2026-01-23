@@ -114,7 +114,16 @@ const makeFakeBookingRepo = () => {
 					Effect.map(() => booking),
 				),
 			findById: (id) =>
-				Effect.fail(new BookingNotFoundError({ searchkey: id })),
+				Ref.get(ref).pipe(
+					Effect.flatMap((map) => {
+						const booking = map.get(id);
+						return booking
+							? Effect.succeed(
+									booking as import("@workspace/domain/booking").Booking,
+								)
+							: Effect.fail(new BookingNotFoundError({ searchkey: id }));
+					}),
+				),
 			findByPnr: () =>
 				Effect.fail(new BookingNotFoundError({ searchkey: "mock" })),
 			findExpired: () => Effect.succeed([]),
@@ -192,6 +201,7 @@ describe("BookingService", () => {
 	it("should successfully book a flight when inventory is available", async () => {
 		const flightId = faker.string.alphanumeric(6);
 		const inventory = makeInventory(flightId);
+		let savedBooking: import("@workspace/domain/booking").Booking | null = null;
 
 		const TestLayer = BookingService.Default.pipe(
 			Layer.provide(
@@ -213,7 +223,14 @@ describe("BookingService", () => {
 							}),
 					},
 					bookingRepo: {
-						save: (booking) => Effect.succeed(booking),
+						save: (booking) => {
+							savedBooking = booking;
+							return Effect.succeed(booking);
+						},
+						findById: () =>
+							savedBooking
+								? Effect.succeed(savedBooking)
+								: Effect.fail(new BookingNotFoundError({ searchkey: "mock" })),
 					},
 					notificationGateway: {
 						sendTicket: (ticket) =>
@@ -287,6 +304,7 @@ describe("BookingService", () => {
 	it("should retry PNR generation on collision", async () => {
 		const flightId = faker.string.alphanumeric(6);
 		const inventory = makeInventory(flightId);
+		let savedBooking: import("@workspace/domain/booking").Booking | null = null;
 		let pnrCheckCount = 0;
 
 		const TestLayer = BookingService.Default.pipe(
@@ -309,7 +327,14 @@ describe("BookingService", () => {
 							}),
 					},
 					bookingRepo: {
-						save: (booking) => Effect.succeed(booking),
+						save: (booking) => {
+							savedBooking = booking;
+							return Effect.succeed(booking);
+						},
+						findById: () =>
+							savedBooking
+								? Effect.succeed(savedBooking)
+								: Effect.fail(new BookingNotFoundError({ searchkey: "mock" })),
 						findByPnr: () => {
 							pnrCheckCount++;
 							if (pnrCheckCount === 1) {
