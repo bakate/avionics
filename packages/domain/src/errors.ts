@@ -75,3 +75,19 @@ export class TicketAlreadyIssuedError extends Data.TaggedError(
 )<{
 	readonly pnrCode: string;
 }> {}
+
+// --- Persistence Errors ---
+
+export class BookingPersistenceError extends Data.TaggedError(
+	"BookingPersistenceError",
+)<{
+	readonly bookingId: string;
+	readonly reason: string;
+}> {}
+
+export class InventoryPersistenceError extends Data.TaggedError(
+	"InventoryPersistenceError",
+)<{
+	readonly flightId: string;
+	readonly reason: string;
+}> {}
