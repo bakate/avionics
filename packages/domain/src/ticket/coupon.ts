@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { FlightId } from "../flight/flight.js";
+import { FlightId } from "../kernel.js";
 
 export class Coupon extends Schema.Class<Coupon>("Coupon")({
 	couponNumber: Schema.Number.pipe(Schema.int(), Schema.positive()),
