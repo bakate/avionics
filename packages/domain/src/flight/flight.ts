@@ -1,8 +1,5 @@
 import { Schema } from "effect";
-import { Route, Schedule } from "../kernel.js";
-
-export const FlightId = Schema.String.pipe(Schema.brand("FlightId"));
-export type FlightId = typeof FlightId.Type;
+import { FlightId, Route, Schedule } from "../kernel.js";
 
 // flight number (e.g., "AF1234")
 export const FlightNumber = Schema.String.pipe(
