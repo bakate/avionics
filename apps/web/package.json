@@ -14,7 +14,7 @@
 	},
 	"dependencies": {
 		"@workspace/domain": "workspace:*",
-		"effect": "catalog:"
+		"effect": "catalog:effect3"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",

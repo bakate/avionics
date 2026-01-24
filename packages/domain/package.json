@@ -25,7 +25,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"effect": "catalog:"
+		"effect": "catalog:effect3"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "catalog:",
