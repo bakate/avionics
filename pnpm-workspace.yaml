@@ -17,7 +17,6 @@ packages:
 # -------------------------------------------------------------------------
 catalog:
   typescript: ^5.9.3
-  effect: ^3.19.14
   zod: 4.3.1
   vite: ^7.2.4
   "react-hook-form": ^7.71.1
@@ -41,6 +40,14 @@ catalogs:
 
   node25:
     "@types/node": "^25.0.9"
+
+  effect3:
+    "effect": ^3.19.15
+    "@effect/experimental": ^0.58.0
+    "@effect/opentelemetry": ^0.61.0
+    "@effect/platform": ^0.94.2
+    "@effect/sql": ^0.49.0
+    "@effect/sql-pg": ^0.50.1
 
 onlyBuiltDependencies:
   - esbuild
