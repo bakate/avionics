@@ -1,0 +1,38 @@
+{
+  "name": "@workspace/infrastructure",
+  "version": "0.1.0",
+  "description": "Infrastructure layer for Avionics system",
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc -b",
+    "test": "vitest run",
+    "test:integration": "vitest run --dir src/repositories",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@effect/experimental": "catalog:effect3",
+    "@effect/opentelemetry": "catalog:effect3",
+    "@effect/platform": "catalog:effect3",
+    "@effect/sql": "catalog:effect3",
+    "@effect/sql-pg": "catalog:effect3",
+    "@workspace/application": "workspace:*",
+    "@workspace/domain": "workspace:*",
+    "effect": "catalog:effect3",
+    "pg": "^8.17.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "@faker-js/faker": "catalog:",
+    "@types/node": "catalog:node25",
+    "@types/pg": "^8.16.0",
+    "@vitest/coverage-v8": "catalog:vitest3",
+    "@workspace/biome-config": "workspace:*",
+    "@workspace/tsconfig": "workspace:*",
+    "@workspace/vitest-config": "workspace:*",
+    "testcontainers": "^11.11.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:vitest3"
+  }
+}
