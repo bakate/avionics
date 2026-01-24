@@ -1,0 +1,9 @@
+{
+  "extends": "@workspace/tsconfig/internal-package.json",
+  "compilerOptions": {
+    "lib": ["ES2024"],
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+}
