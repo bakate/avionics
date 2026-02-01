@@ -2,10 +2,25 @@ import * as Crypto from "node:crypto";
 import { Booking } from "@workspace/domain/booking";
 import { Coupon } from "@workspace/domain/coupon";
 import {
-	type BookingId,
+	type BookingExpiredError,
+	BookingNotFoundError,
+	type BookingPersistenceError,
+	type BookingStatusError,
+	type FlightFullError,
+	type FlightNotFoundError,
+	type InvalidAmountError,
+	type InventoryOvercapacityError,
+	type InventoryPersistenceError,
+	type OptimisticLockingError,
+} from "@workspace/domain/errors";
+import { FlightInventory, SeatBucket } from "@workspace/domain/inventory";
+import {
+	BookingId,
 	CabinClassSchema,
 	EmailSchema,
+	type FlightId,
 	GenderSchema,
+	Money,
 	makeFlightId,
 	PassengerTypeSchema,
 	type PnrCode,
@@ -14,7 +29,17 @@ import {
 import { Passenger, PassengerId } from "@workspace/domain/passenger";
 import { BookingSegment } from "@workspace/domain/segment";
 import { Ticket, TicketNumber, TicketStatus } from "@workspace/domain/ticket";
-import { Duration, Effect, Option as O, Schedule, Schema } from "effect";
+import {
+	type Cause,
+	Context,
+	Duration,
+	Effect,
+	Layer,
+	Option as O,
+	Ref,
+	Schedule,
+	Schema,
+} from "effect";
 import { NotificationGateway } from "../gateways/notification.gateway.js";
 import { PaymentGateway } from "../gateways/payment.gateway.js";
 import { UnitOfWork } from "../ports/unit-of-work.js";
@@ -22,9 +47,15 @@ import {
 	BookingRepository,
 	type BookingRepositoryPort,
 } from "../repositories/booking.repository.js";
-import { InventoryService } from "./inventory.service.js";
+import {
+	InventoryService,
+	type InventoryServiceSignature,
+} from "./inventory.service.js";
 
+// ---------------------------------------------------------------------------
 // Command Schema
+// ---------------------------------------------------------------------------
+
 export class BookFlightCommand extends Schema.Class<BookFlightCommand>(
 	"BookFlightCommand",
 )({
@@ -43,18 +74,53 @@ export class BookFlightCommand extends Schema.Class<BookFlightCommand>(
 	creditCardToken: Schema.String,
 }) {}
 
-export class BookingService extends Effect.Service<BookingService>()(
-	"BookingService",
-	{
-		effect: Effect.gen(function* () {
-			// Dependencies Injection
+// ---------------------------------------------------------------------------
+// Service Interface
+// ---------------------------------------------------------------------------
+
+export interface BookingServiceImpl {
+	bookFlight: (
+		command: BookFlightCommand,
+	) => Effect.Effect<
+		Booking,
+		| BookingNotFoundError
+		| BookingStatusError
+		| BookingExpiredError
+		| FlightFullError
+		| FlightNotFoundError
+		| OptimisticLockingError
+		| InvalidAmountError
+		| InventoryPersistenceError
+		| BookingPersistenceError
+		| InventoryOvercapacityError
+		| Cause.TimeoutException
+	>;
+}
+
+// ---------------------------------------------------------------------------
+// Context.Tag — déclaration du service dans le contexte Effect
+// ---------------------------------------------------------------------------
+
+export class BookingService extends Context.Tag("BookingService")<
+	BookingService,
+	BookingServiceImpl
+>() {
+	// ------------------------------------------------------------------
+	// Live Layer — Production implementation
+	// Resolves dependencies explicitly via Effect.gen + yield*
+	// ------------------------------------------------------------------
+	// ------------------------------------------------------------------
+	static readonly Live = Layer.effect(
+		BookingService,
+		Effect.gen(function* () {
+			// Resolve dependencies from context
 			const inventoryService = yield* InventoryService;
 			const bookingRepo = yield* BookingRepository;
 			const paymentGateway = yield* PaymentGateway;
 			const notificationGateway = yield* NotificationGateway;
 			const unitOfWork = yield* UnitOfWork;
 
-			// Retry policy: exponential backoff with max 3 retries
+			// Retry policy: exponential backoff, max 3 attempts
 			const retryPolicy = Schedule.exponential(Duration.millis(100)).pipe(
 				Schedule.compose(Schedule.recurs(3)),
 			);
@@ -85,7 +151,7 @@ export class BookingService extends Effect.Service<BookingService>()(
 						const pnr = yield* generateUniquePnr(bookingRepo);
 
 						// 2.3. Generate Booking ID (Manually brand)
-						const bookingId = `booking-${Date.now()}` as typeof BookingId.Type;
+						const bookingId = BookingId.make(`booking-${Date.now()}`);
 
 						// 2.4. Create Booking Segment
 						const segment = new BookingSegment({
@@ -188,22 +254,184 @@ export class BookingService extends Effect.Service<BookingService>()(
 					}),
 			};
 		}),
-	},
-) {}
+	);
 
+	// ------------------------------------------------------------------
+	// TestOverrides — Type to configure the Test layer
+	// Each key is a Partial on the corresponding service.
+	// Only pass what differs from the default behavior.
+	// ------------------------------------------------------------------
+	static readonly TestOverrides = {} as {
+		inventoryService?: Partial<InventoryServiceSignature>;
+		bookingRepo?: Partial<typeof BookingRepository.Service>;
+		paymentGateway?: Partial<typeof PaymentGateway.Service>;
+		notificationGateway?: Partial<typeof NotificationGateway.Service>;
+		unitOfWork?: Partial<typeof UnitOfWork.Service>;
+	};
+
+	/**
+	 * Test Layer — Factory that returns a complete Layer for tests.
+	 *
+	 * Default behaviors (without override):
+	 *   - PaymentGateway.charge        → Effect.void (payment always OK)
+	 *   - NotificationGateway.sendTicket → Effect.void (silent notification)
+	 *   - UnitOfWork.transaction       → passthrough (no real transaction)
+	 *   - BookingRepository.save       → returns the booking as-is
+	 *   - BookingRepository.findByPnr  → BookingNotFoundError (no collision)
+	 *   - BookingRepository.findById   → BookingNotFoundError
+	 *   - InventoryService.holdSeats   → Success with 10 economy seats available
+	 *   - InventoryService.getAvailability → Success with mock inventory
+	 *   - InventoryService.releaseSeats → Success with seats released
+	 *
+	 * Usage in a test:
+	 *   const layer = BookingService.Test({ inventoryService: { holdSeats: ... } });
+	 *   program.pipe(Effect.provide(layer))
+	 */
+	/**
+	 * Helper to create mock inventory for tests.
+	 * Reduces duplication in test layer defaults.
+	 */
+	private static makeMockInventory = (
+		flightId: FlightId,
+		economySeats = 10,
+	): FlightInventory =>
+		new FlightInventory({
+			flightId,
+			availability: {
+				economy: new SeatBucket({
+					available: economySeats,
+					capacity: 100,
+					price: Money.of(500, "EUR"),
+				}),
+				business: new SeatBucket({
+					available: 5,
+					capacity: 50,
+					price: Money.of(1000, "USD"),
+				}),
+				first: new SeatBucket({
+					available: 2,
+					capacity: 20,
+					price: Money.of(2000, "USD"),
+				}),
+			},
+			version: 1,
+			domainEvents: [],
+		});
+
+	static readonly Test = (overrides: TestOverrides = {}) => {
+		const InventoryServiceTest = Layer.succeed(
+			InventoryService,
+			InventoryService.of({
+				// Default: Return a mock inventory with 10 available economy seats
+				holdSeats: ({ flightId, numberOfSeats }) =>
+					Effect.succeed({
+						inventory: BookingService.makeMockInventory(flightId),
+						totalPrice: Money.of(500 * numberOfSeats, "EUR"),
+						unitPrice: Money.of(500, "EUR"),
+						seatsHeld: numberOfSeats,
+						holdExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
+					}),
+				getAvailability: (flightId) =>
+					Effect.succeed(BookingService.makeMockInventory(flightId)),
+				releaseSeats: ({ flightId, numberOfSeats }) =>
+					Effect.succeed({
+						inventory: BookingService.makeMockInventory(
+							flightId,
+							10 + numberOfSeats,
+						),
+						seatsReleased: numberOfSeats,
+					}),
+				...overrides.inventoryService,
+			}),
+		);
+
+		const BookingRepoTest = Layer.effect(
+			BookingRepository,
+			Effect.gen(function* () {
+				// Stateful in-memory store for saved bookings
+				const store = yield* Ref.make(new Map<string, Booking>());
+
+				return BookingRepository.of({
+					save: (booking) =>
+						Ref.update(store, (map) => map.set(booking.id, booking)).pipe(
+							Effect.map(() => booking),
+						),
+					findById: (id) =>
+						Ref.get(store).pipe(
+							Effect.flatMap((map) => {
+								const booking = map.get(id);
+								return booking
+									? Effect.succeed(booking)
+									: Effect.fail(new BookingNotFoundError({ searchkey: id }));
+							}),
+						),
+					findByPnr: () =>
+						Effect.fail(new BookingNotFoundError({ searchkey: "mock" })),
+					findExpired: () => Effect.succeed([]),
+					findByPassengerId: () => Effect.succeed([]),
+					...overrides.bookingRepo,
+				});
+			}),
+		);
+
+		const PaymentGatewayTest = Layer.succeed(
+			PaymentGateway,
+			PaymentGateway.of({
+				charge: () => Effect.void,
+				...overrides.paymentGateway,
+			}),
+		);
+
+		const NotificationGatewayTest = Layer.succeed(
+			NotificationGateway,
+			NotificationGateway.of({
+				sendTicket: () => Effect.void,
+				...overrides.notificationGateway,
+			}),
+		);
+
+		const UnitOfWorkTest = Layer.succeed(
+			UnitOfWork,
+			UnitOfWork.of({
+				transaction: (effect) => effect,
+				...overrides.unitOfWork,
+			}),
+		);
+
+		// Composition: BookingService.Live on top, mocks below.
+		// Live will yield* each dep → it will find them in the layers below.
+		return BookingService.Live.pipe(
+			Layer.provide(
+				InventoryServiceTest.pipe(
+					Layer.merge(BookingRepoTest),
+					Layer.merge(PaymentGatewayTest),
+					Layer.merge(NotificationGatewayTest),
+					Layer.merge(UnitOfWorkTest),
+				),
+			),
+		);
+	};
+}
+
+// Type helper for test overrides
+export type TestOverrides = {
+	inventoryService?: Partial<InventoryServiceSignature>;
+	bookingRepo?: Partial<typeof BookingRepository.Service>;
+	paymentGateway?: Partial<typeof PaymentGateway.Service>;
+	notificationGateway?: Partial<typeof NotificationGateway.Service>;
+	unitOfWork?: Partial<typeof UnitOfWork.Service>;
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 const generateUniquePnr = (
 	bookingRepo: BookingRepositoryPort,
 ): Effect.Effect<PnrCode> => {
-	// Operation that generates a PNR and fails if it collides
 	const generate = Effect.gen(function* () {
-		// 1. Generate candidate
 		const candidate = generatePnrCandidate();
-
 		const pnr = Schema.decodeSync(PnrCodeSchema)(candidate);
 
-		// 2. Check collision
-		// findByPnr returns Success(Booking) if found (Collision!) -> We fail to trigger retry
-		// returns Fail(BookingNotFound) if free -> We recover and return PNR
 		return yield* bookingRepo.findByPnr(pnr).pipe(
 			Effect.flatMap(() => Effect.fail(new Error("Collision"))),
 			Effect.catchTag("BookingNotFoundError", () => Effect.succeed(pnr)),
@@ -236,15 +464,12 @@ const generatePnrCandidate = (): string => {
 
 const generateTicketNumber = (): Effect.Effect<TicketNumber> => {
 	return Effect.sync(() => {
-		// 13 digits (3 prefix + 10 serial)
-		const prefix = "176"; // Example Airline Code
+		const prefix = "176";
 		let serial = "";
-		// Generate 10 random digits
 		const bytes = Crypto.randomBytes(10);
 		for (const byte of bytes) {
 			serial += (byte % 10).toString();
 		}
-		// In a real system, we would check uniqueness against DB here.
 		return TicketNumber.make(prefix + serial);
 	});
 };
