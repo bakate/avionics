@@ -6,9 +6,13 @@ import type {
 	InventoryPersistenceError,
 	OptimisticLockingError,
 } from "@workspace/domain/errors";
-import type { FlightInventory } from "@workspace/domain/inventory";
-import type { CabinClass, FlightId } from "@workspace/domain/kernel";
-import { Effect } from "effect";
+import { FlightInventory, SeatBucket } from "@workspace/domain/inventory";
+import {
+	type CabinClass,
+	type FlightId,
+	Money,
+} from "@workspace/domain/kernel";
+import { Context, Effect, Layer } from "effect";
 import { HoldSeatsResult, ReleaseSeatsResult } from "../models/results.js";
 import { InventoryRepository } from "../repositories/inventory.repository.js";
 
@@ -44,10 +48,18 @@ export interface InventoryServiceSignature {
 	) => Effect.Effect<FlightInventory, FlightNotFoundError>;
 }
 
-export class InventoryService extends Effect.Service<InventoryServiceSignature>()(
-	"InventoryService",
-	{
-		effect: Effect.gen(function* () {
+export class InventoryService extends Context.Tag("InventoryService")<
+	InventoryService,
+	InventoryServiceSignature
+>() {
+	/**
+	 * Live Layer — Production implementation.
+	 * Requires InventoryRepository in context.
+	 */
+	static readonly Live = Layer.effect(
+		InventoryService,
+		Effect.gen(function* () {
+			// Resolve dependencies from context
 			const repo = yield* InventoryRepository;
 
 			return {
@@ -96,5 +108,86 @@ export class InventoryService extends Effect.Service<InventoryServiceSignature>(
 				getAvailability: (flightId: FlightId) => repo.getByFlightId(flightId),
 			};
 		}),
-	},
-) {}
+	);
+
+	/**
+	 * Helper to create mock inventory for tests.
+	 * Reduces duplication in test layer defaults.
+	 */
+	private static makeMockInventory = (
+		flightId: FlightId,
+		economySeats = 10,
+	): FlightInventory =>
+		new FlightInventory({
+			flightId,
+			availability: {
+				economy: new SeatBucket({
+					available: economySeats,
+					capacity: 100,
+					price: Money.of(500, "EUR"),
+				}),
+				business: new SeatBucket({
+					available: 5,
+					capacity: 50,
+					price: Money.of(1000, "USD"),
+				}),
+				first: new SeatBucket({
+					available: 2,
+					capacity: 20,
+					price: Money.of(2000, "USD"),
+				}),
+			},
+			version: 1,
+			domainEvents: [],
+		});
+
+	/**
+	 * Test Layer — Factory that returns a complete Layer for tests.
+	 *
+	 * Default behaviors (without override):
+	 *   - holdSeats: Success with 10 economy seats available
+	 *   - getAvailability: Success with mock inventory
+	 *   - releaseSeats: Success with seats released
+	 *
+	 * Usage in a test:
+	 *   const layer = InventoryService.Test({ holdSeats: ... });
+	 *   program.pipe(Effect.provide(layer))
+	 */
+	static readonly Test = (overrides: Partial<InventoryServiceSignature> = {}) =>
+		Layer.succeed(
+			InventoryService,
+			InventoryService.of({
+				// Default: Use real domain logic with mock inventory
+				holdSeats: ({ flightId, cabin, numberOfSeats }) =>
+					Effect.gen(function* () {
+						const inventory = InventoryService.makeMockInventory(flightId);
+						const [nextInventory, unitPrice] = yield* inventory.holdSeats(
+							cabin,
+							numberOfSeats,
+						);
+						return new HoldSeatsResult({
+							inventory: nextInventory,
+							totalPrice: unitPrice.multiply(numberOfSeats),
+							unitPrice,
+							seatsHeld: numberOfSeats,
+							holdExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
+						});
+					}),
+				getAvailability: (flightId) =>
+					Effect.succeed(InventoryService.makeMockInventory(flightId)),
+				releaseSeats: ({ flightId, cabin, numberOfSeats }) =>
+					Effect.gen(function* () {
+						const inventory = InventoryService.makeMockInventory(flightId);
+						const nextInventory = yield* inventory.releaseSeats(
+							cabin,
+							numberOfSeats,
+						);
+						return new ReleaseSeatsResult({
+							inventory: nextInventory,
+							seatsReleased: numberOfSeats,
+						});
+					}),
+				...overrides,
+			}),
+		);
+}
