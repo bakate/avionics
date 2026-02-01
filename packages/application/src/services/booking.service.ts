@@ -13,14 +13,11 @@ import {
 	type InventoryPersistenceError,
 	type OptimisticLockingError,
 } from "@workspace/domain/errors";
-import { FlightInventory, SeatBucket } from "@workspace/domain/inventory";
 import {
 	BookingId,
 	CabinClassSchema,
 	EmailSchema,
-	type FlightId,
 	GenderSchema,
-	Money,
 	makeFlightId,
 	PassengerTypeSchema,
 	type PnrCode,
@@ -151,7 +148,7 @@ export class BookingService extends Context.Tag("BookingService")<
 						const pnr = yield* generateUniquePnr(bookingRepo);
 
 						// 2.3. Generate Booking ID (Manually brand)
-						const bookingId = BookingId.make(`booking-${Date.now()}`);
+						const bookingId = BookingId.make(`booking-${Crypto.randomUUID()}`);
 
 						// 2.4. Create Booking Segment
 						const segment = new BookingSegment({
@@ -279,70 +276,15 @@ export class BookingService extends Context.Tag("BookingService")<
 	 *   - BookingRepository.save       → returns the booking as-is
 	 *   - BookingRepository.findByPnr  → BookingNotFoundError (no collision)
 	 *   - BookingRepository.findById   → BookingNotFoundError
-	 *   - InventoryService.holdSeats   → Success with 10 economy seats available
-	 *   - InventoryService.getAvailability → Success with mock inventory
-	 *   - InventoryService.releaseSeats → Success with seats released
+	 *   - InventoryService.*           → Delegated to InventoryService.Test (see its docs)
 	 *
 	 * Usage in a test:
 	 *   const layer = BookingService.Test({ inventoryService: { holdSeats: ... } });
 	 *   program.pipe(Effect.provide(layer))
 	 */
-	/**
-	 * Helper to create mock inventory for tests.
-	 * Reduces duplication in test layer defaults.
-	 */
-	private static makeMockInventory = (
-		flightId: FlightId,
-		economySeats = 10,
-	): FlightInventory =>
-		new FlightInventory({
-			flightId,
-			availability: {
-				economy: new SeatBucket({
-					available: economySeats,
-					capacity: 100,
-					price: Money.of(500, "EUR"),
-				}),
-				business: new SeatBucket({
-					available: 5,
-					capacity: 50,
-					price: Money.of(1000, "USD"),
-				}),
-				first: new SeatBucket({
-					available: 2,
-					capacity: 20,
-					price: Money.of(2000, "USD"),
-				}),
-			},
-			version: 1,
-			domainEvents: [],
-		});
-
 	static readonly Test = (overrides: TestOverrides = {}) => {
-		const InventoryServiceTest = Layer.succeed(
-			InventoryService,
-			InventoryService.of({
-				// Default: Return a mock inventory with 10 available economy seats
-				holdSeats: ({ flightId, numberOfSeats }) =>
-					Effect.succeed({
-						inventory: BookingService.makeMockInventory(flightId),
-						totalPrice: Money.of(500 * numberOfSeats, "EUR"),
-						unitPrice: Money.of(500, "EUR"),
-						seatsHeld: numberOfSeats,
-						holdExpiresAt: new Date(Date.now() + 30 * 60 * 1000),
-					}),
-				getAvailability: (flightId) =>
-					Effect.succeed(BookingService.makeMockInventory(flightId)),
-				releaseSeats: ({ flightId, numberOfSeats }) =>
-					Effect.succeed({
-						inventory: BookingService.makeMockInventory(
-							flightId,
-							10 + numberOfSeats,
-						),
-						seatsReleased: numberOfSeats,
-					}),
-				...overrides.inventoryService,
-			}),
+		const InventoryServiceTest = InventoryService.Test(
+			overrides.inventoryService,
 		);
 
 		const BookingRepoTest = Layer.effect(

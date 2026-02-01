@@ -249,7 +249,7 @@ describe("BookingService", () => {
 			const unitOfWork = UnitOfWork.of({ transaction: (eff) => eff });
 
 			const BookingServiceLive = BookingService.Live.pipe(
-				Layer.provide(InventoryService.Default),
+				Layer.provide(InventoryService.Live),
 				Layer.provide(Layer.succeed(InventoryRepository, inventoryRepo)),
 				Layer.provide(Layer.succeed(BookingRepository, bookingRepo)),
 				Layer.provide(Layer.succeed(PaymentGateway, paymentGateway)),
