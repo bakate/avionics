@@ -24,7 +24,10 @@ export interface InventoryRepositoryPort {
 	 */
 	getByFlightId(
 		id: FlightId,
-	): Effect.Effect<FlightInventory, FlightNotFoundError>;
+	): Effect.Effect<
+		FlightInventory,
+		FlightNotFoundError | InventoryPersistenceError
+	>;
 
 	/**
 	 * Find all flights with available seats in a specific cabin.

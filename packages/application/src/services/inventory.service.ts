@@ -45,7 +45,10 @@ export interface InventoryServiceSignature {
 	>;
 	getAvailability: (
 		flightId: FlightId,
-	) => Effect.Effect<FlightInventory, FlightNotFoundError>;
+	) => Effect.Effect<
+		FlightInventory,
+		FlightNotFoundError | InventoryPersistenceError
+	>;
 }
 
 export class InventoryService extends Context.Tag("InventoryService")<

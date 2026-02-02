@@ -88,17 +88,12 @@ const makeFakeBookingRepo = () => {
 				),
 			findById: (id) =>
 				Ref.get(ref).pipe(
-					Effect.flatMap((map) => {
-						const booking = map.get(id);
-						return booking
-							? Effect.succeed(
-									booking as import("@workspace/domain/booking").Booking,
-								)
-							: Effect.fail(new BookingNotFoundError({ searchkey: id }));
+					Effect.map((map): Option.Option<Booking> => {
+						const booking = map.get(id) as Booking | undefined;
+						return booking ? Option.some(booking) : Option.none();
 					}),
 				),
-			findByPnr: () =>
-				Effect.fail(new BookingNotFoundError({ searchkey: "mock" })),
+			findByPnr: () => Effect.succeed(Option.none()),
 			findExpired: () => Effect.succeed([]),
 			findByPassengerId: () => Effect.succeed([]),
 		});
@@ -183,10 +178,10 @@ describe("BookingService", () => {
 					pnrCheckCount++;
 					if (pnrCheckCount === 1) {
 						// First time: Find collision
-						return Effect.succeed({} as unknown as Booking);
+						return Effect.succeed(Option.some({} as unknown as Booking));
 					}
 					// Second time: Not found (success)
-					return Effect.fail(new BookingNotFoundError({ searchkey: "mock" }));
+					return Effect.succeed(Option.none());
 				},
 			},
 		});

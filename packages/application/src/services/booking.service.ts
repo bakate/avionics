@@ -1,17 +1,17 @@
 import * as Crypto from "node:crypto";
 import { Booking } from "@workspace/domain/booking";
 import { Coupon } from "@workspace/domain/coupon";
-import {
-	type BookingExpiredError,
+import type {
+	BookingExpiredError,
 	BookingNotFoundError,
-	type BookingPersistenceError,
-	type BookingStatusError,
-	type FlightFullError,
-	type FlightNotFoundError,
-	type InvalidAmountError,
-	type InventoryOvercapacityError,
-	type InventoryPersistenceError,
-	type OptimisticLockingError,
+	BookingPersistenceError,
+	BookingStatusError,
+	FlightFullError,
+	FlightNotFoundError,
+	InvalidAmountError,
+	InventoryOvercapacityError,
+	InventoryPersistenceError,
+	OptimisticLockingError,
 } from "@workspace/domain/errors";
 import {
 	BookingId,
@@ -208,7 +208,8 @@ export class BookingService extends Context.Tag("BookingService")<
 						// 4. Confirm Booking
 						// We must re-fetch the booking to ensure we have the latest version
 						// (Optimistic Locking) as payment might have taken some time.
-						const freshBooking = yield* bookingRepo.findById(booking.id);
+						const freshBookingOpt = yield* bookingRepo.findById(booking.id);
+						const freshBooking = O.getOrThrow(freshBookingOpt);
 
 						// Confirm using aggregate method (emits BookingConfirmed event)
 						const confirmedBooking = yield* freshBooking.confirm();
@@ -300,15 +301,12 @@ export class BookingService extends Context.Tag("BookingService")<
 						),
 					findById: (id) =>
 						Ref.get(store).pipe(
-							Effect.flatMap((map) => {
+							Effect.map((map) => {
 								const booking = map.get(id);
-								return booking
-									? Effect.succeed(booking)
-									: Effect.fail(new BookingNotFoundError({ searchkey: id }));
+								return booking ? O.some(booking) : O.none();
 							}),
 						),
-					findByPnr: () =>
-						Effect.fail(new BookingNotFoundError({ searchkey: "mock" })),
+					findByPnr: () => Effect.succeed(O.none()),
 					findExpired: () => Effect.succeed([]),
 					findByPassengerId: () => Effect.succeed([]),
 					...overrides.bookingRepo,
@@ -375,8 +373,12 @@ const generateUniquePnr = (
 		const pnr = Schema.decodeSync(PnrCodeSchema)(candidate);
 
 		return yield* bookingRepo.findByPnr(pnr).pipe(
-			Effect.flatMap(() => Effect.fail(new Error("Collision"))),
-			Effect.catchTag("BookingNotFoundError", () => Effect.succeed(pnr)),
+			Effect.flatMap(
+				O.match({
+					onNone: () => Effect.succeed(pnr), // PNR is unique
+					onSome: () => Effect.fail(new Error("Collision")), // PNR already exists
+				}),
+			),
 		);
 	});
 
