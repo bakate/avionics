@@ -35,6 +35,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
 			description: "Domain events raised by this aggregate",
 		}),
 	),
+	version: Schema.Number,
 }) {
 	isPayable(): boolean {
 		return (
@@ -63,6 +64,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
 			status: PnrStatus.HELD,
 			createdAt: now,
 			domainEvents: [],
+			version: 1,
 		});
 
 		const event = new BookingCreated({
@@ -155,7 +157,6 @@ export class Booking extends Schema.Class<Booking>("Booking")({
 		});
 	}
 
-	// Mark as expired
 	// Mark as expired
 	markExpired(): Booking {
 		return O.match(this.expiresAt, {
