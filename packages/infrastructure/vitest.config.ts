@@ -1,5 +1,9 @@
 import path from "node:path";
+import { config } from "dotenv";
 import { defineConfig } from "vitest/config";
+
+// Load .env.test for test isolation (dedicated Neon test branch)
+config({ path: path.resolve(__dirname, ".env.test") });
 
 export default defineConfig({
   test: {

@@ -1,0 +1,21 @@
+import { NodeSdk } from "@effect/opentelemetry";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { Resource } from "@opentelemetry/resources";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
+import { Effect, Layer } from "effect";
+
+// Tracing Setup
+export const TracingLive = NodeSdk.layer(() => ({
+  resource: new Resource({
+    [SemanticResourceAttributes.SERVICE_NAME]: "avionics-infrastructure",
+    [SemanticResourceAttributes.SERVICE_VERSION]: "1.0.0",
+  }),
+  spanProcessor: new BatchSpanProcessor(
+    new OTLPTraceExporter({
+      url:
+        process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
+        "http://localhost:4318/v1/traces",
+    }),
+  ),
+}));

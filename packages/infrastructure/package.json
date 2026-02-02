@@ -7,9 +7,14 @@
     "clean": "rm -rf dist",
     "build": "tsc -b",
     "test": "vitest run",
-    "test:integration": "vitest run --dir src/repositories",
+    "test:integration": "vitest run src/test/repositories",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check ."
+    "lint": "biome check .",
+    "migrate": "tsx scripts/migrate.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "pnpm migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@effect/experimental": "catalog:effect3",
@@ -19,6 +24,7 @@
     "@effect/sql-pg": "catalog:effect3",
     "@workspace/application": "workspace:*",
     "@workspace/domain": "workspace:*",
+    "drizzle-orm": "^0.45.1",
     "effect": "catalog:effect3",
     "pg": "^8.17.2"
   },
@@ -31,7 +37,10 @@
     "@workspace/biome-config": "workspace:*",
     "@workspace/tsconfig": "workspace:*",
     "@workspace/vitest-config": "workspace:*",
+    "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.8",
     "testcontainers": "^11.11.0",
+    "tsx": "^4.21.0",
     "typescript": "catalog:",
     "vitest": "catalog:vitest3"
   }

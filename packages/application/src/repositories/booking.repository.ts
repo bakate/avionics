@@ -6,7 +6,7 @@ import type {
 } from "@workspace/domain/errors";
 import type { BookingId, PnrCode } from "@workspace/domain/kernel";
 import type { PassengerId } from "@workspace/domain/passenger";
-import { Context, type Effect } from "effect";
+import { Context, type Effect, type Option } from "effect";
 
 export interface BookingRepositoryPort {
 	/**
@@ -19,13 +19,19 @@ export interface BookingRepositoryPort {
 
 	/**
 	 * Find a booking by its ID.
+	 * Returns Option.none() if not found.
 	 */
-	findById(id: BookingId): Effect.Effect<Booking, BookingNotFoundError>;
+	findById(
+		id: BookingId,
+	): Effect.Effect<Option.Option<Booking>, BookingPersistenceError>;
 
 	/**
 	 * Find a booking by its PNR code.
+	 * Returns Option.none() if not found.
 	 */
-	findByPnr(pnr: PnrCode): Effect.Effect<Booking, BookingNotFoundError>;
+	findByPnr(
+		pnr: PnrCode,
+	): Effect.Effect<Option.Option<Booking>, BookingPersistenceError>;
 
 	/**
 	 * Find all bookings that expired before the given date.
