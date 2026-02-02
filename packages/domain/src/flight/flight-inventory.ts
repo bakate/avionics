@@ -144,7 +144,6 @@ export class FlightInventory extends Schema.Class<FlightInventory>(
 		});
 	}
 
-	// Clear events after publishing
 	clearEvents(): FlightInventory {
 		return new FlightInventory({
 			...this,
