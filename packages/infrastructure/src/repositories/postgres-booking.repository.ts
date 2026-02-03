@@ -97,7 +97,7 @@ export const PostgresBookingRepositoryLive = Layer.effect(
             ? e
             : new BookingPersistenceError({
                 bookingId: booking.id,
-                reason: (e as any).message || "Unknown error",
+                reason: e instanceof Error ? e.message : String(e),
               });
         }),
       );

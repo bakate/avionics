@@ -1,16 +1,16 @@
 import * as Crypto from "node:crypto";
 import { Booking } from "@workspace/domain/booking";
 import { Coupon } from "@workspace/domain/coupon";
-import type {
-	BookingExpiredError,
-	BookingNotFoundError,
-	BookingPersistenceError,
-	BookingStatusError,
-	FlightFullError,
-	FlightNotFoundError,
-	InvalidAmountError,
-	InventoryOvercapacityError,
-	InventoryPersistenceError,
+import {
+	type BookingExpiredError,
+	type BookingNotFoundError,
+	type BookingPersistenceError,
+	type BookingStatusError,
+	type FlightFullError,
+	type FlightNotFoundError,
+	type InvalidAmountError,
+	type InventoryOvercapacityError,
+	type InventoryPersistenceError,
 	OptimisticLockingError,
 } from "@workspace/domain/errors";
 import {
@@ -208,14 +208,21 @@ export class BookingService extends Context.Tag("BookingService")<
 						// 4. Confirm Booking
 						// We must re-fetch the booking to ensure we have the latest version
 						// (Optimistic Locking) as payment might have taken some time.
-						const freshBookingOpt = yield* bookingRepo.findById(booking.id);
-						const freshBooking = O.getOrThrow(freshBookingOpt);
+						const confirmedBooking = yield* Effect.gen(function* () {
+							const freshBookingOpt = yield* bookingRepo.findById(booking.id);
+							const freshBooking = O.getOrThrow(freshBookingOpt);
 
-						// Confirm using aggregate method (emits BookingConfirmed event)
-						const confirmedBooking = yield* freshBooking.confirm();
+							// Confirm using aggregate method (emits BookingConfirmed event)
+							const confirmed = yield* freshBooking.confirm();
 
-						// Save confirmed booking within transaction
-						yield* unitOfWork.transaction(bookingRepo.save(confirmedBooking));
+							// Save confirmed booking within transaction
+							return yield* unitOfWork.transaction(bookingRepo.save(confirmed));
+						}).pipe(
+							Effect.retry({
+								times: 3,
+								while: (error) => error instanceof OptimisticLockingError,
+							}),
+						);
 
 						// 5. Issue Ticket
 						const coupon = new Coupon({
@@ -296,8 +303,32 @@ export class BookingService extends Context.Tag("BookingService")<
 
 				return BookingRepository.of({
 					save: (booking) =>
-						Ref.update(store, (map) => map.set(booking.id, booking)).pipe(
-							Effect.map(() => booking),
+						Ref.modify(store, (map) => {
+							const current = map.get(booking.id);
+							// If current exists, check version match
+							if (current && current.version !== booking.version) {
+								throw new OptimisticLockingError({
+									entityType: "Booking",
+									id: booking.id,
+									expectedVersion: booking.version,
+									actualVersion: current.version,
+								});
+							}
+
+							// Increment version
+							const saved = new Booking({
+								...booking,
+								version: booking.version + 1,
+							});
+
+							const newMap = new Map(map);
+							newMap.set(booking.id, saved);
+							return [saved, newMap];
+						}).pipe(
+							Effect.catchAllDefect((e) => {
+								if (e instanceof OptimisticLockingError) return Effect.fail(e);
+								return Effect.die(e);
+							}),
 						),
 					findById: (id) =>
 						Ref.get(store).pipe(
