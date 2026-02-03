@@ -8,6 +8,7 @@ import {
   InventoryPersistenceError,
   OptimisticLockingError,
 } from "@workspace/domain/errors";
+import type { DomainEventType } from "@workspace/domain/events";
 import { FlightInventory } from "@workspace/domain/inventory";
 import { Effect, Layer } from "effect";
 import { type FlightInventoryRow, toDomain } from "./mappers/inventory.mapper";
@@ -91,8 +92,8 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
 
         // Save Domain Events (Transactional Outbox)
         if (inventory.domainEvents.length > 0) {
-          const events = inventory.domainEvents.map((e: any) => ({
-            event_type: e._tag ?? e.constructor.name,
+          const events = inventory.domainEvents.map((e: DomainEventType) => ({
+            event_type: "_tag" in e ? String(e._tag) : e.constructor.name,
             aggregate_id: inventory.flightId,
             payload: e,
           }));
@@ -115,7 +116,7 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
           if (e instanceof OptimisticLockingError) return e;
           return new InventoryPersistenceError({
             flightId: inventory.flightId,
-            reason: (e as any).message || "Unknown error",
+            reason: e instanceof Error ? e.message : String(e),
           });
         }),
       );

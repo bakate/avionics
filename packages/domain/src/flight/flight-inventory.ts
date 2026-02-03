@@ -4,7 +4,12 @@ import {
 	InvalidAmountError,
 	InventoryOvercapacityError,
 } from "../errors.js";
-import { type EventId, SeatsHeld, SeatsReleased } from "../events.js";
+import {
+	DomainEventSchema,
+	type EventId,
+	SeatsHeld,
+	SeatsReleased,
+} from "../events.js";
 import { type CabinClass, FlightId, Money } from "../kernel.js";
 
 export class SeatBucket extends Schema.Class<SeatBucket>("SeatBucket")({
@@ -23,7 +28,7 @@ export class FlightInventory extends Schema.Class<FlightInventory>(
 		first: SeatBucket,
 	}),
 	version: Schema.Number.pipe(Schema.int(), Schema.nonNegative()), // Optimistic Concurrency
-	domainEvents: Schema.Array(Schema.Unknown).pipe(
+	domainEvents: Schema.Array(DomainEventSchema).pipe(
 		Schema.annotations({
 			description: "Domain events raised by this aggregate",
 		}),

@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import type { Booking } from "@workspace/domain/booking";
+import { Booking, PnrStatus } from "@workspace/domain/booking";
 import {
 	BookingNotFoundError,
 	FlightFullError,
@@ -8,17 +8,24 @@ import {
 } from "@workspace/domain/errors";
 import { FlightInventory, SeatBucket } from "@workspace/domain/inventory";
 import {
+	BookingId,
 	type Email,
 	Money,
 	makeFlightId,
 	type PassengerType,
+	PnrCodeSchema,
 } from "@workspace/domain/kernel";
-import { Effect, Layer, Option, Ref } from "effect";
+import { Passenger, PassengerId } from "@workspace/domain/passenger";
+import { BookingSegment } from "@workspace/domain/segment";
+import { Effect, Layer, Option, Ref, Schema } from "effect";
 import { describe, expect, it } from "vitest";
 import { NotificationGateway } from "../gateways/notification.gateway.js";
 import { PaymentGateway } from "../gateways/payment.gateway.js";
 import { UnitOfWork } from "../ports/unit-of-work.js";
-import { BookingRepository } from "../repositories/booking.repository.js";
+import {
+	BookingRepository,
+	type BookingRepositoryPort,
+} from "../repositories/booking.repository.js";
 import { InventoryRepository } from "../repositories/inventory.repository.js";
 import { BookFlightCommand, BookingService } from "./booking.service.js";
 import { InventoryService } from "./inventory.service.js";
@@ -294,5 +301,105 @@ describe("BookingService", () => {
 		const report = await Effect.runPromise(program);
 		expect(report.successes).toBe(1);
 		expect(report.finalInventory.availability.economy.available).toBe(0);
+	});
+
+	// --- Concurrency / Reliability Helpers ---
+	const makeMockBooking = (
+		overrides: Partial<ConstructorParameters<typeof Booking>[0]> = {},
+	): Booking => {
+		const passenger = new Passenger({
+			...makePassenger(),
+			id: PassengerId.make(faker.string.uuid()),
+		});
+
+		const segment = new BookingSegment({
+			flightId: makeFlightId("flight-1"),
+			cabin: "ECONOMY",
+			price: Money.of(100, "USD"),
+		});
+
+		return new Booking({
+			id: Schema.decodeSync(BookingId)(faker.string.uuid()),
+			pnrCode: Schema.decodeSync(PnrCodeSchema)("PNR123"),
+			status: PnrStatus.HELD,
+			version: 1,
+			passengers: [passenger, ...[]],
+			segments: [segment, ...[]],
+			createdAt: new Date(),
+			domainEvents: [],
+			expiresAt: Option.none(),
+			...overrides,
+		});
+	};
+
+	it("should handle optimistic locking by retrying the confirmation step (Retry Policy)", async () => {
+		let saveCount = 0;
+
+		// Override BookingRepo to simulate race condition
+		const BookingRepoMock = {
+			save: (booking: Booking) =>
+				Effect.gen(function* () {
+					saveCount++;
+					if (booking.status === "Confirmed" && saveCount === 2) {
+						// Fail the first confirmation attempt
+						return yield* Effect.fail(
+							new OptimisticLockingError({
+								entityType: "Booking",
+								id: booking.id,
+								expectedVersion: booking.version,
+								actualVersion: booking.version + 1,
+							}),
+						);
+					}
+					// Success otherwise (simulated)
+					return new Booking({ ...booking, version: booking.version + 1 });
+				}),
+			findById: (id: string) =>
+				Effect.succeed(
+					Option.some(
+						Object.assign(
+							makeMockBooking({
+								id: Schema.decodeSync(BookingId)(id),
+								status: PnrStatus.HELD,
+								version: 2,
+							}),
+							{
+								confirm: () =>
+									Effect.succeed(
+										makeMockBooking({
+											id: Schema.decodeSync(BookingId)(id),
+											status: PnrStatus.CONFIRMED,
+											version: 2,
+										}),
+									),
+							},
+						) as unknown as Booking,
+					),
+				),
+		};
+
+		const program = Effect.gen(function* () {
+			const service = yield* BookingService;
+			const command = new BookFlightCommand({
+				flightId: "flight-1",
+				cabinClass: "ECONOMY",
+				passenger: makePassenger(),
+				creditCardToken: "tok_visa",
+				seatNumber: Option.none(),
+			});
+
+			// Execute
+			return yield* service.bookFlight(command);
+		});
+
+		const layer = BookingService.Test({
+			bookingRepo: BookingRepoMock as unknown as BookingRepositoryPort, // Type cast for partial mock
+		});
+
+		// We expect success (because of retry)
+		const run = program.pipe(Effect.provide(layer), Effect.runPromise);
+
+		await expect(run).resolves.toBeDefined();
+		expect(saveCount).toBeGreaterThan(2);
 	});
 });

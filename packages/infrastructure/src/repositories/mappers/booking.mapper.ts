@@ -1,11 +1,16 @@
-import { Booking, type BookingStatusSchema } from "@workspace/domain/booking";
+import { Booking, BookingStatusSchema } from "@workspace/domain/booking";
 import {
-  type BookingId,
-  type FlightId,
+  BookingId,
+  CabinClassSchema,
+  CurrencyCodeSchema,
+  EmailSchema,
+  FlightId,
+  GenderSchema,
   Money,
-  type PnrCodeSchema,
+  PassengerTypeSchema,
+  PnrCodeSchema,
 } from "@workspace/domain/kernel";
-import { Passenger, type PassengerId } from "@workspace/domain/passenger";
+import { Passenger, PassengerId } from "@workspace/domain/passenger";
 import { BookingSegment } from "@workspace/domain/segment";
 import { type Data, Option, Schema } from "effect";
 
@@ -62,30 +67,32 @@ export const fromBookingRow = (
   const domainPassengers = passengers.map(
     (p) =>
       new Passenger({
-        id: p.id as PassengerId, // Trusted cast from DB
+        id: Schema.decodeUnknownSync(PassengerId)(p.id),
         firstName: p.first_name,
         lastName: p.last_name,
-        email: p.email as any,
-        // Using "Adult" as default if type missing/invalid in old data, or careful validation
-        type: (p.type as any) || "Adult",
+        email: Schema.decodeUnknownSync(EmailSchema)(p.email),
+        type: Schema.decodeUnknownSync(PassengerTypeSchema)(p.type),
         dateOfBirth: p.date_of_birth ?? new Date(0), // Fallback
-        gender: p.gender as any,
+        gender: Schema.decodeUnknownSync(GenderSchema)(p.gender),
       }),
-  ) as unknown as readonly [Passenger, ...Passenger[]];
+  ) as [Passenger, ...Passenger[]];
 
   const domainSegments = segments.map(
     (s) =>
       new BookingSegment({
-        flightId: s.flight_id as FlightId,
-        cabin: s.cabin_class as any,
-        price: Money.of(Number(s.price_amount), s.price_currency as any),
+        flightId: Schema.decodeUnknownSync(FlightId)(s.flight_id),
+        cabin: Schema.decodeUnknownSync(CabinClassSchema)(s.cabin_class),
+        price: Money.of(
+          Number(s.price_amount),
+          Schema.decodeUnknownSync(CurrencyCodeSchema)(s.price_currency),
+        ),
       }),
-  ) as unknown as readonly [BookingSegment, ...BookingSegment[]];
+  ) as [BookingSegment, ...BookingSegment[]];
 
   return new Booking({
-    id: row.id as BookingId,
-    pnrCode: row.pnr_code as typeof PnrCodeSchema.Type,
-    status: row.status as typeof BookingStatusSchema.Type,
+    id: Schema.decodeUnknownSync(BookingId)(row.id),
+    pnrCode: Schema.decodeUnknownSync(PnrCodeSchema)(row.pnr_code),
+    status: Schema.decodeUnknownSync(BookingStatusSchema)(row.status),
     passengers: domainPassengers,
     segments: domainSegments,
     version: row.version,
