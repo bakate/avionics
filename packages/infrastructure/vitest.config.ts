@@ -10,7 +10,8 @@ export default defineConfig({
     globals: true,
     environment: "node",
     include: ["src/**/*.{test,spec}.ts"],
-    hookTimeout: 30000, // For Testcontainers
+    hookTimeout: 30000,
+    fileParallelism: false,
     exclude: ["node_modules", "dist"],
     coverage: {
       provider: "v8",

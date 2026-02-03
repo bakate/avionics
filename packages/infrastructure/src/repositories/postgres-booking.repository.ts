@@ -1,3 +1,4 @@
+import * as nodeCrypto from "node:crypto";
 import { SqlClient } from "@effect/sql";
 import {
   BookingRepository,
@@ -39,12 +40,11 @@ export const PostgresBookingRepositoryLive = Layer.effect(
             version = bookings.version + 1,
             expires_at = EXCLUDED.expires_at,
             updated_at = NOW()
-          WHERE bookings.version = ${booking.version} -- Expect current version
+          WHERE bookings.version = ${booking.version}
           RETURNING version
         `;
 
         if (result.length === 0) {
-          // If ID exists, it's a lock failure
           // Retrieve current version to report actual
           const existing = yield* sql<{
             version: number;
@@ -56,7 +56,7 @@ export const PostgresBookingRepositoryLive = Layer.effect(
             new OptimisticLockingError({
               entityType: "Booking",
               id: booking.id,
-              expectedVersion: booking.version - 1,
+              expectedVersion: booking.version,
               actualVersion: actualVersion,
             }),
           );
@@ -82,7 +82,7 @@ export const PostgresBookingRepositoryLive = Layer.effect(
           for (const s of booking.segments) {
             yield* sql`
               INSERT INTO segments (id, booking_id, flight_id, cabin_class, price_amount, price_currency)
-              VALUES (${crypto.randomUUID()}, ${booking.id}, ${s.flightId}, ${s.cabin}, ${s.price.amount}, ${s.price.currency})
+              VALUES (${nodeCrypto.randomUUID()}, ${booking.id}, ${s.flightId}, ${s.cabin}, ${s.price.amount}, ${s.price.currency})
             `;
           }
         }
@@ -93,7 +93,6 @@ export const PostgresBookingRepositoryLive = Layer.effect(
         });
       }).pipe(
         Effect.mapError((e) => {
-          console.error("Save error:", e);
           return e instanceof OptimisticLockingError
             ? e
             : new BookingPersistenceError({
