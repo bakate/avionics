@@ -42,17 +42,7 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
         }
 
         return toDomain(rows[0]!);
-      }).pipe(
-        // Effect.catchTag("SqlError", ...) -> Wrap in PersistenceError if not found
-        // But for found, we handle Not Found.
-        Effect.mapError(
-          (e) =>
-            new InventoryPersistenceError({
-              flightId: flightId,
-              reason: (e as any).message || "Unknown error",
-            }),
-        ),
-      );
+      });
 
     const save: InventoryRepositoryPort["save"] = (inventory) =>
       Effect.gen(function* () {
@@ -65,48 +55,40 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
             version
           ) VALUES (
             ${inventory.flightId},
-            100, ${inventory.availability.economy.available},
-            20, ${inventory.availability.business.available},
-            8, ${inventory.availability.first.available},
-            ${inventory.version}
+            ${inventory.availability.economy.capacity}, ${inventory.availability.economy.available},
+            ${inventory.availability.business.capacity}, ${inventory.availability.business.available},
+            ${inventory.availability.first.capacity}, ${inventory.availability.first.available},
+            1
           )
           ON CONFLICT (flight_id) DO UPDATE SET
             economy_available = EXCLUDED.economy_available,
             business_available = EXCLUDED.business_available,
             first_available = EXCLUDED.first_available,
             version = flight_inventory.version + 1
-          WHERE flight_inventory.version = ${inventory.version - 1}
-          RETURNING version
+          RETURNING flight_inventory.version
         `;
 
-        if (result.length === 0) {
-          // Conflict check failed (Version mismatch)
-          // OR creation failed? (Should not happen with INSERT ON CONFLICT unless constraints)
-          // Actually, if we INSERT new, version should be what we passed (1?)
-          // If we UPDATE, we expect previous version.
-
-          const existing = yield* sql<{
-            version: number;
-          }>`SELECT version FROM flight_inventory WHERE flight_id = ${inventory.flightId}`;
-          const first = existing[0];
-          const currentVersion =
-            existing.length > 0 && first ? (first.version as number) : -1;
-
-          if (currentVersion !== -1) {
-            return yield* Effect.fail(
-              new OptimisticLockingError({
-                entityType: "FlightInventory",
-                id: inventory.flightId,
-                expectedVersion: inventory.version - 1,
-                actualVersion: currentVersion,
-              }),
-            );
-          }
-          // Unknown error
+        const row = result[0];
+        if (!row) {
           return yield* Effect.fail(new Error("Failed to save inventory"));
         }
 
-        // Save Domain Events (Transactional Outbox)
+        const returnedVersion = row.version as number;
+
+        // Optimistic locking check for UPDATEs only
+        // If returnedVersion is 1, it was an INSERT (no conflict)
+        // If returnedVersion > 1, it was an UPDATE - check version matches
+        if (returnedVersion > 1 && returnedVersion !== inventory.version) {
+          return yield* Effect.fail(
+            new OptimisticLockingError({
+              entityType: "FlightInventory",
+              id: inventory.flightId,
+              expectedVersion: inventory.version - 1,
+              actualVersion: returnedVersion - 1,
+            }),
+          );
+        }
+
         // Save Domain Events (Transactional Outbox)
         if (inventory.domainEvents.length > 0) {
           const events = inventory.domainEvents.map((e: any) => ({
@@ -115,15 +97,18 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
             payload: e,
           }));
 
-          yield* sql`
-            INSERT INTO event_outbox (event_type, aggregate_id, payload)
-            ${sql(events as any)}
-          `;
+          // Batch insert events
+          for (const event of events) {
+            yield* sql`
+              INSERT INTO event_outbox (event_type, aggregate_id, payload)
+              VALUES (${event.event_type}, ${event.aggregate_id}, ${JSON.stringify(event.payload)})
+            `;
+          }
         }
 
         return new FlightInventory({
           ...inventory,
-          version: result[0]!.version as number,
+          version: returnedVersion,
         }).clearEvents();
       }).pipe(
         Effect.mapError((e) => {

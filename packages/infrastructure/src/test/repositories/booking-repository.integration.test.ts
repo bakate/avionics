@@ -2,15 +2,7 @@ import { BookingRepository } from "@workspace/application/booking.repository";
 import { PnrStatus } from "@workspace/domain/booking";
 import { PnrCodeSchema } from "@workspace/domain/kernel";
 import { Effect, Layer, Option } from "effect";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ConnectionPoolLive } from "../../db/connection.js";
 import { PostgresBookingRepositoryLive } from "../../repositories/postgres-booking.repository.js";
 import { createTestBooking } from "../factories/booking-factory.js";
@@ -25,12 +17,12 @@ const runTest = <A, E>(effect: Effect.Effect<A, E, BookingRepository>) =>
 
 describe("BookingRepository Integration Tests", () => {
   // Clean database before each test
-  beforeAll(async () => {
+  beforeEach(async () => {
     await Effect.runPromise(Effect.provide(cleanDatabase, ConnectionPoolLive));
   });
 
   // Clean database after each test to restore clean state
-  afterAll(async () => {
+  afterEach(async () => {
     await Effect.runPromise(Effect.provide(cleanDatabase, ConnectionPoolLive));
   });
 
