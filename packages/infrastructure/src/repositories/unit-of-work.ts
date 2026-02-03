@@ -5,7 +5,11 @@ import {
 } from "@workspace/application/unit-of-work";
 import { Effect, Layer } from "effect";
 
-export const UnitOfWorkLive = Layer.effect(
+export const UnitOfWorkLive: Layer.Layer<
+  UnitOfWork,
+  never,
+  SqlClient.SqlClient
+> = Layer.effect(
   UnitOfWork,
   Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;

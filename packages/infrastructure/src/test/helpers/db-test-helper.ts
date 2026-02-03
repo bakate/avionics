@@ -1,5 +1,12 @@
+import type { SqlClient, SqlError } from "@effect/sql";
 import { PgClient } from "@effect/sql-pg";
-import { Effect } from "effect";
+import { type ConfigError, Effect, type Layer } from "effect";
+import { ConnectionPoolLive } from "../../db/connection.js";
+
+export const TestLayer: Layer.Layer<
+  SqlClient.SqlClient,
+  ConfigError.ConfigError | SqlError.SqlError
+> = ConnectionPoolLive;
 
 /**
  * Clean all tables in the database
