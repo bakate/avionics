@@ -1,7 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { Booking, PnrStatus } from "@workspace/domain/booking";
 import {
-	BookingNotFoundError,
 	FlightFullError,
 	FlightNotFoundError,
 	OptimisticLockingError,
@@ -13,6 +12,7 @@ import {
 	type FlightId,
 	Money,
 	makeFlightId,
+	makeSegmentId,
 	type PassengerType,
 	PnrCodeSchema,
 } from "@workspace/domain/kernel";
@@ -375,6 +375,7 @@ describe("BookingService", () => {
 		});
 
 		const segment = new BookingSegment({
+			id: makeSegmentId(faker.string.uuid()),
 			flightId: makeFlightId("flight-1"),
 			cabin: "ECONOMY",
 			price: Money.of(100, "USD"),

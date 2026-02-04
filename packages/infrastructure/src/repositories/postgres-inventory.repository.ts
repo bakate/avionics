@@ -10,7 +10,6 @@ import {
 } from "@workspace/domain/errors";
 import type { DomainEventType } from "@workspace/domain/events";
 import { FlightInventory } from "@workspace/domain/inventory";
-import type { CabinClass } from "@workspace/domain/kernel";
 import { Effect, Layer } from "effect";
 import {
   type FlightInventoryRow,
@@ -46,95 +45,125 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
           );
         }
 
-        return toDomain(rows[0]!);
+        const [row] = rows;
+        if (!row) {
+          return yield* Effect.fail(
+            new FlightNotFoundError({ flightId: flightId }),
+          );
+        }
+        return toDomain(row);
       });
 
     const save: InventoryRepositoryPort["save"] = (inventory) =>
-      Effect.gen(function* () {
-        const result = yield* sql`
+      sql
+        .withTransaction(
+          Effect.gen(function* () {
+            const result = yield* sql`
           INSERT INTO flight_inventory (
             flight_id,
-            economy_total, economy_available,
-            business_total, business_available,
-            first_total, first_available,
+            economy_total, economy_available, economy_price_amount, economy_price_currency,
+            business_total, business_available, business_price_amount, business_price_currency,
+            first_total, first_available, first_price_amount, first_price_currency,
             version
           ) VALUES (
             ${inventory.flightId},
-            ${inventory.availability.economy.capacity}, ${inventory.availability.economy.available},
-            ${inventory.availability.business.capacity}, ${inventory.availability.business.available},
-            ${inventory.availability.first.capacity}, ${inventory.availability.first.available},
+            ${inventory.availability.economy.capacity}, ${inventory.availability.economy.available}, ${inventory.availability.economy.price.amount}, ${inventory.availability.economy.price.currency},
+            ${inventory.availability.business.capacity}, ${inventory.availability.business.available}, ${inventory.availability.business.price.amount}, ${inventory.availability.business.price.currency},
+            ${inventory.availability.first.capacity}, ${inventory.availability.first.available}, ${inventory.availability.first.price.amount}, ${inventory.availability.first.price.currency},
             ${inventory.version + 1}
           )
           ON CONFLICT (flight_id) DO UPDATE SET
             economy_available = EXCLUDED.economy_available,
+            economy_price_amount = EXCLUDED.economy_price_amount,
+            economy_price_currency = EXCLUDED.economy_price_currency,
             business_available = EXCLUDED.business_available,
+            business_price_amount = EXCLUDED.business_price_amount,
+            business_price_currency = EXCLUDED.business_price_currency,
             first_available = EXCLUDED.first_available,
+            first_price_amount = EXCLUDED.first_price_amount,
+            first_price_currency = EXCLUDED.first_price_currency,
             version = flight_inventory.version + 1
           WHERE flight_inventory.version = ${inventory.version}
           RETURNING version
         `;
 
-        if (result.length === 0) {
-          // If update failed due to WHERE clause, find the current version to report it
-          const existing = yield* sql<{ version: number }>`
+            if (result.length === 0) {
+              // If update failed due to WHERE clause, find the current version to report it
+              const existing = yield* sql<{ version: number }>`
             SELECT version FROM flight_inventory WHERE flight_id = ${inventory.flightId}
           `;
-          const actualVersion =
-            existing.length > 0 ? (existing[0]!.version as number) : -1;
+              const firstExisting = existing[0];
+              const actualVersion = firstExisting
+                ? (firstExisting.version as number)
+                : -1;
 
-          return yield* Effect.fail(
-            new OptimisticLockingError({
-              entityType: "FlightInventory",
-              id: inventory.flightId,
-              expectedVersion: inventory.version,
-              actualVersion: actualVersion,
-            }),
-          );
-        }
+              return yield* Effect.fail(
+                new OptimisticLockingError({
+                  entityType: "FlightInventory",
+                  id: inventory.flightId,
+                  expectedVersion: inventory.version,
+                  actualVersion: actualVersion,
+                }),
+              );
+            }
 
-        const returnedVersion = result[0]!.version as number;
-        // Verify increment
-        if (returnedVersion !== inventory.version + 1) {
-          return yield* Effect.fail(
-            new OptimisticLockingError({
-              entityType: "FlightInventory",
-              id: inventory.flightId,
-              expectedVersion: inventory.version,
-              actualVersion: returnedVersion - 1,
-            }),
-          );
-        }
+            const resultRow = result[0];
+            if (!resultRow) {
+              return yield* Effect.fail(
+                new InventoryPersistenceError({
+                  flightId: inventory.flightId,
+                  reason: "Update failed to return a result",
+                }),
+              );
+            }
 
-        // Save Domain Events (Transactional Outbox)
-        if (inventory.domainEvents.length > 0) {
-          const events = inventory.domainEvents.map((e: DomainEventType) => ({
-            event_type: "_tag" in e ? String(e._tag) : e.constructor.name,
-            aggregate_id: inventory.flightId,
-            payload: e,
-          }));
+            const returnedVersion = resultRow.version as number;
+            // Verify increment
+            if (returnedVersion !== inventory.version + 1) {
+              return yield* Effect.fail(
+                new OptimisticLockingError({
+                  entityType: "FlightInventory",
+                  id: inventory.flightId,
+                  expectedVersion: inventory.version,
+                  actualVersion: returnedVersion - 1,
+                }),
+              );
+            }
 
-          // Batch insert events
-          for (const event of events) {
-            yield* sql`
+            // Save Domain Events (Transactional Outbox)
+            if (inventory.domainEvents.length > 0) {
+              const events = inventory.domainEvents.map(
+                (e: DomainEventType) => ({
+                  event_type: "_tag" in e ? String(e._tag) : e.constructor.name,
+                  aggregate_id: inventory.flightId,
+                  payload: e,
+                }),
+              );
+
+              // Batch insert events
+              for (const event of events) {
+                yield* sql`
               INSERT INTO event_outbox (event_type, aggregate_id, payload)
               VALUES (${event.event_type}, ${event.aggregate_id}, ${JSON.stringify(event.payload)})
             `;
-          }
-        }
+              }
+            }
 
-        return new FlightInventory({
-          ...inventory,
-          version: result[0]!.version as number,
-        }).clearEvents();
-      }).pipe(
-        Effect.mapError((e) => {
-          if (e instanceof OptimisticLockingError) return e;
-          return new InventoryPersistenceError({
-            flightId: inventory.flightId,
-            reason: e instanceof Error ? e.message : String(e),
-          });
-        }),
-      );
+            return new FlightInventory({
+              ...inventory,
+              version: returnedVersion,
+            }).clearEvents();
+          }),
+        )
+        .pipe(
+          Effect.mapError((e) => {
+            if (e instanceof OptimisticLockingError) return e;
+            return new InventoryPersistenceError({
+              flightId: inventory.flightId,
+              reason: e instanceof Error ? e.message : String(e),
+            });
+          }),
+        );
 
     return {
       save,

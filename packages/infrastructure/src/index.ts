@@ -1,6 +1,7 @@
 import { Layer } from "effect";
 import { ConnectionPoolLive } from "./db/connection.js";
 import { EventBusLive } from "./events/event-bus.js";
+import { TransactionalOutboxLive } from "./events/transactional-outbox.js";
 import { NotificationGatewayLive } from "./gateways/notification-gateway.js";
 import { PaymentGatewayLive } from "./gateways/payment-gateway.js";
 import { PostgresBookingRepositoryLive } from "./repositories/postgres-booking.repository.js";
@@ -28,6 +29,7 @@ export const InfrastructureLive = Layer.mergeAll(
   RepositoriesLive,
   GatewaysLive,
   EventBusLive,
+  TransactionalOutboxLive,
 ).pipe(Layer.provide(DatabaseLive));
 
 export * from "./config.js";

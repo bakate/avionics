@@ -9,10 +9,11 @@ import {
   Money,
   PassengerTypeSchema,
   PnrCodeSchema,
+  SegmentId,
 } from "@workspace/domain/kernel";
 import { Passenger, PassengerId } from "@workspace/domain/passenger";
 import { BookingSegment } from "@workspace/domain/segment";
-import { type Data, Option, Schema } from "effect";
+import { Option, Schema } from "effect";
 
 // --- Database Row Types (Private to Infrastructure) ---
 
@@ -97,6 +98,7 @@ export const fromBookingRow = (
   const domainSegments = segments.map(
     (s) =>
       new BookingSegment({
+        id: Schema.decodeUnknownSync(SegmentId)(s.id),
         flightId: Schema.decodeUnknownSync(FlightId)(s.flight_id),
         cabin: Schema.decodeUnknownSync(CabinClassSchema)(s.cabin_class),
         price: Money.of(
