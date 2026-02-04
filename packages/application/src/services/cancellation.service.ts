@@ -1,3 +1,4 @@
+import { PnrStatus } from "@workspace/domain/booking";
 import { Context, Duration, Effect, Layer, Schedule } from "effect";
 import { UnitOfWork } from "../ports/unit-of-work.js";
 import { BookingRepository } from "../repositories/booking.repository.js";
@@ -23,17 +24,20 @@ export class CancellationService extends Context.Tag("CancellationService")<
 				Effect.gen(function* () {
 					const now = new Date();
 					const expiredBookings = yield* bookingRepo.findExpired(now);
+					const toExpire = expiredBookings.filter(
+						(booking) => booking.status === PnrStatus.HELD,
+					);
 
-					if (expiredBookings.length === 0) {
+					if (toExpire.length === 0) {
 						return;
 					}
 
 					yield* Effect.logInfo(
-						`Found ${expiredBookings.length} expired bookings to process`,
+						`Found ${toExpire.length} bookings to expire (out of ${expiredBookings.length} total expired candidates)`,
 					);
 
 					yield* Effect.forEach(
-						expiredBookings,
+						toExpire,
 						(booking) =>
 							Effect.gen(function* () {
 								// 1. Release all seats for all segments

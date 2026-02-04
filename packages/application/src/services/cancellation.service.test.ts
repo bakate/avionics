@@ -162,4 +162,56 @@ describe("CancellationService", () => {
 		expect(processedPnrs).toContain("EXP002");
 		expect(processedPnrs).not.toContain("EXP001");
 	});
+
+	it("should skip already expired bookings returned by findExpired", async () => {
+		const booking1 = makeExpiredBooking("EXP001");
+		const alreadyExpired = booking1.markExpired(); // This sets status to EXPIRED
+
+		let releaseSeatsCalled = false;
+
+		const MockInventoryService = InventoryService.Test({
+			releaseSeats: () => {
+				releaseSeatsCalled = true;
+				return Effect.succeed(
+					new ReleaseSeatsResult({
+						inventory: {},
+						seatsReleased: 1,
+					}),
+				);
+			},
+		});
+
+		const MockBookingRepo = Layer.succeed(
+			BookingRepository,
+			BookingRepository.of({
+				findExpired: () => Effect.succeed([alreadyExpired]),
+				save: (b) => Effect.succeed(b),
+				findById: () => Effect.die("Not implemented"),
+				findByPnr: () => Effect.die("Not implemented"),
+				findByPassengerId: () => Effect.die("Not implemented"),
+				findAll: () => Effect.die("Not implemented"),
+			}),
+		);
+
+		const MockUnitOfWork = Layer.succeed(
+			UnitOfWork,
+			UnitOfWork.of({
+				transaction: (eff) => eff,
+			}),
+		);
+
+		const program = Effect.gen(function* () {
+			const service = yield* CancellationService;
+			yield* service.processExpirations();
+		}).pipe(
+			Effect.provide(CancellationService.Live),
+			Effect.provide(MockInventoryService),
+			Effect.provide(MockBookingRepo),
+			Effect.provide(MockUnitOfWork),
+		);
+
+		await Effect.runPromise(program);
+
+		expect(releaseSeatsCalled).toBe(false);
+	});
 });

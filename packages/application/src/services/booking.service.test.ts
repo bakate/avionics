@@ -10,6 +10,7 @@ import { FlightInventory, SeatBucket } from "@workspace/domain/inventory";
 import {
 	BookingId,
 	type Email,
+	type FlightId,
 	Money,
 	makeFlightId,
 	type PassengerType,
@@ -60,24 +61,46 @@ const makeFakeInventoryRepo = (initialState: FlightInventory[]) => {
 					}),
 				),
 			save: (inventory) =>
-				Ref.modify(ref, (map) => {
+				Ref.modify<
+					Map<FlightId, FlightInventory>,
+					| { readonly _tag: "Success"; readonly saved: FlightInventory }
+					| {
+							readonly _tag: "Conflict";
+							readonly error: OptimisticLockingError;
+					  }
+				>(ref, (map) => {
 					const current = map.get(inventory.flightId);
-					if (current && current.version !== inventory.version - 1) {
-						throw new OptimisticLockingError({
-							entityType: "FlightInventory",
-							id: inventory.flightId,
-							expectedVersion: inventory.version - 1,
-							actualVersion: current.version,
-						});
+
+					if (current && current.version !== inventory.version) {
+						return [
+							{
+								_tag: "Conflict",
+								error: new OptimisticLockingError({
+									entityType: "FlightInventory",
+									id: inventory.flightId,
+									expectedVersion: inventory.version,
+									actualVersion: current.version,
+								}),
+							} as const,
+							map,
+						] as const;
 					}
+
+					const nextVersion = current ? current.version + 1 : inventory.version;
+					const saved = new FlightInventory({
+						...inventory,
+						version: nextVersion,
+					});
+
 					const newMap = new Map(map);
-					newMap.set(inventory.flightId, inventory);
-					return [inventory, newMap];
+					newMap.set(inventory.flightId, saved);
+					return [{ _tag: "Success", saved } as const, newMap] as const;
 				}).pipe(
-					Effect.catchAllDefect((e) => {
-						if (e instanceof OptimisticLockingError) return Effect.fail(e);
-						return Effect.die(e);
-					}),
+					Effect.flatMap((result) =>
+						result._tag === "Conflict"
+							? Effect.fail(result.error)
+							: Effect.succeed(result.saved),
+					),
 				),
 			findAvailableFlights: () => Effect.succeed([]),
 		});
@@ -86,12 +109,50 @@ const makeFakeInventoryRepo = (initialState: FlightInventory[]) => {
 
 const makeFakeBookingRepo = () => {
 	return Effect.gen(function* () {
-		const ref = yield* Ref.make(new Map<string, unknown>());
+		const ref = yield* Ref.make(new Map<BookingId, Booking>());
 
 		return BookingRepository.of({
 			save: (booking) =>
-				Ref.update(ref, (map) => map.set(booking.id, booking)).pipe(
-					Effect.map(() => booking),
+				Ref.modify<
+					Map<BookingId, Booking>,
+					| { readonly _tag: "Success"; readonly saved: Booking }
+					| {
+							readonly _tag: "Conflict";
+							readonly error: OptimisticLockingError;
+					  }
+				>(ref, (map) => {
+					const current = map.get(booking.id) as Booking | undefined;
+
+					if (current && current.version !== booking.version) {
+						return [
+							{
+								_tag: "Conflict",
+								error: new OptimisticLockingError({
+									entityType: "Booking",
+									id: booking.id,
+									expectedVersion: booking.version,
+									actualVersion: current.version,
+								}),
+							} as const,
+							map,
+						] as const;
+					}
+
+					const nextVersion = current ? current.version + 1 : booking.version;
+					const saved = new Booking({
+						...booking,
+						version: nextVersion,
+					});
+
+					const newMap = new Map(map);
+					newMap.set(booking.id, saved);
+					return [{ _tag: "Success", saved } as const, newMap] as const;
+				}).pipe(
+					Effect.flatMap((result) =>
+						result._tag === "Conflict"
+							? Effect.fail(result.error)
+							: Effect.succeed(result.saved),
+					),
 				),
 			findById: (id) =>
 				Ref.get(ref).pipe(
@@ -103,6 +164,7 @@ const makeFakeBookingRepo = () => {
 			findByPnr: () => Effect.succeed(Option.none()),
 			findExpired: () => Effect.succeed([]),
 			findByPassengerId: () => Effect.succeed([]),
+			findAll: () => Effect.succeed([]),
 		});
 	});
 };
