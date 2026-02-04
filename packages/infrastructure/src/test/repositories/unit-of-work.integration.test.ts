@@ -17,14 +17,14 @@ describe("UnitOfWork Integration", () => {
   const insertInventory = (sql: SqlClient.SqlClient, flightId: string) => sql`
   INSERT INTO flight_inventory (
                 flight_id,
-                economy_total, economy_available,
-                business_total, business_available,
-                first_total, first_available,
+                economy_total, economy_available, economy_price_amount, economy_price_currency,
+                business_total, business_available, business_price_amount, business_price_currency,
+                first_total, first_available, first_price_amount, first_price_currency,
                 version
             ) VALUES (${flightId},
-            100, 100, -- economy (total, available)
-            20, 20, -- business (total, available)
-            10, 10, -- first (total, available)
+            100, 100, 100.00, 'EUR', -- economy
+            20, 20, 500.00, 'EUR', -- business
+            10, 10, 1000.00, 'EUR', -- first
             1 -- version
             )
 `;
@@ -54,10 +54,16 @@ describe("UnitOfWork Integration", () => {
       flight_id: "FL-UOW-COMMIT",
       economy_total: 100,
       economy_available: 100,
+      economy_price_amount: "100.00",
+      economy_price_currency: "EUR",
       business_total: 20,
       business_available: 20,
+      business_price_amount: "500.00",
+      business_price_currency: "EUR",
       first_total: 10,
       first_available: 10,
+      first_price_amount: "1000.00",
+      first_price_currency: "EUR",
       version: 1,
     });
   });

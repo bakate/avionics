@@ -1,9 +1,8 @@
 import { SqlClient } from "@effect/sql";
 import { InventoryRepository } from "@workspace/application/inventory.repository";
 import { SeatsHeld } from "@workspace/domain/events";
-import { FlightId } from "@workspace/domain/kernel";
 import { Effect, Schema } from "effect";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { PostgresInventoryRepositoryLive } from "../../repositories/postgres-inventory.repository.js";
 import { createTestInventory } from "../factories/inventory-factory.js";
 import { cleanDatabase, TestLayer } from "../helpers/db-test-helper.js";

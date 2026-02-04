@@ -1,4 +1,3 @@
-import * as nodeCrypto from "node:crypto";
 import { SqlClient } from "@effect/sql";
 import {
   BookingRepository,
@@ -6,7 +5,6 @@ import {
 } from "@workspace/application/booking.repository";
 import { Booking } from "@workspace/domain/booking";
 import {
-  BookingNotFoundError,
   BookingPersistenceError,
   OptimisticLockingError,
 } from "@workspace/domain/errors";
@@ -51,8 +49,10 @@ export const PostgresBookingRepositoryLive = Layer.effect(
               const existing = yield* sql<{
                 version: number;
               }>`SELECT version FROM bookings WHERE id = ${booking.id}`;
-              const actualVersion =
-                existing.length > 0 ? (existing[0]!.version as number) : -1;
+              const firstExisting = existing[0];
+              const actualVersion = firstExisting
+                ? (firstExisting.version as number)
+                : -1;
 
               return yield* Effect.fail(
                 new OptimisticLockingError({
@@ -64,7 +64,17 @@ export const PostgresBookingRepositoryLive = Layer.effect(
               );
             }
 
-            const returnedVersion = result[0]!.version as number;
+            const resultRow = result[0];
+            if (!resultRow) {
+              return yield* Effect.fail(
+                new BookingPersistenceError({
+                  bookingId: booking.id,
+                  reason: "Failed to retrieve update result",
+                }),
+              );
+            }
+
+            const returnedVersion = resultRow.version as number;
             if (returnedVersion !== booking.version + 1) {
               return yield* Effect.fail(
                 new OptimisticLockingError({
@@ -90,12 +100,11 @@ export const PostgresBookingRepositoryLive = Layer.effect(
               }
             }
 
-            // Re-insert segments
             if (booking.segments.length > 0) {
               for (const s of booking.segments) {
                 yield* sql`
                 INSERT INTO segments (id, booking_id, flight_id, cabin_class, price_amount, price_currency)
-                VALUES (${nodeCrypto.randomUUID()}, ${booking.id}, ${s.flightId}, ${s.cabin}, ${s.price.amount}, ${s.price.currency})
+                VALUES (${s.id}, ${booking.id}, ${s.flightId}, ${s.cabin}, ${s.price.amount}, ${s.price.currency})
               `;
               }
             }
@@ -112,7 +121,7 @@ export const PostgresBookingRepositoryLive = Layer.effect(
 
             return new Booking({
               ...booking,
-              version: result[0]!.version as number,
+              version: returnedVersion,
             }).clearEvents();
           }),
         )
@@ -135,10 +144,10 @@ export const PostgresBookingRepositoryLive = Layer.effect(
              SELECT * FROM bookings WHERE id = ${id}
            `;
 
-          if (bookings.length === 0) {
+          const booking = bookings[0];
+          if (!booking) {
             return Option.none();
           }
-          const booking = bookings[0]!;
 
           const passengers = yield* sql<PassengerRow>`
              SELECT * FROM passengers WHERE booking_id = ${id}
@@ -148,7 +157,15 @@ export const PostgresBookingRepositoryLive = Layer.effect(
              SELECT * FROM segments WHERE booking_id = ${id}
            `;
 
-          return Option.some(fromBookingRow(booking, passengers, segments));
+          const domainBooking = yield* Effect.try({
+            try: () => fromBookingRow(booking, passengers, segments),
+            catch: (e) =>
+              new BookingPersistenceError({
+                bookingId: id,
+                reason: e instanceof Error ? e.message : String(e),
+              }),
+          });
+          return Option.some(domainBooking);
         }).pipe(
           Effect.catchTag("SqlError", (e) =>
             Effect.fail(
@@ -166,10 +183,10 @@ export const PostgresBookingRepositoryLive = Layer.effect(
              SELECT * FROM bookings WHERE pnr_code = ${pnr}
            `;
 
-          if (bookings.length === 0) {
+          const booking = bookings[0];
+          if (!booking) {
             return Option.none();
           }
-          const booking = bookings[0]!;
 
           const passengers = yield* sql<PassengerRow>`
              SELECT * FROM passengers WHERE booking_id = ${booking.id}
@@ -179,7 +196,15 @@ export const PostgresBookingRepositoryLive = Layer.effect(
              SELECT * FROM segments WHERE booking_id = ${booking.id}
            `;
 
-          return Option.some(fromBookingRow(booking, passengers, segments));
+          const domainBooking = yield* Effect.try({
+            try: () => fromBookingRow(booking, passengers, segments),
+            catch: (e) =>
+              new BookingPersistenceError({
+                bookingId: pnr,
+                reason: e instanceof Error ? e.message : String(e),
+              }),
+          });
+          return Option.some(domainBooking);
         }).pipe(
           Effect.catchTag("SqlError", (e) =>
             Effect.fail(
@@ -205,10 +230,29 @@ export const PostgresBookingRepositoryLive = Layer.effect(
             const segments = yield* sql<SegmentRow>`
                SELECT * FROM segments WHERE booking_id = ${row.id}
              `;
-            results.push(fromBookingRow(row, passengers, segments));
+
+            // Wrap mapper in a try to catch runtime integrity errors as typed failures
+            const booking = yield* Effect.try({
+              try: () => fromBookingRow(row, passengers, segments),
+              catch: (e) =>
+                new BookingPersistenceError({
+                  bookingId: row.id,
+                  reason: e instanceof Error ? e.message : String(e),
+                }),
+            });
+            results.push(booking);
           }
           return results;
-        }).pipe(Effect.orDie),
+        }).pipe(
+          Effect.catchTag("SqlError", (e) =>
+            Effect.fail(
+              new BookingPersistenceError({
+                bookingId: "all-expired",
+                reason: e.message,
+              }),
+            ),
+          ),
+        ),
 
       findByPassengerId: (passengerId) =>
         Effect.gen(function* () {
@@ -229,11 +273,32 @@ export const PostgresBookingRepositoryLive = Layer.effect(
               const segments = yield* sql<SegmentRow>`
                  SELECT * FROM segments WHERE booking_id = ${booking_id}
                `;
-              results.push(fromBookingRow(bookings[0]!, passengers, segments));
+
+              const bookingRow = bookings[0];
+              if (!bookingRow) continue;
+
+              const booking = yield* Effect.try({
+                try: () => fromBookingRow(bookingRow, passengers, segments),
+                catch: (e) =>
+                  new BookingPersistenceError({
+                    bookingId: booking_id,
+                    reason: e instanceof Error ? e.message : String(e),
+                  }),
+              });
+              results.push(booking);
             }
           }
           return results;
-        }).pipe(Effect.orDie),
+        }).pipe(
+          Effect.catchTag("SqlError", (e) =>
+            Effect.fail(
+              new BookingPersistenceError({
+                bookingId: "by-passenger",
+                reason: e.message,
+              }),
+            ),
+          ),
+        ),
 
       findAll: () =>
         Effect.gen(function* () {
@@ -249,7 +314,15 @@ export const PostgresBookingRepositoryLive = Layer.effect(
             const segments = yield* sql<SegmentRow>`
                SELECT * FROM segments WHERE booking_id = ${row.id}
              `;
-            results.push(fromBookingRow(row, passengers, segments));
+            const booking = yield* Effect.try({
+              try: () => fromBookingRow(row, passengers, segments),
+              catch: (e) =>
+                new BookingPersistenceError({
+                  bookingId: row.id,
+                  reason: e instanceof Error ? e.message : String(e),
+                }),
+            });
+            results.push(booking);
           }
           return results;
         }).pipe(

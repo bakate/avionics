@@ -19,6 +19,7 @@ import {
 	EmailSchema,
 	GenderSchema,
 	makeFlightId,
+	makeSegmentId,
 	PassengerTypeSchema,
 	type PnrCode,
 	PnrCodeSchema,
@@ -154,6 +155,7 @@ export class BookingService extends Context.Tag("BookingService")<
 
 						// 2.4. Create Booking Segment
 						const segment = new BookingSegment({
+							id: makeSegmentId(Crypto.randomUUID()),
 							flightId: makeFlightId(command.flightId),
 							cabin: command.cabinClass,
 							price: holdResult.totalPrice,

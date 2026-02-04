@@ -8,6 +8,7 @@ import {
   Money,
   PassengerType,
   PnrCodeSchema,
+  SegmentId,
 } from "@workspace/domain/kernel";
 import { Passenger } from "@workspace/domain/passenger";
 import { BookingSegment } from "@workspace/domain/segment";
@@ -51,6 +52,7 @@ export const createTestBooking = ({
     { length: segmentCount },
     (_, index) =>
       new BookingSegment({
+        id: Schema.decodeSync(SegmentId)(crypto.randomUUID()),
         flightId: Schema.decodeSync(FlightId)(
           `FL${String(index).padStart(3, "0")}`,
         ),

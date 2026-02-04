@@ -36,11 +36,13 @@ export interface BookingRepositoryPort {
 	/**
 	 * Find all bookings that expired before the given date.
 	 */
-	findExpired(before: Date): Effect.Effect<ReadonlyArray<Booking>>;
+	findExpired(
+		before: Date,
+	): Effect.Effect<ReadonlyArray<Booking>, BookingPersistenceError>;
 
 	findByPassengerId(
 		passengerId: PassengerId,
-	): Effect.Effect<ReadonlyArray<Booking>>;
+	): Effect.Effect<ReadonlyArray<Booking>, BookingPersistenceError>;
 
 	/**
 	 * Find all bookings.

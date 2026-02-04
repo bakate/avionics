@@ -23,10 +23,15 @@ import { CurrencyMismatchError } from "./errors.js";
 // --- Aggregate IDs ---
 export const BookingId = Schema.String.pipe(Schema.brand("BookingId"));
 export type BookingId = typeof BookingId.Type;
+export const makeBookingId = (id: string): BookingId => BookingId.make(id);
 
 export const FlightId = Schema.String.pipe(Schema.brand("FlightId"));
 export type FlightId = typeof FlightId.Type;
-export const makeFlightId = (id: string): FlightId => id as FlightId;
+export const makeFlightId = (id: string): FlightId => FlightId.make(id);
+
+export const SegmentId = Schema.String.pipe(Schema.brand("SegmentId"));
+export type SegmentId = typeof SegmentId.Type;
+export const makeSegmentId = (id: string): SegmentId => SegmentId.make(id);
 
 // --- Airport Code (IATA) ---
 export const AirportCodeSchema = Schema.String.pipe(

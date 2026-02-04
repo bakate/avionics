@@ -5,6 +5,7 @@ import {
 	EmailSchema,
 	Money,
 	makeFlightId,
+	makeSegmentId,
 	PnrCodeSchema,
 } from "@workspace/domain/kernel";
 import { Passenger, PassengerId } from "@workspace/domain/passenger";
@@ -29,6 +30,7 @@ const makeExpiredBooking = (pnr: string, flightId = "FL-123") => {
 	});
 
 	const segment = new BookingSegment({
+		id: makeSegmentId("seg-1"),
 		flightId: makeFlightId(flightId),
 		cabin: "ECONOMY",
 		price: Money.of(100, "EUR"),
