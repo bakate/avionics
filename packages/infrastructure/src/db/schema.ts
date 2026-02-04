@@ -26,6 +26,36 @@ export const flightInventory = pgTable(
     firstTotal: integer("first_total").notNull(),
     firstAvailable: integer("first_available").notNull(),
 
+    economyPriceAmount: decimal("economy_price_amount", {
+      precision: 10,
+      scale: 2,
+    })
+      .notNull()
+      .default("0.00"),
+    economyPriceCurrency: varchar("economy_price_currency", { length: 3 })
+      .notNull()
+      .default("EUR"),
+
+    businessPriceAmount: decimal("business_price_amount", {
+      precision: 10,
+      scale: 2,
+    })
+      .notNull()
+      .default("0.00"),
+    businessPriceCurrency: varchar("business_price_currency", { length: 3 })
+      .notNull()
+      .default("EUR"),
+
+    firstPriceAmount: decimal("first_price_amount", {
+      precision: 10,
+      scale: 2,
+    })
+      .notNull()
+      .default("0.00"),
+    firstPriceCurrency: varchar("first_price_currency", { length: 3 })
+      .notNull()
+      .default("EUR"),
+
     // Optimistic Locking
     version: integer("version").notNull().default(1),
   },
@@ -110,8 +140,9 @@ export const eventOutbox = pgTable(
     publishedAt: timestamp("published_at"),
   },
   (table) => [
-    // Index for unpublished events (partial index will be added in migration)
-    index("idx_outbox_unpublished").on(table.createdAt),
+    index("idx_outbox_unpublished")
+      .on(table.createdAt)
+      .where(sql`${table.publishedAt} IS NULL`),
   ],
 );
 
