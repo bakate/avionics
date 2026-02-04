@@ -69,26 +69,24 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
             business_available = EXCLUDED.business_available,
             first_available = EXCLUDED.first_available,
             version = flight_inventory.version + 1
-          RETURNING flight_inventory.version
+          WHERE flight_inventory.version = ${inventory.version}
+          RETURNING version
         `;
 
-        const row = result[0];
-        if (!row) {
-          return yield* Effect.fail(new Error("Failed to save inventory"));
-        }
+        if (result.length === 0) {
+          // If update failed due to WHERE clause, find the current version to report it
+          const existing = yield* sql<{ version: number }>`
+            SELECT version FROM flight_inventory WHERE flight_id = ${inventory.flightId}
+          `;
+          const actualVersion =
+            existing.length > 0 ? (existing[0]!.version as number) : -1;
 
-        const returnedVersion = row.version as number;
-
-        // Optimistic locking check for UPDATEs only
-        // If returnedVersion is 1, it was an INSERT (no conflict)
-        // If returnedVersion > 1, it was an UPDATE - check version matches
-        if (returnedVersion > 1 && returnedVersion !== inventory.version) {
           return yield* Effect.fail(
             new OptimisticLockingError({
               entityType: "FlightInventory",
               id: inventory.flightId,
-              expectedVersion: inventory.version - 1,
-              actualVersion: returnedVersion - 1,
+              expectedVersion: inventory.version,
+              actualVersion: actualVersion,
             }),
           );
         }
@@ -112,7 +110,7 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
 
         return new FlightInventory({
           ...inventory,
-          version: returnedVersion,
+          version: result[0]!.version as number,
         }).clearEvents();
       }).pipe(
         Effect.mapError((e) => {
@@ -147,7 +145,16 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
           }
 
           return rows.map((row) => toDomain(row));
-        }).pipe(Effect.catchTag("SqlError", (e) => Effect.die(e))),
+        }).pipe(
+          Effect.catchTag("SqlError", (e) =>
+            Effect.fail(
+              new InventoryPersistenceError({
+                flightId: "all",
+                reason: e.message,
+              }),
+            ),
+          ),
+        ),
     };
   }),
 );

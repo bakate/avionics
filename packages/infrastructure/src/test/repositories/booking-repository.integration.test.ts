@@ -21,11 +21,6 @@ describe("BookingRepository Integration Tests", () => {
     await Effect.runPromise(Effect.provide(cleanDatabase, ConnectionPoolLive));
   });
 
-  // Clean database after each test to restore clean state
-  afterEach(async () => {
-    await Effect.runPromise(Effect.provide(cleanDatabase, ConnectionPoolLive));
-  });
-
   describe("save", () => {
     it("should create a new booking with passengers and segments", async () => {
       const booking = createTestBooking({

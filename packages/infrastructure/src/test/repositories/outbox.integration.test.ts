@@ -13,10 +13,6 @@ describe("Transactional Outbox Integration", () => {
     await Effect.runPromise(cleanDatabase.pipe(Effect.provide(TestLayer)));
   });
 
-  afterEach(async () => {
-    await Effect.runPromise(cleanDatabase.pipe(Effect.provide(TestLayer)));
-  });
-
   it("should save domain events to the outbox table when persisting an aggregate", async () => {
     const flightId = "FL-OUTBOX-1";
 
