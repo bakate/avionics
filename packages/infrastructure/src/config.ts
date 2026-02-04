@@ -11,14 +11,17 @@ export const DatabaseConfig = Config.all({
   url: Config.string("DATABASE_URL").pipe(Config.option), // Optional Override
 });
 
+const isProduction = process.env.NODE_ENV === "production";
+
+const secret = (name: string, mock: string) => {
+  const config = Config.redacted(name);
+  return isProduction
+    ? config
+    : config.pipe(Config.withDefault(Redacted.make(mock)));
+};
+
 export const SecretsConfig = Config.all({
-  stripeKey: Config.redacted("STRIPE_API_KEY").pipe(
-    Config.withDefault(Redacted.make("sk_test_mock")),
-  ),
-  sendgridKey: Config.redacted("SENDGRID_API_KEY").pipe(
-    Config.withDefault(Redacted.make("sg_test_mock")),
-  ),
-  resendKey: Config.redacted("RESEND_API_KEY").pipe(
-    Config.withDefault(Redacted.make("resend_test_mock")),
-  ),
+  stripeKey: secret("STRIPE_API_KEY", "sk_test_mock"),
+  sendgridKey: secret("SENDGRID_API_KEY", "sg_test_mock"),
+  resendKey: secret("RESEND_API_KEY", "resend_test_mock"),
 });
