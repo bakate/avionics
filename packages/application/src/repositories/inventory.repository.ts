@@ -35,7 +35,7 @@ export interface InventoryRepositoryPort {
 	findAvailableFlights(
 		cabin: string,
 		minSeats: number,
-	): Effect.Effect<ReadonlyArray<FlightInventory>>;
+	): Effect.Effect<ReadonlyArray<FlightInventory>, InventoryPersistenceError>;
 }
 
 export class InventoryRepository extends Context.Tag("InventoryRepository")<
