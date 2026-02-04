@@ -27,90 +27,105 @@ export const PostgresBookingRepositoryLive = Layer.effect(
     const sql = yield* SqlClient.SqlClient;
 
     const save: BookingRepositoryPort["save"] = (booking) =>
-      Effect.gen(function* () {
-        // 1. Insert/Update Booking Root
-        const row = toBookingRow(booking);
+      sql
+        .withTransaction(
+          Effect.gen(function* () {
+            // 1. Insert/Update Booking Root
+            const row = toBookingRow(booking);
 
-        // Using explicit Optimistic Lock check
-        const result = yield* sql`
-          INSERT INTO bookings (id, pnr_code, status, version, created_at, expires_at)
-          VALUES (${row.id}, ${row.pnr_code}, ${row.status}, ${row.version}, ${row.created_at}, ${row.expires_at})
-          ON CONFLICT (id) DO UPDATE SET
-            status = EXCLUDED.status,
-            version = bookings.version + 1,
-            expires_at = EXCLUDED.expires_at,
-            updated_at = NOW()
-          WHERE bookings.version = ${booking.version}
-          RETURNING version
-        `;
+            // Using explicit Optimistic Lock check
+            const result = yield* sql`
+            INSERT INTO bookings (id, pnr_code, status, version, created_at, expires_at)
+            VALUES (${row.id}, ${row.pnr_code}, ${row.status}, ${row.version + 1}, ${row.created_at}, ${row.expires_at})
+            ON CONFLICT (id) DO UPDATE SET
+              status = EXCLUDED.status,
+              version = bookings.version + 1,
+              expires_at = EXCLUDED.expires_at,
+              updated_at = NOW()
+            WHERE bookings.version = ${booking.version}
+            RETURNING version
+          `;
 
-        if (result.length === 0) {
-          // Retrieve current version to report actual
-          const existing = yield* sql<{
-            version: number;
-          }>`SELECT version FROM bookings WHERE id = ${booking.id}`;
-          const actualVersion =
-            existing.length > 0 ? (existing[0]!.version as number) : -1;
+            if (result.length === 0) {
+              // Retrieve current version to report actual
+              const existing = yield* sql<{
+                version: number;
+              }>`SELECT version FROM bookings WHERE id = ${booking.id}`;
+              const actualVersion =
+                existing.length > 0 ? (existing[0]!.version as number) : -1;
 
-          return yield* Effect.fail(
-            new OptimisticLockingError({
-              entityType: "Booking",
-              id: booking.id,
-              expectedVersion: booking.version,
-              actualVersion: actualVersion,
-            }),
-          );
-        }
+              return yield* Effect.fail(
+                new OptimisticLockingError({
+                  entityType: "Booking",
+                  id: booking.id,
+                  expectedVersion: booking.version,
+                  actualVersion: actualVersion,
+                }),
+              );
+            }
 
-        // 2. Save Passengers/Segments (Full Replace strategy for simplicity within transaction)
-        // Ideally we diff, but deleting and re-inserting by booking_id is safe in a Transaction
-        yield* sql`DELETE FROM passengers WHERE booking_id = ${booking.id}`;
-        yield* sql`DELETE FROM segments WHERE booking_id = ${booking.id}`;
+            const returnedVersion = result[0]!.version as number;
+            if (returnedVersion !== booking.version + 1) {
+              return yield* Effect.fail(
+                new OptimisticLockingError({
+                  entityType: "Booking",
+                  id: booking.id,
+                  expectedVersion: booking.version,
+                  actualVersion: returnedVersion - 1,
+                }),
+              );
+            }
 
-        // Re-insert passengers (Batch)
-        if (booking.passengers.length > 0) {
-          for (const p of booking.passengers) {
-            yield* sql`
-              INSERT INTO passengers (id, booking_id, first_name, last_name, email, date_of_birth, gender, type)
-              VALUES (${p.id}, ${booking.id}, ${p.firstName}, ${p.lastName}, ${p.email}, ${p.dateOfBirth}, ${p.gender}, ${p.type})
-            `;
-          }
-        }
+            // 2. Save Passengers/Segments (Full Replace strategy for simplicity within transaction)
+            yield* sql`DELETE FROM passengers WHERE booking_id = ${booking.id}`;
+            yield* sql`DELETE FROM segments WHERE booking_id = ${booking.id}`;
 
-        // Re-insert segments
-        if (booking.segments.length > 0) {
-          for (const s of booking.segments) {
-            yield* sql`
-              INSERT INTO segments (id, booking_id, flight_id, cabin_class, price_amount, price_currency)
-              VALUES (${nodeCrypto.randomUUID()}, ${booking.id}, ${s.flightId}, ${s.cabin}, ${s.price.amount}, ${s.price.currency})
-            `;
-          }
-        }
+            // Re-insert passengers (Batch)
+            if (booking.passengers.length > 0) {
+              for (const p of booking.passengers) {
+                yield* sql`
+                INSERT INTO passengers (id, booking_id, first_name, last_name, email, date_of_birth, gender, type)
+                VALUES (${p.id}, ${booking.id}, ${p.firstName}, ${p.lastName}, ${p.email}, ${p.dateOfBirth}, ${p.gender}, ${p.type})
+              `;
+              }
+            }
 
-        // 3. Save Domain Events (Transactional Outbox)
-        if (booking.domainEvents.length > 0) {
-          for (const event of booking.domainEvents as DomainEventType[]) {
-            yield* sql`
-              INSERT INTO event_outbox (id, event_type, aggregate_id, payload)
-              VALUES (${String(event.eventId)}, ${"_tag" in event ? String(event._tag) : event.constructor.name}, ${String(booking.id)}, ${JSON.stringify(event)})
-            `;
-          }
-        }
+            // Re-insert segments
+            if (booking.segments.length > 0) {
+              for (const s of booking.segments) {
+                yield* sql`
+                INSERT INTO segments (id, booking_id, flight_id, cabin_class, price_amount, price_currency)
+                VALUES (${nodeCrypto.randomUUID()}, ${booking.id}, ${s.flightId}, ${s.cabin}, ${s.price.amount}, ${s.price.currency})
+              `;
+              }
+            }
 
-        return new Booking({
-          ...booking,
-          version: result[0]!.version as number,
-        }).clearEvents();
-      }).pipe(
-        Effect.mapError((e) => {
-          return e instanceof OptimisticLockingError
-            ? e
-            : new BookingPersistenceError({
-                bookingId: booking.id,
-                reason: e instanceof Error ? e.message : String(e),
-              });
-        }),
-      );
+            // 3. Save Domain Events (Transactional Outbox)
+            if (booking.domainEvents.length > 0) {
+              for (const event of booking.domainEvents as DomainEventType[]) {
+                yield* sql`
+                INSERT INTO event_outbox (id, event_type, aggregate_id, payload)
+                VALUES (${String(event.eventId)}, ${"_tag" in event ? String(event._tag) : event.constructor.name}, ${String(booking.id)}, ${JSON.stringify(event)})
+              `;
+              }
+            }
+
+            return new Booking({
+              ...booking,
+              version: result[0]!.version as number,
+            }).clearEvents();
+          }),
+        )
+        .pipe(
+          Effect.mapError((e) => {
+            return e instanceof OptimisticLockingError
+              ? e
+              : new BookingPersistenceError({
+                  bookingId: booking.id,
+                  reason: e instanceof Error ? e.message : String(e),
+                });
+          }),
+        );
 
     return {
       save,

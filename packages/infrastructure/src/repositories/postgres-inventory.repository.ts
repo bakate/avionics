@@ -10,6 +10,7 @@ import {
 } from "@workspace/domain/errors";
 import type { DomainEventType } from "@workspace/domain/events";
 import { FlightInventory } from "@workspace/domain/inventory";
+import type { CabinClass } from "@workspace/domain/kernel";
 import { Effect, Layer } from "effect";
 import {
   type FlightInventoryRow,
@@ -62,7 +63,7 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
             ${inventory.availability.economy.capacity}, ${inventory.availability.economy.available},
             ${inventory.availability.business.capacity}, ${inventory.availability.business.available},
             ${inventory.availability.first.capacity}, ${inventory.availability.first.available},
-            1
+            ${inventory.version + 1}
           )
           ON CONFLICT (flight_id) DO UPDATE SET
             economy_available = EXCLUDED.economy_available,
@@ -87,6 +88,19 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
               id: inventory.flightId,
               expectedVersion: inventory.version,
               actualVersion: actualVersion,
+            }),
+          );
+        }
+
+        const returnedVersion = result[0]!.version as number;
+        // Verify increment
+        if (returnedVersion !== inventory.version + 1) {
+          return yield* Effect.fail(
+            new OptimisticLockingError({
+              entityType: "FlightInventory",
+              id: inventory.flightId,
+              expectedVersion: inventory.version,
+              actualVersion: returnedVersion - 1,
             }),
           );
         }
@@ -127,24 +141,30 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
       getByFlightId: findByFlightId,
       findAvailableFlights: (cabin, minSeats) =>
         Effect.gen(function* () {
-          // Dynamic query based on cabin
-          let rows: readonly FlightInventoryRow[] = [];
+          const columnMap = {
+            ECONOMY: "economy_available",
+            BUSINESS: "business_available",
+            FIRST: "first_available",
+          } as const;
 
-          if (cabin === "ECONOMY") {
-            rows = yield* sql<FlightInventoryRow>`
-               SELECT * FROM flight_inventory WHERE economy_available >= ${minSeats}
-             `;
-          } else if (cabin === "BUSINESS") {
-            rows = yield* sql<FlightInventoryRow>`
-               SELECT * FROM flight_inventory WHERE business_available >= ${minSeats}
-             `;
-          } else if (cabin === "FIRST") {
-            rows = yield* sql<FlightInventoryRow>`
-               SELECT * FROM flight_inventory WHERE first_available >= ${minSeats}
-             `;
+          const column = (columnMap as Record<string, string>)[cabin];
+
+          if (!column) {
+            return yield* Effect.fail(
+              new InventoryPersistenceError({
+                flightId: "all",
+                reason: `Invalid cabin type: ${cabin}`,
+              }),
+            );
           }
 
-          return rows.map((row) => toDomain(row));
+          // Single dynamic query instead of branching
+          const rows = yield* sql<FlightInventoryRow>`
+            SELECT * FROM flight_inventory
+            WHERE ${sql(column)} >= ${minSeats}
+          `;
+
+          return rows.map(toDomain);
         }).pipe(
           Effect.catchTag("SqlError", (e) =>
             Effect.fail(

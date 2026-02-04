@@ -49,7 +49,7 @@ export const createTestInventory = ({
         price: Money.of(firstPrice, "EUR"),
       }),
     },
-    version: 1,
+    version: 0,
     domainEvents: [],
   });
 };
