@@ -3,7 +3,7 @@ import { Booking } from "@workspace/domain/booking";
 import { Coupon } from "@workspace/domain/coupon";
 import {
 	type BookingExpiredError,
-	type BookingNotFoundError,
+	BookingNotFoundError,
 	type BookingPersistenceError,
 	type BookingStatusError,
 	type FlightFullError,
@@ -91,6 +91,7 @@ export interface BookingServiceImpl {
 		| BookingPersistenceError
 		| InventoryOvercapacityError
 		| Cause.TimeoutException
+		| { readonly _tag: "SqlError" }
 	>;
 	findAll: () => Effect.Effect<ReadonlyArray<Booking>, BookingPersistenceError>;
 }
@@ -210,8 +211,17 @@ export class BookingService extends Context.Tag("BookingService")<
 						// We must re-fetch the booking to ensure we have the latest version
 						// (Optimistic Locking) as payment might have taken some time.
 						const confirmedBooking = yield* Effect.gen(function* () {
-							const freshBookingOpt = yield* bookingRepo.findById(booking.id);
-							const freshBooking = O.getOrThrow(freshBookingOpt);
+							const freshBooking = yield* bookingRepo.findById(booking.id).pipe(
+								Effect.flatMap(
+									O.match({
+										onNone: () =>
+											Effect.fail(
+												new BookingNotFoundError({ searchkey: booking.id }),
+											),
+										onSome: (b) => Effect.succeed(b),
+									}),
+								),
+							);
 
 							// Confirm using aggregate method (emits BookingConfirmed event)
 							const confirmed = yield* freshBooking.confirm();
@@ -306,32 +316,48 @@ export class BookingService extends Context.Tag("BookingService")<
 
 				return BookingRepository.of({
 					save: (booking) =>
-						Ref.modify(store, (map) => {
+						Ref.modify<
+							Map<string, Booking>,
+							| { readonly _tag: "Success"; readonly saved: Booking }
+							| {
+									readonly _tag: "Conflict";
+									readonly error: OptimisticLockingError;
+							  }
+						>(store, (map) => {
 							const current = map.get(booking.id);
-							// If current exists, check version match
+
 							if (current && current.version !== booking.version) {
-								throw new OptimisticLockingError({
-									entityType: "Booking",
-									id: booking.id,
-									expectedVersion: booking.version,
-									actualVersion: current.version,
-								});
+								return [
+									{
+										_tag: "Conflict",
+										error: new OptimisticLockingError({
+											entityType: "Booking",
+											id: booking.id,
+											expectedVersion: booking.version,
+											actualVersion: current.version,
+										}),
+									} as const,
+									map,
+								];
 							}
 
-							// Increment version
+							const nextVersion = current
+								? current.version + 1
+								: booking.version;
 							const saved = new Booking({
 								...booking,
-								version: booking.version + 1,
+								version: nextVersion,
 							});
 
 							const newMap = new Map(map);
 							newMap.set(booking.id, saved);
-							return [saved, newMap];
+							return [{ _tag: "Success", saved } as const, newMap];
 						}).pipe(
-							Effect.catchAllDefect((e) => {
-								if (e instanceof OptimisticLockingError) return Effect.fail(e);
-								return Effect.die(e);
-							}),
+							Effect.flatMap((result) =>
+								result._tag === "Conflict"
+									? Effect.fail(result.error)
+									: Effect.succeed(result.saved),
+							),
 						),
 					findById: (id) =>
 						Ref.get(store).pipe(
