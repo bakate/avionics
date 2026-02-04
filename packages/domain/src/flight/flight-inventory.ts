@@ -63,7 +63,7 @@ export class FlightInventory extends Schema.Class<FlightInventory>(
 
 			// 3. Create domain event
 			const event = new SeatsHeld({
-				eventId: `evt-${crypto.randomUUID()}` as EventId,
+				eventId: crypto.randomUUID() as EventId,
 				occurredAt: new Date(),
 				aggregateId: this.flightId,
 				aggregateType: "FlightInventory",
@@ -122,7 +122,7 @@ export class FlightInventory extends Schema.Class<FlightInventory>(
 
 			// 3. Create domain event
 			const event = new SeatsReleased({
-				eventId: `evt-${crypto.randomUUID()}` as EventId,
+				eventId: crypto.randomUUID() as EventId,
 				occurredAt: new Date(),
 				aggregateId: this.flightId,
 				aggregateType: "FlightInventory",

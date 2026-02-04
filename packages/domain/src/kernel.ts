@@ -14,7 +14,7 @@
  */
 
 import { Schema } from "effect";
-import { CurrencyMismatchError } from "./errors";
+import { CurrencyMismatchError } from "./errors.js";
 
 // =============================================================================
 // PRIMITIVE VALUE OBJECTS (Scalars with Rules)

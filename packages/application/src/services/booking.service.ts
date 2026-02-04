@@ -92,6 +92,7 @@ export interface BookingServiceImpl {
 		| InventoryOvercapacityError
 		| Cause.TimeoutException
 	>;
+	findAll: () => Effect.Effect<ReadonlyArray<Booking>, BookingPersistenceError>;
 }
 
 // ---------------------------------------------------------------------------
@@ -148,7 +149,7 @@ export class BookingService extends Context.Tag("BookingService")<
 						const pnr = yield* generateUniquePnr(bookingRepo);
 
 						// 2.3. Generate Booking ID (Manually brand)
-						const bookingId = BookingId.make(`booking-${Crypto.randomUUID()}`);
+						const bookingId = BookingId.make(Crypto.randomUUID());
 
 						// 2.4. Create Booking Segment
 						const segment = new BookingSegment({
@@ -257,6 +258,8 @@ export class BookingService extends Context.Tag("BookingService")<
 
 						return confirmedBooking;
 					}),
+
+				findAll: () => bookingRepo.findAll(),
 			};
 		}),
 	);
@@ -340,6 +343,8 @@ export class BookingService extends Context.Tag("BookingService")<
 					findByPnr: () => Effect.succeed(O.none()),
 					findExpired: () => Effect.succeed([]),
 					findByPassengerId: () => Effect.succeed([]),
+					findAll: () =>
+						Ref.get(store).pipe(Effect.map((map) => Array.from(map.values()))),
 					...overrides.bookingRepo,
 				});
 			}),

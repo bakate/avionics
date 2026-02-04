@@ -10,6 +10,7 @@ import {
   BookingPersistenceError,
   OptimisticLockingError,
 } from "@workspace/domain/errors";
+import type { DomainEventType } from "@workspace/domain/events";
 import { Effect, Layer, Option } from "effect";
 import {
   type BookingRow,
@@ -17,7 +18,7 @@ import {
   type PassengerRow,
   type SegmentRow,
   toBookingRow,
-} from "./mappers/booking.mapper";
+} from "./mappers/booking.mapper.js";
 
 // Simplified implementation focusing on structure
 export const PostgresBookingRepositoryLive = Layer.effect(
@@ -30,7 +31,6 @@ export const PostgresBookingRepositoryLive = Layer.effect(
         // 1. Insert/Update Booking Root
         const row = toBookingRow(booking);
 
-        // Using explicit Optimistic Lock check
         // Using explicit Optimistic Lock check
         const result = yield* sql`
           INSERT INTO bookings (id, pnr_code, status, version, created_at, expires_at)
@@ -87,10 +87,20 @@ export const PostgresBookingRepositoryLive = Layer.effect(
           }
         }
 
+        // 3. Save Domain Events (Transactional Outbox)
+        if (booking.domainEvents.length > 0) {
+          for (const event of booking.domainEvents as DomainEventType[]) {
+            yield* sql`
+              INSERT INTO event_outbox (id, event_type, aggregate_id, payload)
+              VALUES (${String(event.eventId)}, ${"_tag" in event ? String(event._tag) : event.constructor.name}, ${String(booking.id)}, ${JSON.stringify(event)})
+            `;
+          }
+        }
+
         return new Booking({
           ...booking,
           version: result[0]!.version as number,
-        });
+        }).clearEvents();
       }).pipe(
         Effect.mapError((e) => {
           return e instanceof OptimisticLockingError
@@ -209,6 +219,34 @@ export const PostgresBookingRepositoryLive = Layer.effect(
           }
           return results;
         }).pipe(Effect.orDie),
+
+      findAll: () =>
+        Effect.gen(function* () {
+          const bookings = yield* sql<BookingRow>`
+             SELECT * FROM bookings ORDER BY created_at DESC
+           `;
+
+          const results: Booking[] = [];
+          for (const row of bookings) {
+            const passengers = yield* sql<PassengerRow>`
+               SELECT * FROM passengers WHERE booking_id = ${row.id}
+             `;
+            const segments = yield* sql<SegmentRow>`
+               SELECT * FROM segments WHERE booking_id = ${row.id}
+             `;
+            results.push(fromBookingRow(row, passengers, segments));
+          }
+          return results;
+        }).pipe(
+          Effect.catchTag("SqlError", (e) =>
+            Effect.fail(
+              new BookingPersistenceError({
+                bookingId: "all",
+                reason: e.message,
+              }),
+            ),
+          ),
+        ),
     };
   }),
 );

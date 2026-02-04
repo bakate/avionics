@@ -68,7 +68,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
 		});
 
 		const event = new BookingCreated({
-			eventId: `evt-${crypto.randomUUID()}` as EventId,
+			eventId: crypto.randomUUID() as EventId,
 			occurredAt: now,
 			aggregateId: props.id,
 			aggregateType: "Booking",
@@ -105,7 +105,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
 			}
 
 			const event = new BookingConfirmed({
-				eventId: `evt-${crypto.randomUUID()}` as EventId,
+				eventId: crypto.randomUUID() as EventId,
 				occurredAt: new Date(),
 				aggregateId: this.id,
 				aggregateType: "Booking",
@@ -139,7 +139,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
 			}
 
 			const event = new BookingCancelled({
-				eventId: `evt-${crypto.randomUUID()}` as EventId,
+				eventId: crypto.randomUUID() as EventId,
 				occurredAt: new Date(),
 				aggregateId: this.id,
 				aggregateType: "Booking",
@@ -163,7 +163,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
 			onNone: () => this,
 			onSome: (expiredAt) => {
 				const event = new BookingExpired({
-					eventId: `evt-${crypto.randomUUID()}` as EventId,
+					eventId: crypto.randomUUID() as EventId,
 					occurredAt: new Date(),
 					aggregateId: this.id,
 					aggregateType: "Booking",

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Infrastructure layer for Avionics system",
   "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc -b",

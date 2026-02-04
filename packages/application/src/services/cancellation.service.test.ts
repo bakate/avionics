@@ -73,6 +73,7 @@ describe("CancellationService", () => {
 				findById: () => Effect.die("Not implemented"),
 				findByPnr: () => Effect.die("Not implemented"),
 				findByPassengerId: () => Effect.die("Not implemented"),
+				findAll: () => Effect.die("Not implemented"),
 			}),
 		);
 
@@ -134,6 +135,7 @@ describe("CancellationService", () => {
 				findById: () => Effect.die("Not implemented"),
 				findByPnr: () => Effect.die("Not implemented"),
 				findByPassengerId: () => Effect.die("Not implemented"),
+				findAll: () => Effect.die("Not implemented"),
 			}),
 		);
 

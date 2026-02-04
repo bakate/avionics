@@ -1,93 +1,119 @@
-import { Data } from "effect";
+import { Schema } from "effect";
 
 // --- Kernel / Primitives Errors ---
 
-export class CurrencyMismatchError extends Data.TaggedError(
+export class CurrencyMismatchError extends Schema.TaggedError<CurrencyMismatchError>()(
 	"CurrencyMismatchError",
-)<{
-	readonly expected: string;
-	readonly actual: string;
-}> {}
+	{
+		expected: Schema.String,
+		actual: Schema.String,
+	},
+) {}
 
-export class InventoryOvercapacityError extends Data.TaggedError(
+export class InventoryOvercapacityError extends Schema.TaggedError<InventoryOvercapacityError>()(
 	"InventoryOvercapacityError",
-)<{
-	readonly flightId: string;
-	readonly cabin: string;
-	readonly requested: number;
-	readonly available: number;
-	readonly capacity: number;
-}> {}
+	{
+		flightId: Schema.String,
+		cabin: Schema.String,
+		requested: Schema.Number,
+		available: Schema.Number,
+		capacity: Schema.Number,
+	},
+) {}
 
-export class OptimisticLockingError extends Data.TaggedError(
+export class OptimisticLockingError extends Schema.TaggedError<OptimisticLockingError>()(
 	"OptimisticLockingError",
-)<{
-	readonly entityType: string;
-	readonly id: string;
-	readonly expectedVersion: number;
-	readonly actualVersion: number;
-}> {}
+	{
+		entityType: Schema.String,
+		id: Schema.String,
+		expectedVersion: Schema.Number,
+		actualVersion: Schema.Number,
+	},
+) {}
 
 // --- Inventory Errors ---
 
-export class FlightFullError extends Data.TaggedError("FlightFullError")<{
-	readonly flightId: string;
-	readonly cabin: string;
-	readonly requested: number;
-	readonly available: number;
-}> {}
+export class FlightFullError extends Schema.TaggedError<FlightFullError>()(
+	"FlightFullError",
+	{
+		flightId: Schema.String,
+		cabin: Schema.String,
+		requested: Schema.Number,
+		available: Schema.Number,
+	},
+) {}
 
-export class InvalidAmountError extends Data.TaggedError("InvalidAmountError")<{
-	readonly amount: number;
-}> {}
+export class InvalidAmountError extends Schema.TaggedError<InvalidAmountError>()(
+	"InvalidAmountError",
+	{
+		amount: Schema.Number,
+	},
+) {}
 
-export class FlightNotFoundError extends Data.TaggedError(
+export class FlightNotFoundError extends Schema.TaggedError<FlightNotFoundError>()(
 	"FlightNotFoundError",
-)<{
-	readonly flightId: string;
-}> {}
+	{
+		flightId: Schema.String,
+	},
+) {}
 
 // --- Booking Errors ---
 
-export class BookingNotFoundError extends Data.TaggedError(
+export class BookingNotFoundError extends Schema.TaggedError<BookingNotFoundError>()(
 	"BookingNotFoundError",
-)<{
-	readonly searchkey: string;
-}> {}
+	{
+		searchkey: Schema.String,
+	},
+) {}
 
-export class BookingExpiredError extends Data.TaggedError(
+export class BookingExpiredError extends Schema.TaggedError<BookingExpiredError>()(
 	"BookingExpiredError",
-)<{
-	readonly pnrCode: string;
-	readonly expiresAt: Date;
-}> {}
+	{
+		pnrCode: Schema.String,
+		expiresAt: Schema.Date,
+	},
+) {}
 
-export class BookingStatusError extends Data.TaggedError("BookingStatusError")<{
-	readonly pnrCode: string;
-	readonly status: string;
-	readonly expected: string;
-}> {}
+export class BookingStatusError extends Schema.TaggedError<BookingStatusError>()(
+	"BookingStatusError",
+	{
+		pnrCode: Schema.String,
+		status: Schema.String,
+		expected: Schema.String,
+	},
+) {}
 
 // --- Ticketing Errors ---
 
-export class TicketAlreadyIssuedError extends Data.TaggedError(
+export class TicketAlreadyIssuedError extends Schema.TaggedError<TicketAlreadyIssuedError>()(
 	"TicketAlreadyIssuedError",
-)<{
-	readonly pnrCode: string;
-}> {}
+	{
+		pnrCode: Schema.String,
+	},
+) {}
 
 // --- Persistence Errors ---
 
-export class BookingPersistenceError extends Data.TaggedError(
+export class BookingPersistenceError extends Schema.TaggedError<BookingPersistenceError>()(
 	"BookingPersistenceError",
-)<{
-	readonly bookingId: string;
-	readonly reason: string;
-}> {}
+	{
+		bookingId: Schema.String,
+		reason: Schema.String,
+	},
+) {}
 
-export class InventoryPersistenceError extends Data.TaggedError(
+export class InventoryPersistenceError extends Schema.TaggedError<InventoryPersistenceError>()(
 	"InventoryPersistenceError",
-)<{
-	readonly flightId: string;
-	readonly reason: string;
-}> {}
+	{
+		flightId: Schema.String,
+		reason: Schema.String,
+	},
+) {}
+
+export class RequestTimeoutError extends Schema.TaggedError<RequestTimeoutError>()(
+	"RequestTimeoutError",
+	{
+		method: Schema.String,
+		path: Schema.String,
+	},
+) {}

@@ -11,7 +11,10 @@ import {
 import type { DomainEventType } from "@workspace/domain/events";
 import { FlightInventory } from "@workspace/domain/inventory";
 import { Effect, Layer } from "effect";
-import { type FlightInventoryRow, toDomain } from "./mappers/inventory.mapper";
+import {
+  type FlightInventoryRow,
+  toDomain,
+} from "./mappers/inventory.mapper.js";
 
 export const PostgresInventoryRepositoryLive = Layer.effect(
   InventoryRepository,
@@ -127,7 +130,8 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
       findAvailableFlights: (cabin, minSeats) =>
         Effect.gen(function* () {
           // Dynamic query based on cabin
-          let rows: readonly FlightInventoryRow[];
+          let rows: readonly FlightInventoryRow[] = [];
+
           if (cabin === "ECONOMY") {
             rows = yield* sql<FlightInventoryRow>`
                SELECT * FROM flight_inventory WHERE economy_available >= ${minSeats}
@@ -140,18 +144,9 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
             rows = yield* sql<FlightInventoryRow>`
                SELECT * FROM flight_inventory WHERE first_available >= ${minSeats}
              `;
-          } else {
-            rows = [];
           }
 
-          if (rows === undefined) {
-            // Should verify why rows could be undefined if sql returns []
-            // Actually, the above If-Else guarantees rows assignment unless initialized
-            // but let's be safe
-            rows = [];
-          }
-
-          return rows.map(toDomain);
+          return rows.map((row) => toDomain(row));
         }).pipe(Effect.catchTag("SqlError", (e) => Effect.die(e))),
     };
   }),
