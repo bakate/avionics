@@ -38,12 +38,14 @@ export interface BookingRepositoryPort {
 	 */
 	findExpired(before: Date): Effect.Effect<ReadonlyArray<Booking>>;
 
-	/**
-	 * Find all bookings for a specific passenger.
-	 */
 	findByPassengerId(
 		passengerId: PassengerId,
 	): Effect.Effect<ReadonlyArray<Booking>>;
+
+	/**
+	 * Find all bookings.
+	 */
+	findAll(): Effect.Effect<ReadonlyArray<Booking>, BookingPersistenceError>;
 }
 
 export class BookingRepository extends Context.Tag("BookingRepository")<

@@ -5,7 +5,12 @@
  */
 
 import { Schema } from "effect";
-import { BookingId, CabinClassSchema, FlightId, PnrCodeSchema } from "./kernel";
+import {
+	BookingId,
+	CabinClassSchema,
+	FlightId,
+	PnrCodeSchema,
+} from "./kernel.js";
 
 const EventId = Schema.String.pipe(Schema.brand("EventId"));
 export type EventId = typeof EventId.Type;
