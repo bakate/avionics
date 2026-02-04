@@ -85,7 +85,7 @@ export class FlightInventory extends Schema.Class<FlightInventory>(
 					...this.availability,
 					[checkKey]: nextBucket,
 				},
-				version: this.version + 1,
+				version: this.version,
 				domainEvents: [...this.domainEvents, event],
 			});
 			return [nextInventory, bucket.price] as const;
@@ -142,7 +142,7 @@ export class FlightInventory extends Schema.Class<FlightInventory>(
 					...this.availability,
 					[checkKey]: nextBucket,
 				},
-				version: this.version + 1,
+				version: this.version,
 				domainEvents: [...this.domainEvents, event],
 			});
 			return nextInventory;

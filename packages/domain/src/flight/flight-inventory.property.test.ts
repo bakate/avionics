@@ -106,7 +106,7 @@ describe("FlightInventory - Property-Based Tests", () => {
 	);
 
 	test.prop([arbFlightInventory, fc.integer({ min: 1, max: 10 })])(
-		"Property 3: Version increments on every state change",
+		"Property 3: Version remains stable in domain (infrastructure handles increments)",
 		async (inventory, amount) => {
 			const cabin = "ECONOMY";
 			const bucket = inventory.availability.economy;
@@ -118,7 +118,7 @@ describe("FlightInventory - Property-Based Tests", () => {
 				const initialVersion = inventory.version;
 				const [heldInventory] = yield* inventory.holdSeats(cabin, amount);
 
-				return heldInventory.version === initialVersion + 1;
+				return heldInventory.version === initialVersion;
 			});
 
 			const result = await Effect.runPromise(program);
