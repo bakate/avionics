@@ -16,10 +16,10 @@ export const UnitOfWorkLive: Layer.Layer<
 
     const transaction: UnitOfWorkPort["transaction"] = (effect) =>
       sql.withTransaction(effect).pipe(
-        Effect.catchTag("SqlError", (err) => Effect.die(err)),
         Effect.tapError((err) =>
           Effect.logError("Transaction failed, rolling back", err),
         ),
+        Effect.catchTag("SqlError", (err) => Effect.fail(err)),
       );
 
     return UnitOfWork.of({ transaction });

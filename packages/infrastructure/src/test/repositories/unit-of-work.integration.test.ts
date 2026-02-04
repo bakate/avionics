@@ -14,10 +14,6 @@ describe("UnitOfWork Integration", () => {
     await Effect.runPromise(cleanDatabase.pipe(Effect.provide(TestLayer)));
   });
 
-  afterEach(async () => {
-    await Effect.runPromise(cleanDatabase.pipe(Effect.provide(TestLayer)));
-  });
-
   const insertInventory = (sql: SqlClient.SqlClient, flightId: string) => sql`
   INSERT INTO flight_inventory (
                 flight_id,
@@ -51,10 +47,7 @@ describe("UnitOfWork Integration", () => {
     });
 
     const rows = await Effect.runPromise(
-      program.pipe(
-        Effect.provide(UnitOfWorkLive),
-        Effect.provide(TestLayer),
-      ),
+      program.pipe(Effect.provide(UnitOfWorkLive), Effect.provide(TestLayer)),
     );
     expect(rows).toHaveLength(1);
     expect(rows[0]).toEqual({
