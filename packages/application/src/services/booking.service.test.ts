@@ -402,7 +402,7 @@ describe("BookingService", () => {
 			save: (booking: Booking) =>
 				Effect.gen(function* () {
 					saveCount++;
-					if (booking.status === "Confirmed" && saveCount === 2) {
+					if (booking.status === PnrStatus.CONFIRMED && saveCount === 2) {
 						// Fail the first confirmation attempt
 						return yield* Effect.fail(
 							new OptimisticLockingError({

@@ -23,7 +23,7 @@ export class BookingEventBase extends Schema.Class<BookingEventBase>(
 	"BookingEventBase",
 )({
 	eventId: EventId,
-	occurredAt: Schema.Date,
+	occurredAt: Schema.Union(Schema.Date, Schema.DateFromString),
 	bookingId: BookingId,
 	pnrCode: PnrCodeSchema,
 	aggregateType: aggregateTypes.pipe(Schema.pickLiteral("Booking")),
@@ -37,7 +37,7 @@ export class InventoryEventBase extends Schema.Class<InventoryEventBase>(
 	"InventoryEventBase",
 )({
 	eventId: EventId,
-	occurredAt: Schema.Date,
+	occurredAt: Schema.Union(Schema.Date, Schema.DateFromString),
 	aggregateId: Schema.String,
 	flightId: FlightId,
 	cabin: CabinClassSchema,
@@ -80,7 +80,7 @@ export class BookingCancelled extends BookingEventBase.extend<BookingCancelled>(
 export class BookingExpired extends BookingEventBase.extend<BookingExpired>(
 	"BookingExpired",
 )({
-	expiredAt: Schema.Date,
+	expiredAt: Schema.Union(Schema.Date, Schema.DateFromString),
 }) {}
 
 // ============================================================================

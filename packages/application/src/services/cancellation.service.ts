@@ -40,23 +40,27 @@ export class CancellationService extends Context.Tag("CancellationService")<
 						toExpire,
 						(booking) =>
 							Effect.gen(function* () {
-								// 1. Release all seats for all segments
-								yield* Effect.forEach(
-									booking.segments,
-									(segment) =>
-										inventoryService.releaseSeats({
-											flightId: segment.flightId,
-											cabin: segment.cabin,
-											numberOfSeats: booking.passengers.length,
-										}),
-									{ discard: true },
+								yield* unitOfWork.transaction(
+									Effect.gen(function* () {
+										// 1. Mark booking as expired
+										const updatedBooking = booking.markExpired();
+
+										// 2. Save updated booking
+										yield* bookingRepo.save(updatedBooking);
+
+										// 3. Release all seats for all segments
+										yield* Effect.forEach(
+											booking.segments,
+											(segment) =>
+												inventoryService.releaseSeats({
+													flightId: segment.flightId,
+													cabin: segment.cabin,
+													numberOfSeats: booking.passengers.length,
+												}),
+											{ discard: true },
+										);
+									}),
 								);
-
-								// 2. Mark booking as expired
-								const updatedBooking = booking.markExpired();
-
-								// 3. Save updated booking inside a transaction
-								yield* unitOfWork.transaction(bookingRepo.save(updatedBooking));
 
 								yield* Effect.logInfo(
 									`Successfully cancelled expired booking ${booking.pnrCode}`,

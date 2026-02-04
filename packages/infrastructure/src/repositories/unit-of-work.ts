@@ -15,12 +15,13 @@ export const UnitOfWorkLive: Layer.Layer<
     const sql = yield* SqlClient.SqlClient;
 
     const transaction: UnitOfWorkPort["transaction"] = (effect) =>
-      sql.withTransaction(effect).pipe(
-        Effect.tapError((err) =>
-          Effect.logError("Transaction failed, rolling back", err),
-        ),
-        Effect.catchTag("SqlError", (err) => Effect.fail(err)),
-      );
+      sql
+        .withTransaction(effect)
+        .pipe(
+          Effect.tapError((err) =>
+            Effect.logError("Transaction failed, rolling back", err),
+          ),
+        );
 
     return UnitOfWork.of({ transaction });
   }),

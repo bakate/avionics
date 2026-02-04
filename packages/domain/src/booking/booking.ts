@@ -64,7 +64,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
 			status: PnrStatus.HELD,
 			createdAt: now,
 			domainEvents: [],
-			version: 1,
+			version: 0,
 		});
 
 		const event = new BookingCreated({

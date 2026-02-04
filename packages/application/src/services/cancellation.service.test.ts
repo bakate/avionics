@@ -142,7 +142,17 @@ describe("CancellationService", () => {
 		const MockUnitOfWork = Layer.succeed(
 			UnitOfWork,
 			UnitOfWork.of({
-				transaction: (eff) => eff,
+				transaction: (eff) =>
+					Effect.gen(function* () {
+						const snapshot = [...processedPnrs];
+						const result = yield* Effect.either(eff);
+						if (result._tag === "Left") {
+							processedPnrs.length = 0;
+							processedPnrs.push(...snapshot);
+							return yield* Effect.fail(result.left);
+						}
+						return result.right;
+					}),
 			}),
 		);
 

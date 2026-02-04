@@ -11,13 +11,14 @@ export const DatabaseConfig = Config.all({
   url: Config.string("DATABASE_URL").pipe(Config.option), // Optional Override
 });
 
-const isProduction = process.env.NODE_ENV === "production";
+const isDevOrTest =
+  process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
 const secret = (name: string, mock: string) => {
   const config = Config.redacted(name);
-  return isProduction
-    ? config
-    : config.pipe(Config.withDefault(Redacted.make(mock)));
+  return isDevOrTest
+    ? config.pipe(Config.withDefault(Redacted.make(mock)))
+    : config;
 };
 
 export const SecretsConfig = Config.all({

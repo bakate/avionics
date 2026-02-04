@@ -63,19 +63,36 @@ export const fromBookingRow = (
   passengers: ReadonlyArray<PassengerRow>,
   segments: ReadonlyArray<SegmentRow>,
 ): Booking => {
+  // Runtime Integrity Checks
+  if (passengers.length === 0) {
+    throw new Error("Cannot map Booking: passengers list is empty");
+  }
+  if (segments.length === 0) {
+    throw new Error("Cannot map Booking: segments list is empty");
+  }
+
   // Reconstruct Domain Objects
-  const domainPassengers = passengers.map(
-    (p) =>
-      new Passenger({
-        id: Schema.decodeUnknownSync(PassengerId)(p.id),
-        firstName: p.first_name,
-        lastName: p.last_name,
-        email: Schema.decodeUnknownSync(EmailSchema)(p.email),
-        type: Schema.decodeUnknownSync(PassengerTypeSchema)(p.type),
-        dateOfBirth: p.date_of_birth ?? new Date(0), // Fallback
-        gender: Schema.decodeUnknownSync(GenderSchema)(p.gender),
-      }),
-  ) as [Passenger, ...Passenger[]];
+  const domainPassengers = passengers.map((p) => {
+    if (!p.date_of_birth) {
+      throw new Error(`Missing date_of_birth for passenger ${p.id}`);
+    }
+    if (!p.gender) {
+      throw new Error(`Missing gender for passenger ${p.id}`);
+    }
+    if (!p.type) {
+      throw new Error(`Missing type for passenger ${p.id}`);
+    }
+
+    return new Passenger({
+      id: Schema.decodeUnknownSync(PassengerId)(p.id),
+      firstName: p.first_name,
+      lastName: p.last_name,
+      email: Schema.decodeUnknownSync(EmailSchema)(p.email),
+      type: Schema.decodeUnknownSync(PassengerTypeSchema)(p.type),
+      dateOfBirth: p.date_of_birth,
+      gender: Schema.decodeUnknownSync(GenderSchema)(p.gender),
+    });
+  }) as [Passenger, ...Passenger[]];
 
   const domainSegments = segments.map(
     (s) =>
@@ -98,6 +115,6 @@ export const fromBookingRow = (
     version: row.version,
     createdAt: row.created_at,
     expiresAt: Option.fromNullable(row.expires_at),
-    domainEvents: [], // Events are transient, not rehydrated from main tables (Transaction Outbox separate)
+    domainEvents: [], // Events are transient, not rehydrated from main tables
   });
 };

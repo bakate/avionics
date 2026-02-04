@@ -26,23 +26,22 @@ export const TransactionalOutboxLive = Layer.effectDiscard(
 
       // Publish to Bus
       for (const row of rows) {
-        // Parse payload (assuming JSONB)
-        // In Postgres adapter, payload might be an object already or string depending on driver config
         const payload = row.payload;
-        try {
-          // Try publish
-          yield* eventBus.publish(payload);
 
-          // Mark published
-          yield* sql`
-                        UPDATE event_outbox
-                        SET published_at = NOW()
-                        WHERE id = ${row.id}
-                    `;
-        } catch (e) {
-          yield* Effect.logError("Failed to publish outbox event", e);
-          // Do not mark as published -> will retry next tick
-        }
+        yield* eventBus.publish(payload).pipe(
+          Effect.flatMap(
+            () =>
+              // Mark published
+              sql`
+              UPDATE event_outbox
+              SET published_at = NOW()
+              WHERE id = ${row.id}
+            `,
+          ),
+          Effect.catchAll((e) =>
+            Effect.logError("Failed to publish outbox event", e),
+          ),
+        );
       }
     });
 

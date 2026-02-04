@@ -31,13 +31,9 @@ export const toDomain = (row: FlightInventoryRow): FlightInventory => {
       economy: new SeatBucket({
         available: row.economy_available,
         capacity: row.economy_total,
-        // Price is not in inventory table in this schema?
-        // In real app, price is dynamic. For this exercise, we might need a default or fetch from elsewhere.
-        // Assuming fixed for now or logic handled in Pricing Context.
-        // However, Domain entity requires it. We'll use a placeholder or check if schema needs update.
-        // Looking at integration test, it was creating seat buckets with price.
-        // But schema.sql DOES NOT have price columns.
-        // We will default to 0 or a base price, acknowledging this limitation.
+        // TODO: Implement persistent inventory prices in the flight_inventory table.
+        // Currently, we default to 0 because the schema lacks price columns,
+        // but this should be replaced with real value from DB once columns are added.
         price: Money.of(0, "EUR"),
       }),
       business: new SeatBucket({
