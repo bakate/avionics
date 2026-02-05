@@ -19,7 +19,7 @@ import {
   type PnrCode,
 } from "../kernel.js";
 import { Booking, PnrStatus } from "./booking.js";
-import { Passenger, type PassengerId } from "./passenger.js";
+import { Passenger, PassengerId } from "./passenger.js";
 import { BookingSegment } from "./segment.js";
 
 // -----------------------------------------------------------------------------

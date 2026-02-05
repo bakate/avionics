@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
+    "@faker-js/faker": "catalog:",
     "@vitest/coverage-v8": "catalog:vitest3",
     "@workspace/tsconfig": "workspace:*",
     "@workspace/prettier-config": "workspace:*",
