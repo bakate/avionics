@@ -97,8 +97,8 @@ const arbBooking = fc
     Booking.create({
       id: props.id as BookingId,
       pnrCode: props.pnrCode as PnrCode,
-      passengers: props.passengers as [Passenger, ...Passenger[]],
-      segments: props.segments as [BookingSegment, ...BookingSegment[]],
+      passengers: props.passengers as [Passenger, ...Array<Passenger>],
+      segments: props.segments as [BookingSegment, ...Array<BookingSegment>],
       expiresAt: props.expiresAt ? O.some(props.expiresAt) : O.none(),
     }),
   );

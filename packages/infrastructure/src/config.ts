@@ -1,4 +1,4 @@
-import { Config, Effect, Redacted } from "effect";
+import { Config, Redacted } from "effect";
 
 export const DatabaseConfig = Config.all({
   host: Config.string("DB_HOST"),

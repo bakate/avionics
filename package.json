@@ -8,7 +8,7 @@
     "clean": "turbo run clean",
     "dev": "turbo run dev",
     "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\"",
-    "lint": "turbo run lint",
+    "lint": "turbo run lint -- --write",
     "lint-staged": "lint-staged",
     "prepare": "husky"
   },

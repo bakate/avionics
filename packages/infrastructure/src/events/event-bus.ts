@@ -1,4 +1,4 @@
-import type { DomainEventType } from "@workspace/domain/events";
+import { type DomainEventType } from "@workspace/domain/events";
 import { Context, Effect, Layer, Queue, Stream } from "effect";
 
 export interface EventBusPort {

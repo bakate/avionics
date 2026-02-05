@@ -1,6 +1,6 @@
-import type { SqlClient, SqlError } from "@effect/sql";
+import { type SqlClient, type SqlError } from "@effect/sql";
 import { PgClient } from "@effect/sql-pg";
-import type { ConfigError, Layer } from "effect";
+import { type ConfigError, type Layer } from "effect";
 
 // Main Connection Layer (Production)
 // Uses PostgreSQL standard environment variables (PGHOST, PGDATABASE, PGUSER, PGPASSWORD, PGSSLMODE)

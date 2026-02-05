@@ -5,11 +5,11 @@ export const PassengerId = Schema.String.pipe(Schema.brand("PassengerId"));
 export type PassengerId = typeof PassengerId.Type;
 
 export class Passenger extends Schema.Class<Passenger>("Passenger")({
-	id: PassengerId,
-	firstName: Schema.String,
-	lastName: Schema.String,
-	email: EmailSchema,
-	dateOfBirth: Schema.Date,
-	gender: GenderSchema,
-	type: PassengerTypeSchema,
+  id: PassengerId,
+  firstName: Schema.String,
+  lastName: Schema.String,
+  email: EmailSchema,
+  dateOfBirth: Schema.Date,
+  gender: GenderSchema,
+  type: PassengerTypeSchema,
 }) {}

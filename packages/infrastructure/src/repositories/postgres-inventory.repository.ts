@@ -8,7 +8,7 @@ import {
   InventoryPersistenceError,
   OptimisticLockingError,
 } from "@workspace/domain/errors";
-import type { DomainEventType } from "@workspace/domain/events";
+import { type DomainEventType } from "@workspace/domain/events";
 import { FlightInventory } from "@workspace/domain/inventory";
 import { Effect, Layer } from "effect";
 import {

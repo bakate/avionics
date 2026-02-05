@@ -1,8 +1,8 @@
 import baseConfig from "@workspace/eslint-config/base";
 
 export default [
-	{
-		ignores: ["dist/**"],
-	},
-	...baseConfig,
+  {
+    ignores: ["dist/**"],
+  },
+  ...baseConfig,
 ];

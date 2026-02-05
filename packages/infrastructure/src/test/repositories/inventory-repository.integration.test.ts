@@ -1,11 +1,7 @@
 import { InventoryRepository } from "@workspace/application/inventory.repository";
-import {
-  FlightNotFoundError,
-  OptimisticLockingError,
-} from "@workspace/domain/errors";
 import { FlightId } from "@workspace/domain/kernel";
 import { Effect, Layer, Schema } from "effect";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { ConnectionPoolLive } from "../../db/connection.js";
 import { PostgresInventoryRepositoryLive } from "../../repositories/postgres-inventory.repository.js";
 import { createTestInventory } from "../factories/inventory-factory.js";
