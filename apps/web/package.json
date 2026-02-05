@@ -1,26 +1,27 @@
 {
-	"name": "web",
-	"version": "0.0.0",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "tsc && vite build",
-		"check": "biome check --write .",
-		"clean": "rm -rf dist coverage .turbo .cache",
-		"dev": "vite",
-		"format": "biome format --write .",
-		"lint": "biome lint .",
-		"preview": "vite preview"
-	},
-	"dependencies": {
-		"@workspace/domain": "workspace:*",
-		"effect": "catalog:effect3"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "catalog:",
-		"@workspace/biome-config": "workspace:*",
-		"@workspace/tsconfig": "workspace:*",
-		"typescript": "catalog:",
-		"vite": "catalog:"
-	}
+  "name": "web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc && vite build",
+    "check": "biome check --write .",
+    "clean": "rm -rf dist coverage .turbo .cache",
+    "dev": "vite",
+    "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\"",
+    "lint": "biome lint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@workspace/domain": "workspace:*",
+    "effect": "catalog:effect3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "@workspace/prettier-config": "workspace:*",
+    "@workspace/tsconfig": "workspace:*",
+    "typescript": "catalog:",
+    "prettier": "catalog:",
+    "vite": "catalog:"
+  }
 }

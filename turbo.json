@@ -18,10 +18,12 @@
       "dependsOn": ["^check"]
     },
     "format": {
-      "dependsOn": ["^format"]
+      "outputs": [".cache/.prettiercache"],
+      "outputLogs": "new-only"
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^build"],
+      "outputs": [".cache/.eslintcache"]
     },
     "typecheck": {
       "dependsOn": ["^build"],

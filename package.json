@@ -7,7 +7,7 @@
     "check-types": "turbo run check-types",
     "clean": "turbo run clean",
     "dev": "turbo run dev",
-    "format": "turbo run format",
+    "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\"",
     "lint": "turbo run lint",
     "lint-staged": "lint-staged",
     "prepare": "husky"
@@ -16,9 +16,10 @@
     "@biomejs/biome": "catalog:",
     "@commitlint/cli": "^20.3.1",
     "@commitlint/config-conventional": "^20.3.1",
-    "@workspace/biome-config": "workspace:*",
+    "@workspace/prettier-config": "workspace:*",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "prettier": "catalog:",
     "turbo": "^2.7.4",
     "typescript": "catalog:"
   },

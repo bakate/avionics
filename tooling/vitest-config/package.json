@@ -1,33 +1,32 @@
 {
-	"name": "@workspace/vitest-config",
-	"type": "module",
-	"exports": {
-		".": "./dist/index.js",
-		"./base": "./dist/configs/base-config.js",
-		"./ui": "./dist/configs/ui-config.js"
-	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"scripts": {
-		"build": "tsc",
-		"check": "biome check --write .",
-		"collect-json-reports": "node dist/scripts/collect-json-outputs.js",
-		"format": "biome format --write .",
-		"lint": "biome lint .",
-		"view-report": "open coverage/report/index.html"
-	},
-	"dependencies": {
-		"vitest": "catalog:vitest3"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "catalog:",
-		"@types/node": "^22.10.0",
-		"@vitest/coverage-v8": "catalog:vitest3",
-		"@vitest/ui": "catalog:vitest3",
-		"@workspace/biome-config": "workspace:*",
-		"@workspace/tsconfig": "workspace:*",
-		"glob": "^11.0.0",
-		"jsdom": "^27.4.0",
-		"typescript": "catalog:"
-	}
+  "name": "@workspace/vitest-config",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./base": "./dist/configs/base-config.js",
+    "./ui": "./dist/configs/ui-config.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "check": "biome check --write .",
+    "collect-json-reports": "node dist/scripts/collect-json-outputs.js",
+    "format": "biome format --write .",
+    "lint": "biome lint .",
+    "view-report": "open coverage/report/index.html"
+  },
+  "dependencies": {
+    "vitest": "catalog:vitest3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "catalog:vitest3",
+    "@vitest/ui": "catalog:vitest3",
+    "@workspace/tsconfig": "workspace:*",
+    "glob": "^11.0.0",
+    "jsdom": "^27.4.0",
+    "typescript": "catalog:"
+  }
 }
