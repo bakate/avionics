@@ -10,8 +10,6 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Pool } from "pg";
 
 async function runMigrations() {
-  console.log("🚀 Running Drizzle migrations...");
-
   const pool = new Pool({
     host: process.env.PGHOST,
     port: Number(process.env.PGPORT),
@@ -24,13 +22,11 @@ async function runMigrations() {
   try {
     const db = drizzle(pool);
     await migrate(db, { migrationsFolder: "./drizzle" });
-    console.log("✅ Migrations completed successfully!");
-  } catch (error) {
-    console.error("❌ Migration failed:", error);
+  } catch (_error) {
     process.exit(1);
   } finally {
     await pool.end();
   }
 }
 
-runMigrations();
+void runMigrations();

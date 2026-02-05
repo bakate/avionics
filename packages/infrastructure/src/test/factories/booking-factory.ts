@@ -1,4 +1,4 @@
-import { Booking, PnrStatus } from "@workspace/domain/booking";
+import { Booking } from "@workspace/domain/booking";
 import {
   BookingId,
   CabinClass,
@@ -45,7 +45,7 @@ export const createTestBooking = ({
         gender: Gender.MALE,
         type: PassengerType.ADULT,
       }),
-  ) as [Passenger, ...Passenger[]];
+  ) as [Passenger, ...Array<Passenger>];
 
   // Create segments
   const segments = Array.from(
@@ -59,7 +59,7 @@ export const createTestBooking = ({
         cabin: CabinClass.ECONOMY,
         price: Money.of(100 + index * 10, "EUR"),
       }),
-  ) as [BookingSegment, ...BookingSegment[]];
+  ) as [BookingSegment, ...Array<BookingSegment>];
 
   // Create booking using factory method
   return Booking.create({

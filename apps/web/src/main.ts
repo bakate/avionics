@@ -16,16 +16,16 @@ app.innerHTML = `
 
 // Example Usage
 const exampleFlight = {
-	id: "FL-101",
-	flightNumber: "AF1234",
-	route: {
-		origin: "CDG",
-		destination: "JFK",
-	},
-	schedule: {
-		departure: new Date().toISOString(),
-		arrival: new Date(Date.now() + 8 * 3600 * 1000).toISOString(),
-	},
+  id: "FL-101",
+  flightNumber: "AF1234",
+  route: {
+    origin: "CDG",
+    destination: "JFK",
+  },
+  schedule: {
+    departure: new Date().toISOString(),
+    arrival: new Date(Date.now() + 8 * 3600 * 1000).toISOString(),
+  },
 };
 
 // Decode using the shared Schema
@@ -34,9 +34,9 @@ const decodeResult = Schema.decodeUnknownEither(Flight)(exampleFlight);
 const displayEl = document.querySelector("#flight-display")!;
 
 if (decodeResult._tag === "Right") {
-	const flight = decodeResult.right;
+  const flight = decodeResult.right;
 
-	displayEl.innerHTML = `
+  displayEl.innerHTML = `
       <div style="text-align: left; font-family: monospace;">
         <h3>Flight Decoded Successfully ✅</h3>
         <p><strong>Flight #:</strong> ${flight.flightNumber}</p>
@@ -45,11 +45,11 @@ if (decodeResult._tag === "Right") {
         <pre>${JSON.stringify(flight, null, 2)}</pre>
       </div>
     `;
-	console.log("Decoded Flight:", flight);
+  console.log("Decoded Flight:", flight);
 } else {
-	displayEl.innerHTML = `
+  displayEl.innerHTML = `
         <h3 style="color: red">Decoding Failed ❌</h3>
         <pre>${JSON.stringify(decodeResult.left, null, 2)}</pre>
     `;
-	console.error("Decoding Failed:", decodeResult.left);
+  console.error("Decoding Failed:", decodeResult.left);
 }

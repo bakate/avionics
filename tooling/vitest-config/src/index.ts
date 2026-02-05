@@ -1,19 +1,19 @@
 export const sharedConfig = {
-	test: {
-		globals: true,
-		coverage: {
-			provider: "v8" as const,
-			reporter: [
-				[
-					"json",
-					{
-						file: `../coverage.json`,
-					},
-				],
-			] as const,
-			enabled: true,
-		},
-	},
+  test: {
+    globals: true,
+    coverage: {
+      provider: "v8" as const,
+      reporter: [
+        [
+          "json",
+          {
+            file: `../coverage.json`,
+          },
+        ],
+      ] as const,
+      enabled: true,
+    },
+  },
 };
 
 // Re-export specific configs for backwards compatibility

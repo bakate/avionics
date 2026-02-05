@@ -2,7 +2,7 @@ import { BookingRepository } from "@workspace/application/booking.repository";
 import { PnrStatus } from "@workspace/domain/booking";
 import { PnrCodeSchema } from "@workspace/domain/kernel";
 import { Effect, Layer, Option } from "effect";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { ConnectionPoolLive } from "../../db/connection.js";
 import { PostgresBookingRepositoryLive } from "../../repositories/postgres-booking.repository.js";
 import { createTestBooking } from "../factories/booking-factory.js";

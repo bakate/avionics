@@ -6,11 +6,11 @@
 
 import { BookingStatusSchema } from "@workspace/domain/booking";
 import {
-	BookingId,
-	CabinClassSchema,
-	FlightId,
-	Money,
-	PnrCodeSchema,
+  BookingId,
+  CabinClassSchema,
+  FlightId,
+  Money,
+  PnrCodeSchema,
 } from "@workspace/domain/kernel";
 import { Schema } from "effect";
 
@@ -20,29 +20,29 @@ import { Schema } from "effect";
  * Lightweight booking summary for list views
  */
 export class BookingSummary extends Schema.Class<BookingSummary>(
-	"BookingSummary",
+  "BookingSummary",
 )({
-	id: BookingId,
-	pnrCode: PnrCodeSchema,
-	status: BookingStatusSchema,
-	passengerCount: Schema.Number.pipe(Schema.int(), Schema.positive()),
-	totalPrice: Money,
-	createdAt: Schema.Date,
-	expiresAt: Schema.Option(Schema.Date),
+  id: BookingId,
+  pnrCode: PnrCodeSchema,
+  status: BookingStatusSchema,
+  passengerCount: Schema.Number.pipe(Schema.int(), Schema.positive()),
+  totalPrice: Money,
+  createdAt: Schema.Date,
+  expiresAt: Schema.Option(Schema.Date),
 }) {}
 
 /**
  * Passenger booking history item
  */
 export class PassengerBookingHistory extends Schema.Class<PassengerBookingHistory>(
-	"PassengerBookingHistory",
+  "PassengerBookingHistory",
 )({
-	bookingId: BookingId,
-	pnrCode: PnrCodeSchema,
-	status: BookingStatusSchema,
-	flightNumbers: Schema.Array(Schema.String),
-	totalPrice: Money,
-	bookedAt: Schema.Date,
+  bookingId: BookingId,
+  pnrCode: PnrCodeSchema,
+  status: BookingStatusSchema,
+  flightNumbers: Schema.Array(Schema.String),
+  totalPrice: Money,
+  bookedAt: Schema.Date,
 }) {}
 
 // --- Inventory Read Models ---
@@ -51,30 +51,30 @@ export class PassengerBookingHistory extends Schema.Class<PassengerBookingHistor
  * Flight availability summary
  */
 export class FlightAvailability extends Schema.Class<FlightAvailability>(
-	"FlightAvailability",
+  "FlightAvailability",
 )({
-	flightId: FlightId,
-	economyAvailable: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
-	businessAvailable: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
-	firstAvailable: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
-	economyPrice: Money,
-	businessPrice: Money,
-	firstPrice: Money,
-	lastUpdated: Schema.Date,
+  flightId: FlightId,
+  economyAvailable: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+  businessAvailable: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+  firstAvailable: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+  economyPrice: Money,
+  businessPrice: Money,
+  firstPrice: Money,
+  lastUpdated: Schema.Date,
 }) {}
 
 /**
  * Cabin availability detail
  */
 export class CabinAvailability extends Schema.Class<CabinAvailability>(
-	"CabinAvailability",
+  "CabinAvailability",
 )({
-	cabin: CabinClassSchema,
-	available: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
-	capacity: Schema.Number.pipe(Schema.int(), Schema.positive()),
-	price: Money,
-	utilizationPercent: Schema.Number.pipe(
-		Schema.nonNegative(),
-		Schema.lessThanOrEqualTo(100),
-	),
+  cabin: CabinClassSchema,
+  available: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+  capacity: Schema.Number.pipe(Schema.int(), Schema.positive()),
+  price: Money,
+  utilizationPercent: Schema.Number.pipe(
+    Schema.nonNegative(),
+    Schema.lessThanOrEqualTo(100),
+  ),
 }) {}

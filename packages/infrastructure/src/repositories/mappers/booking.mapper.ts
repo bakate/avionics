@@ -93,7 +93,7 @@ export const fromBookingRow = (
       dateOfBirth: p.date_of_birth,
       gender: Schema.decodeUnknownSync(GenderSchema)(p.gender),
     });
-  }) as [Passenger, ...Passenger[]];
+  }) as [Passenger, ...Array<Passenger>];
 
   const domainSegments = segments.map(
     (s) =>
@@ -106,7 +106,7 @@ export const fromBookingRow = (
           Schema.decodeUnknownSync(CurrencyCodeSchema)(s.price_currency),
         ),
       }),
-  ) as [BookingSegment, ...BookingSegment[]];
+  ) as [BookingSegment, ...Array<BookingSegment>];
 
   return new Booking({
     id: Schema.decodeUnknownSync(BookingId)(row.id),

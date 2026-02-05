@@ -1,9 +1,9 @@
 {
-	"extends": "@workspace/tsconfig/internal-package.json",
-	"compilerOptions": {
-		"lib": ["ES2024", "DOM", "DOM.Iterable"],
-		"types": ["node"]
-	},
-	"include": ["src"],
-	"exclude": ["node_modules", "dist", "**/*.config.ts", "**/*.test.ts"]
+  "extends": "@workspace/tsconfig/internal-package.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": ["node"]
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "**/*.config.ts", "**/*.test.ts"]
 }

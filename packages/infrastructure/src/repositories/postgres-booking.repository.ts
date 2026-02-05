@@ -8,7 +8,7 @@ import {
   BookingPersistenceError,
   OptimisticLockingError,
 } from "@workspace/domain/errors";
-import type { DomainEventType } from "@workspace/domain/events";
+import { type DomainEventType } from "@workspace/domain/events";
 import { Effect, Layer, Option } from "effect";
 import {
   type BookingRow,
@@ -111,7 +111,7 @@ export const PostgresBookingRepositoryLive = Layer.effect(
 
             // 3. Save Domain Events (Transactional Outbox)
             if (booking.domainEvents.length > 0) {
-              for (const event of booking.domainEvents as DomainEventType[]) {
+              for (const event of booking.domainEvents as Array<DomainEventType>) {
                 yield* sql`
                 INSERT INTO event_outbox (id, event_type, aggregate_id, payload)
                 VALUES (${String(event.eventId)}, ${"_tag" in event ? String(event._tag) : event.constructor.name}, ${String(booking.id)}, ${JSON.stringify(event)})
@@ -222,7 +222,7 @@ export const PostgresBookingRepositoryLive = Layer.effect(
              SELECT * FROM bookings WHERE expires_at < ${before}
            `;
 
-          const results: Booking[] = [];
+          const results: Array<Booking> = [];
           for (const row of bookings) {
             const passengers = yield* sql<PassengerRow>`
                SELECT * FROM passengers WHERE booking_id = ${row.id}
@@ -261,7 +261,7 @@ export const PostgresBookingRepositoryLive = Layer.effect(
              SELECT DISTINCT booking_id FROM passengers WHERE id = ${passengerId}
            `;
 
-          const results: Booking[] = [];
+          const results: Array<Booking> = [];
           for (const { booking_id } of rows) {
             const bookings = yield* sql<BookingRow>`
                SELECT * FROM bookings WHERE id = ${booking_id}
@@ -306,7 +306,7 @@ export const PostgresBookingRepositoryLive = Layer.effect(
              SELECT * FROM bookings ORDER BY created_at DESC
            `;
 
-          const results: Booking[] = [];
+          const results: Array<Booking> = [];
           for (const row of bookings) {
             const passengers = yield* sql<PassengerRow>`
                SELECT * FROM passengers WHERE booking_id = ${row.id}
