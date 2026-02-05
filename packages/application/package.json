@@ -1,43 +1,44 @@
 {
-	"name": "@workspace/application",
-	"version": "0.1.0",
-	"type": "module",
-	"exports": {
-		"./booking.service": "./src/services/booking.service.ts",
-		"./inventory.service": "./src/services/inventory.service.ts",
-		"./inventory.repository": "./src/repositories/inventory.repository.ts",
-		"./booking.repository": "./src/repositories/booking.repository.ts",
-		"./payment.gateway": "./src/gateways/payment.gateway.ts",
-		"./notification.gateway": "./src/gateways/notification.gateway.ts",
-		"./unit-of-work": "./src/ports/unit-of-work.ts",
-		"./results": "./src/models/results.ts",
-		"./read-models": "./src/models/read-models.ts",
-		"./booking-queries": "./src/queries/booking-queries.ts",
-		"./inventory-queries": "./src/queries/inventory-queries.ts",
-		"./cancellation.service": "./src/services/cancellation.service.ts"
-	},
-	"scripts": {
-		"build": "tsc --noEmit",
-		"clean": "git clean -xdf .cache .turbo dist node_modules",
-		"check": "biome check --write .",
-		"format": "biome format --write .",
-		"lint": "biome lint .",
-		"test:coverage": "vitest run --coverage",
-		"test:watch": "vitest --watch",
-		"typecheck": "tsc --noEmit"
-	},
-	"dependencies": {
-		"effect": "catalog:effect3",
-		"@workspace/domain": "workspace:*"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "catalog:",
-		"@vitest/coverage-v8": "catalog:vitest3",
-		"@workspace/biome-config": "workspace:*",
-		"@workspace/tsconfig": "workspace:*",
-		"@workspace/vitest-config": "workspace:*",
-		"typescript": "catalog:",
-		"@faker-js/faker": "catalog:",
-		"vitest": "catalog:vitest3"
-	}
+  "name": "@workspace/application",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./booking.service": "./src/services/booking.service.ts",
+    "./inventory.service": "./src/services/inventory.service.ts",
+    "./inventory.repository": "./src/repositories/inventory.repository.ts",
+    "./booking.repository": "./src/repositories/booking.repository.ts",
+    "./payment.gateway": "./src/gateways/payment.gateway.ts",
+    "./notification.gateway": "./src/gateways/notification.gateway.ts",
+    "./unit-of-work": "./src/ports/unit-of-work.ts",
+    "./results": "./src/models/results.ts",
+    "./read-models": "./src/models/read-models.ts",
+    "./booking-queries": "./src/queries/booking-queries.ts",
+    "./inventory-queries": "./src/queries/inventory-queries.ts",
+    "./cancellation.service": "./src/services/cancellation.service.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "check": "biome check --write .",
+    "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\"",
+    "lint": "biome lint .",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "effect": "catalog:effect3",
+    "@workspace/domain": "workspace:*"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "@vitest/coverage-v8": "catalog:vitest3",
+    "@workspace/biome-config": "workspace:*",
+    "@workspace/tsconfig": "workspace:*",
+    "@workspace/prettier-config": "workspace:*",
+    "@workspace/vitest-config": "workspace:*",
+    "typescript": "catalog:",
+    "prettier": "catalog:",
+    "vitest": "catalog:vitest3"
+  }
 }

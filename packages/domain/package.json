@@ -1,41 +1,42 @@
 {
-	"name": "@workspace/domain",
-	"version": "0.1.0",
-	"type": "module",
-	"exports": {
-		"./errors": "./src/errors.ts",
-		"./events": "./src/events.ts",
-		"./flight": "./src/flight/flight.ts",
-		"./inventory": "./src/flight/flight-inventory.ts",
-		"./kernel": "./src/kernel.ts",
-		"./booking": "./src/booking/booking.ts",
-		"./passenger": "./src/booking/passenger.ts",
-		"./segment": "./src/booking/segment.ts",
-		"./coupon": "./src/ticket/coupon.ts",
-		"./ticket": "./src/ticket/ticket.ts"
-	},
-	"scripts": {
-		"build": "tsc --noEmit",
-		"clean": "git clean -xdf .cache .turbo dist node_modules",
-		"check": "biome check --write .",
-		"format": "biome format --write .",
-		"lint": "biome lint .",
-		"test:coverage": "vitest run --coverage",
-		"test:watch": "vitest --watch",
-		"typecheck": "tsc --noEmit"
-	},
-	"dependencies": {
-		"effect": "catalog:effect3"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "catalog:",
-		"@faker-js/faker": "catalog:",
-		"@fast-check/vitest": "catalog:",
-		"@vitest/coverage-v8": "catalog:vitest3",
-		"@workspace/biome-config": "workspace:*",
-		"@workspace/tsconfig": "workspace:*",
-		"@workspace/vitest-config": "workspace:*",
-		"typescript": "catalog:",
-		"vitest": "catalog:vitest3"
-	}
+  "name": "@workspace/domain",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    "./errors": "./src/errors.ts",
+    "./events": "./src/events.ts",
+    "./flight": "./src/flight/flight.ts",
+    "./inventory": "./src/flight/flight-inventory.ts",
+    "./kernel": "./src/kernel.ts",
+    "./booking": "./src/booking/booking.ts",
+    "./passenger": "./src/booking/passenger.ts",
+    "./segment": "./src/booking/segment.ts",
+    "./coupon": "./src/ticket/coupon.ts",
+    "./ticket": "./src/ticket/ticket.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "check": "biome check --write .",
+    "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\"",
+    "lint": "biome lint .",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "effect": "catalog:effect3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "catalog:",
+    "@faker-js/faker": "catalog:",
+    "@fast-check/vitest": "catalog:",
+    "@vitest/coverage-v8": "catalog:vitest3",
+    "@workspace/tsconfig": "workspace:*",
+    "@workspace/prettier-config": "workspace:*",
+    "@workspace/vitest-config": "workspace:*",
+    "typescript": "catalog:",
+    "prettier": "catalog:",
+    "vitest": "catalog:vitest3"
+  }
 }

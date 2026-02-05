@@ -17,6 +17,10 @@
 **/next-env.d.ts
 tsbuildinfo.json
 
+# IDEs
+.kiro/
+.idea/
+
 # Turbo
 .turbo
 .cache
