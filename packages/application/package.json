@@ -20,7 +20,7 @@
     "build": "tsc --noEmit",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "check": "biome check --write .",
-    "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\"",
+    "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\" --cache --cache-location .cache/.prettiercache",
     "lint": "biome lint .",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",

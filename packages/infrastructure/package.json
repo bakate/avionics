@@ -13,7 +13,7 @@
     "test:integration": "vitest run src/test/repositories",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
-    "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\"",
+    "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\" --cache --cache-location .cache/.prettiercache",
     "migrate": "tsx scripts/migrate.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "pnpm migrate",
