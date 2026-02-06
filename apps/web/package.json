@@ -8,7 +8,7 @@
     "check": "biome check --write .",
     "clean": "rm -rf dist coverage .turbo .cache",
     "dev": "vite",
-    "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\"",
+    "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\" --cache --cache-location .cache/.prettiercache",
     "lint": "biome lint .",
     "preview": "vite preview"
   },

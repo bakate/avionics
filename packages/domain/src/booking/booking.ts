@@ -54,8 +54,8 @@ export class Booking extends Schema.Class<Booking>("Booking")({
   static create(props: {
     id: BookingId;
     pnrCode: typeof PnrCodeSchema.Type;
-    passengers: [Passenger, ...Passenger[]];
-    segments: [BookingSegment, ...BookingSegment[]];
+    passengers: [Passenger, ...Array<Passenger>];
+    segments: [BookingSegment, ...Array<BookingSegment>];
     expiresAt: O.Option<Date>;
   }): Booking {
     const now = new Date();
@@ -125,7 +125,10 @@ export class Booking extends Schema.Class<Booking>("Booking")({
   }
 
   // State transition: Cancel booking
-  cancel(reason: string): Effect.Effect<Booking, BookingStatusError> {
+  cancel(
+    reason: string,
+    now: Date = new Date(),
+  ): Effect.Effect<Booking, BookingStatusError> {
     return Effect.gen(this, function* () {
       if (
         this.status === PnrStatus.CANCELLED ||
@@ -142,7 +145,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
 
       const event = new BookingCancelled({
         eventId: crypto.randomUUID() as EventId,
-        occurredAt: new Date(),
+        occurredAt: now,
         aggregateId: this.id,
         aggregateType: "Booking",
         bookingId: this.id,
@@ -160,13 +163,16 @@ export class Booking extends Schema.Class<Booking>("Booking")({
   }
 
   // Mark as expired
-  markExpired(): Booking {
+  markExpired(now: Date = new Date()): Booking {
+    if (this.status !== PnrStatus.HELD) {
+      return this;
+    }
     return O.match(this.expiresAt, {
       onNone: () => this,
       onSome: (expiredAt) => {
         const event = new BookingExpired({
           eventId: crypto.randomUUID() as EventId,
-          occurredAt: new Date(),
+          occurredAt: now,
           aggregateId: this.id,
           aggregateType: "Booking",
           bookingId: this.id,
