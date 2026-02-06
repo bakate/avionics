@@ -108,7 +108,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
 
       const event = new BookingConfirmed({
         eventId: crypto.randomUUID() as EventId,
-        occurredAt: new Date(),
+        occurredAt: now,
         aggregateId: this.id,
         aggregateType: "Booking",
         bookingId: this.id,

@@ -102,9 +102,15 @@ importers:
       '@biomejs/biome':
         specifier: 'catalog:'
         version: 2.3.11
+      '@workspace/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
       '@workspace/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.1
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -124,18 +130,21 @@ importers:
       '@biomejs/biome':
         specifier: 'catalog:'
         version: 2.3.11
-      '@faker-js/faker':
-        specifier: 'catalog:'
-        version: 10.2.0
       '@vitest/coverage-v8':
         specifier: catalog:vitest3
         version: 4.0.17(vitest@4.0.17)
+      '@workspace/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
       '@workspace/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@workspace/vitest-config':
         specifier: workspace:*
         version: link:../../tooling/vitest-config
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.1
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -161,12 +170,18 @@ importers:
       '@vitest/coverage-v8':
         specifier: catalog:vitest3
         version: 4.0.17(vitest@4.0.17)
+      '@workspace/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
       '@workspace/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
       '@workspace/vitest-config':
         specifier: workspace:*
         version: link:../../tooling/vitest-config
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.1
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -222,6 +237,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: catalog:vitest3
         version: 4.0.17(vitest@4.0.17)
+      '@workspace/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
       '@workspace/tsconfig':
         specifier: workspace:*
         version: link:../../tooling/typescript
@@ -234,6 +252,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.8
         version: 0.31.8
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.1
       testcontainers:
         specifier: ^11.11.0
         version: 11.11.0

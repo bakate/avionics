@@ -23,7 +23,7 @@
     },
     "lint": {
       "dependsOn": ["^build"],
-      "outputs": [".cache/.eslintcache"]
+      "outputs": []
     },
     "typecheck": {
       "dependsOn": ["^build"],
