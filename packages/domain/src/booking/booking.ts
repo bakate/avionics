@@ -43,10 +43,10 @@ export class Booking extends Schema.Class<Booking>("Booking")({
     );
   }
 
-  isExpired(): boolean {
+  isExpired(now: Date = new Date()): boolean {
     return O.match(this.expiresAt, {
       onNone: () => false,
-      onSome: (exp) => exp < new Date(),
+      onSome: (exp) => exp < now,
     });
   }
 
@@ -83,9 +83,11 @@ export class Booking extends Schema.Class<Booking>("Booking")({
   }
 
   // State transition: Confirm booking
-  confirm(): Effect.Effect<Booking, BookingStatusError | BookingExpiredError> {
+  confirm(
+    now: Date = new Date(),
+  ): Effect.Effect<Booking, BookingStatusError | BookingExpiredError> {
     return Effect.gen(this, function* () {
-      if (this.isExpired()) {
+      if (this.isExpired(now)) {
         return yield* Effect.fail(
           new BookingExpiredError({
             pnrCode: this.pnrCode,
