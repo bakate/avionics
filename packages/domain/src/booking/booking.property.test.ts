@@ -42,7 +42,10 @@ const arbPassenger = fc
     firstName: fc.string({ minLength: 2, maxLength: 20 }),
     lastName: fc.string({ minLength: 2, maxLength: 20 }),
     email: arbEmail,
-    dateOfBirth: fc.date({ min: new Date("1950-01-01"), max: new Date() }),
+    dateOfBirth: fc.date({
+      min: new Date("1950-01-01"),
+      max: new Date("2030-01-01"),
+    }),
     gender: fc.constantFrom("MALE", "FEMALE") as fc.Arbitrary<Gender>,
     type: fc.constantFrom(
       "ADULT",
