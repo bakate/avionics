@@ -26,6 +26,8 @@ import { BookingSegment } from "./segment.js";
 // Arbitraries
 // -----------------------------------------------------------------------------
 
+const FIXED_NOW = new Date("2025-01-01T00:00:00Z").getTime();
+
 const arbEmail = fc
   .tuple(
     fc.stringMatching(/^[a-z]{3,10}$/),
@@ -89,7 +91,7 @@ const arbBooking = fc
     expiresAt: fc.option(
       fc
         .integer({ min: 1000, max: 3600000 })
-        .map((offset) => new Date(Date.now() + offset)),
+        .map((offset) => new Date(FIXED_NOW + offset)),
       { nil: undefined },
     ),
   })
@@ -119,7 +121,7 @@ describe("Booking - Property-Based Tests", () => {
     "Property 2: Confirming a HELD booking transitions to CONFIRMED",
     async (booking) => {
       const program = Effect.gen(function* () {
-        const confirmed = yield* booking.confirm();
+        const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
         return confirmed.status === PnrStatus.CONFIRMED;
       });
 
@@ -132,7 +134,7 @@ describe("Booking - Property-Based Tests", () => {
     "Property 3: Confirmed bookings have no expiration",
     async (booking) => {
       const program = Effect.gen(function* () {
-        const confirmed = yield* booking.confirm();
+        const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
         return O.isNone(confirmed.expiresAt);
       });
 
@@ -166,7 +168,7 @@ describe("Booking - Property-Based Tests", () => {
     async (booking) => {
       const program = Effect.gen(function* () {
         const initialEventCount = booking.domainEvents.length;
-        const confirmed = yield* booking.confirm();
+        const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
         return confirmed.domainEvents.length > initialEventCount;
       });
 
@@ -181,10 +183,10 @@ describe("Booking - Property-Based Tests", () => {
       // Create an expired booking
       const expiredBooking = new Booking({
         ...booking,
-        expiresAt: O.some(new Date(Date.now() - 1000)), // 1 second ago
+        expiresAt: O.some(new Date(FIXED_NOW - 1000)), // 1 second ago
       });
 
-      const program = expiredBooking.confirm().pipe(
+      const program = expiredBooking.confirm(new Date(FIXED_NOW)).pipe(
         Effect.map(() => false), // Should not succeed
         Effect.catchTag("BookingExpiredError", () => Effect.succeed(true)),
       );
@@ -202,7 +204,7 @@ describe("Booking - Property-Based Tests", () => {
         const heldPayable = booking.isPayable();
 
         // CONFIRMED booking should be payable
-        const confirmed = yield* booking.confirm();
+        const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
         const confirmedPayable = confirmed.isPayable();
 
         return heldPayable && confirmedPayable;

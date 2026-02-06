@@ -33,7 +33,6 @@
   "devDependencies": {
     "@biomejs/biome": "catalog:",
     "@vitest/coverage-v8": "catalog:vitest3",
-    "@workspace/biome-config": "workspace:*",
     "@workspace/tsconfig": "workspace:*",
     "@workspace/prettier-config": "workspace:*",
     "@workspace/vitest-config": "workspace:*",
