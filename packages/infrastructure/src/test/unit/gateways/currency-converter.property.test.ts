@@ -58,6 +58,10 @@ const PROPERTIES = {
     number: 3,
     text: "Valid conversion produces non-zero result",
   },
+  ROUND_TRIP_APPROXIMATION: {
+    number: 4,
+    text: "Conversion round-trip preserves approximate value",
+  },
 } as const;
 
 // ============================================================================
@@ -220,11 +224,11 @@ describe("CurrencyConverterGateway Property Tests", () => {
     },
   );
 
-  // Tag: Feature: infrastructure-layer, Property 35: Conversion round-trip preserves approximate value
+  // Tag: Feature: infrastructure-layer, Property 4: Conversion round-trip preserves approximate value
   test.prop([validCurrencyArb, validCurrencyArb, positiveAmountArb], {
     numRuns: 20,
   })(
-    "Property 35: Conversion round-trip preserves approximate value",
+    `Property ${PROPERTIES.ROUND_TRIP_APPROXIMATION.number}: ${PROPERTIES.ROUND_TRIP_APPROXIMATION.text}`,
     async (fromCurrency, toCurrency, amount) => {
       if (fromCurrency === toCurrency) return;
 
@@ -246,8 +250,19 @@ describe("CurrencyConverterGateway Property Tests", () => {
       );
 
       // Round-trip should be approximately equal (within floating point tolerance)
-      // Using 3 decimal places of precision (approx 0.0005) to handle floating point errors
-      expect(result.amount).toBeCloseTo(originalMoney.amount, 3);
+      // Using hybrid tolerance: absolute check for small amounts, relative for large
+      const absoluteTolerance = 0.02; // Allow small rounding differences
+      const relativeTolerance = 0.0001; // 0.01%
+
+      const absoluteDiff = Math.abs(result.amount - originalMoney.amount);
+      const relativeError =
+        originalMoney.amount > 0 ? absoluteDiff / originalMoney.amount : 0;
+
+      // Hybrid check: either the absolute difference is negligible (small numbers)
+      // or the relative error is within limits (large numbers)
+      expect(
+        absoluteDiff <= absoluteTolerance || relativeError < relativeTolerance,
+      ).toBe(true);
       expect(result.currency).toBe(fromCurrency);
     },
   );

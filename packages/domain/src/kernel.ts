@@ -136,6 +136,14 @@ export class Money extends Schema.Class<Money>("Money")({
     return Money.of(Math.round(this.amount * factor), this.currency);
   }
 
+  /**
+   * Converts the amount to cents (integer) safely handling floating point precision.
+   * Assumes the amount is in major units (e.g. 10.50).
+   */
+  toCents(): number {
+    return Math.round(this.amount * 100);
+  }
+
   equals(other: Money): boolean {
     return this.amount === other.amount && this.currency === other.currency;
   }
