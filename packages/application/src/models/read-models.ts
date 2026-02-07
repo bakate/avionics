@@ -28,7 +28,7 @@ export class BookingSummary extends Schema.Class<BookingSummary>(
   passengerCount: Schema.Number.pipe(Schema.int(), Schema.positive()),
   totalPrice: Money,
   createdAt: Schema.Date,
-  expiresAt: Schema.Option(Schema.Date),
+  expiresAt: Schema.OptionFromNullOr(Schema.Date),
 }) {}
 
 /**

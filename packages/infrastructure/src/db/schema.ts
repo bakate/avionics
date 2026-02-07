@@ -8,6 +8,7 @@ import {
   jsonb,
   pgTable,
   primaryKey,
+  text,
   timestamp,
   uuid,
   varchar,
@@ -140,6 +141,9 @@ export const eventOutbox = pgTable(
     payload: jsonb("payload").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     publishedAt: timestamp("published_at"),
+    processingAt: timestamp("processing_at"),
+    retryCount: integer("retry_count").notNull().default(0),
+    lastError: text("last_error"),
   },
   (table) => [
     index("idx_outbox_unpublished")

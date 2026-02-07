@@ -82,8 +82,8 @@ export const BookingQueriesLive = Layer.effect(
             amount: Number.parseFloat(row.total_price_amount),
             currency: row.total_price_currency,
           },
-          createdAt: row.created_at,
-          expiresAt: row.expires_at ?? undefined,
+          createdAt: row.created_at.toISOString(),
+          expiresAt: row.expires_at?.toISOString() ?? null,
         });
 
         return summary;
@@ -174,7 +174,7 @@ export const BookingQueriesLive = Layer.effect(
               currency: row.total_price_currency,
             },
             createdAt: row.created_at,
-            expiresAt: row.expires_at ?? undefined,
+            expiresAt: row.expires_at ?? null,
           }),
         ) as ReadonlyArray<BookingSummary>;
 
