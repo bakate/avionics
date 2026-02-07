@@ -1,12 +1,32 @@
 import { type CurrencyMismatchError } from "@workspace/domain/errors";
 import { type CurrencyCode, type Money } from "@workspace/domain/kernel";
-import { Context, type Effect } from "effect";
+import { Context, Data, type Effect } from "effect";
 
+/**
+ * Error when currency API is unavailable
+ */
+export class CurrencyApiUnavailableError extends Data.TaggedError(
+  "CurrencyApiUnavailableError",
+)<{
+  readonly message: string;
+  readonly cause?: unknown;
+}> {}
+
+/**
+ * Union of all currency conversion errors
+ */
+export type CurrencyConversionError =
+  | CurrencyMismatchError
+  | CurrencyApiUnavailableError;
+
+/**
+ * Port for currency conversion operations
+ */
 export interface CurrencyConverter {
-  convert: (
+  readonly convert: (
     money: Money,
     toCurrency: CurrencyCode,
-  ) => Effect.Effect<Money, CurrencyMismatchError>;
+  ) => Effect.Effect<Money, CurrencyConversionError>;
 }
 
 export class CurrencyConverterGateway extends Context.Tag(

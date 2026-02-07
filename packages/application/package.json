@@ -9,6 +9,7 @@
     "./booking.repository": "./src/repositories/booking.repository.ts",
     "./payment.gateway": "./src/gateways/payment.gateway.ts",
     "./notification.gateway": "./src/gateways/notification.gateway.ts",
+    "./currency-converter.gateway": "./src/gateways/currency-converter.gateway.ts",
     "./unit-of-work": "./src/ports/unit-of-work.ts",
     "./results": "./src/models/results.ts",
     "./read-models": "./src/models/read-models.ts",

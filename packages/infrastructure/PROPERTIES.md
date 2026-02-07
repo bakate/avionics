@@ -12,17 +12,21 @@ Each property includes:
 
 ## Currency Converter Properties
 
-**Property 1: Same-currency identity**
+**Property 1: Same-currency identity** ✅
 _For any_ amount and currency, converting from that currency to itself should return the original amount unchanged.
 **Validates:** WHEN a currency conversion is requested for the same currency, THE Currency_Gateway SHALL return the original amount without calling external APIs
 
-**Property 2: Invalid currency rejection**
+**Property 2: Invalid currency rejection** ✅
 _For any_ invalid currency code (not in ISO 4217), the converter should return a validation error.
 **Validates:** WHEN invalid currency codes are provided, THE Currency_Gateway SHALL return a validation error
 
-**Property 3: Valid conversion produces non-zero result**
+**Property 3: Valid conversion produces non-zero result** ✅
 _For any_ positive amount and valid different currencies, the conversion should produce a positive result.
 **Validates:** WHEN a currency conversion is requested with valid currencies, THE Currency_Gateway SHALL return the converted amount using current exchange rates
+
+**Property 35: Conversion round-trip preserves approximate value** ✅
+_For any_ valid amount and two different currencies, converting from A to B and back to A should return the original amount within floating-point tolerance.
+**Validates:** THE Currency_Gateway conversion SHALL be invertible with high precision
 
 ## Outbox Processor Properties
 
@@ -36,19 +40,19 @@ _For any_ event that is successfully published, it should be marked with a non-n
 
 ## Query Handler Properties
 
-**Property 6: Booking queries don't load full aggregates**
+**Property 6: Booking queries don't load full aggregates**✅
 _For any_ booking query execution, the result should not contain domain events (indicating no aggregate was loaded).
 **Validates:** WHEN a booking query is executed, THE Query_Handler SHALL return data optimized for read operations without loading full aggregates
 
-**Property 7: Inventory queries don't trigger domain logic**
+**Property 7: Inventory queries don't trigger domain logic**✅
 _For any_ inventory query execution, no domain events should be generated in the outbox.
 **Validates:** WHEN an inventory query is executed, THE Query_Handler SHALL return availability data without triggering domain logic
 
-**Property 8: Query failures return typed errors**
+**Property 8: Query failures return typed errors**✅
 _For any_ query that fails, the error should be an instance of a known error type with diagnostic information.
 **Validates:** WHEN query execution fails, THE System SHALL return a typed error with diagnostic information
 
-**Property 9: findAvailableFlights respects cabin and minSeats filter**
+**Property 9: findAvailableFlights respects cabin and minSeats filter** ✅
 _For any_ availability search, the result should respect cabin and minimum seats filters.
 **Validates:** THE Query_Handler SHALL support filtering by cabin and minimum seats
 
@@ -168,18 +172,21 @@ _For any_ unexpected HTTP status code, the system should return an ExternalServi
 
 ## Implementation Status
 
-| Properties | Status         | Test File                                       |
-| ---------- | -------------- | ----------------------------------------------- |
-| 1-3        | ⏳ Pending     | -                                               |
-| 4-5        | ⏳ Pending     | -                                               |
-| 6-9        | ⏳ Pending     | -                                               |
-| 10-13      | ⏳ Pending     | -                                               |
-| 14-17      | ⏳ Pending     | -                                               |
-| 18-20      | ⏳ Pending     | -                                               |
-| 21-23      | ✅ Implemented | `config/infrastructure-config.property.test.ts` |
-| 24-27      | ⏳ Pending     | -                                               |
-| 28         | ⏳ Pending     | -                                               |
-| 29-34      | ✅ Implemented | `errors/error-mapper.property.test.ts`          |
+| Properties | Status         | Test File                                                                                                     |
+| ---------- | -------------- | ------------------------------------------------------------------------------------------------------------- |
+| 1-3, 35    | ✅ Implemented | `test/unit/gateways/currency-converter.property.test.ts`                                                      |
+| 4-5        | ⏳ Pending     | -                                                                                                             |
+| 6          | ✅ Implemented | `test/unit/queries/booking-queries.property.test.ts`                                                          |
+| 7          | ✅ Implemented | `test/unit/queries/inventory-queries.property.test.ts`                                                        |
+| 8          | ✅ Implemented | `test/unit/queries/booking-queries.property.test.ts` & `test/unit/queries/inventory-queries.property.test.ts` |
+| 9          | ✅ Implemented | `test/unit/queries/booking-queries.property.test.ts` & `test/unit/queries/inventory-queries.property.test.ts` |
+| 10-13      | ⏳ Pending     | -                                                                                                             |
+| 14-17      | ⏳ Pending     | -                                                                                                             |
+| 18-20      | ⏳ Pending     | -                                                                                                             |
+| 21-23      | ✅ Implemented | `config/infrastructure-config.property.test.ts`                                                               |
+| 24-27      | ⏳ Pending     | -                                                                                                             |
+| 28         | ⏳ Pending     | -                                                                                                             |
+| 29-33      | ✅ Implemented | `errors/error-mapper.property.test.ts`                                                                        |
 
 ## Common Property Patterns
 
@@ -267,7 +274,7 @@ fc.record({ field1: fc.string(), field2: fc.integer() });
 
 Each property maintains a clear traceability chain:
 
-```
+```text
 Requirement (EARS format)
     ↓
 Property (formal specification)
