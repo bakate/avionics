@@ -39,7 +39,8 @@ export interface PaymentConfirmation {
 export type CheckoutStatus =
   | { readonly status: "pending" }
   | { readonly status: "completed"; readonly confirmation: PaymentConfirmation }
-  | { readonly status: "expired" };
+  | { readonly status: "expired" }
+  | { readonly status: "failed"; readonly reason: string };
 
 // ============================================================================
 // Payment Errors
@@ -63,6 +64,7 @@ export class PaymentDeclinedError extends Data.TaggedError(
 )<{
   readonly reason: string;
   readonly code?: string;
+  readonly cause?: unknown;
 }> {}
 
 /**
@@ -72,6 +74,17 @@ export class CheckoutNotFoundError extends Data.TaggedError(
   "CheckoutNotFoundError",
 )<{
   readonly checkoutId: string;
+  readonly cause?: unknown;
+}> {}
+
+/**
+ * Error when an unsupported currency is provided
+ */
+export class UnsupportedCurrencyError extends Data.TaggedError(
+  "UnsupportedCurrencyError",
+)<{
+  readonly currency: string;
+  readonly supported: ReadonlyArray<string>;
 }> {}
 
 /**
@@ -80,7 +93,8 @@ export class CheckoutNotFoundError extends Data.TaggedError(
 export type PaymentError =
   | PaymentApiUnavailableError
   | PaymentDeclinedError
-  | CheckoutNotFoundError;
+  | CheckoutNotFoundError
+  | UnsupportedCurrencyError;
 
 // ============================================================================
 // Payment Gateway Port
@@ -123,9 +137,6 @@ export interface PaymentGatewayService {
   ) => Effect.Effect<CheckoutStatus, PaymentError>;
 }
 
-/**
- * PaymentGateway Context Tag
- */
 export class PaymentGateway extends Context.Tag("PaymentGateway")<
   PaymentGateway,
   PaymentGatewayService

@@ -103,8 +103,8 @@ export const PostgresBookingRepositoryLive = Layer.effect(
             if (booking.segments.length > 0) {
               for (const s of booking.segments) {
                 yield* sql`
-                INSERT INTO segments (id, booking_id, flight_id, cabin_class, price_amount, price_currency)
-                VALUES (${s.id}, ${booking.id}, ${s.flightId}, ${s.cabin}, ${s.price.amount}, ${s.price.currency})
+                INSERT INTO segments (id, booking_id, flight_id, cabin_class, price_amount, price_currency, seat_number)
+                VALUES (${s.id}, ${booking.id}, ${s.flightId}, ${s.cabin}, ${s.price.amount}, ${s.price.currency}, ${Option.getOrNull(s.seatNumber)})
               `;
               }
             }

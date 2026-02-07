@@ -7,6 +7,7 @@
     "./inventory.service": "./src/services/inventory.service.ts",
     "./inventory.repository": "./src/repositories/inventory.repository.ts",
     "./booking.repository": "./src/repositories/booking.repository.ts",
+    "./ticket.repository": "./src/repositories/ticket.repository.ts",
     "./payment.gateway": "./src/gateways/payment.gateway.ts",
     "./notification.gateway": "./src/gateways/notification.gateway.ts",
     "./currency-converter.gateway": "./src/gateways/currency-converter.gateway.ts",

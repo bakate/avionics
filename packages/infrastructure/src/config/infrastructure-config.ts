@@ -1,4 +1,4 @@
-import { Config, Redacted } from "effect";
+import { Config, ConfigError, Either, Redacted } from "effect";
 import { secret } from "../config.js";
 
 /**
@@ -39,7 +39,21 @@ export type CurrencyConfig = Config.Config.Success<typeof CurrencyConfig>;
 export const PolarConfig = Config.all({
   apiKey: secret("POLAR_API_KEY", "polar_test_mock"),
   productId: Config.string("POLAR_PRODUCT_ID").pipe(
-    Config.withDefault("polar_product_test"), // Default for tests
+    Config.withDefault("polar_product_test"), // Safe default for dev/test
+    Config.mapOrFail((id) => {
+      if (
+        process.env.NODE_ENV === "production" &&
+        id === "polar_product_test"
+      ) {
+        return Either.left(
+          ConfigError.InvalidData(
+            [],
+            "POLAR_PRODUCT_ID cannot be 'polar_product_test' in production",
+          ),
+        );
+      }
+      return Either.right(id);
+    }),
   ),
   baseUrl: Config.string("POLAR_BASE_URL").pipe(
     Config.withDefault("https://api.polar.sh/v1"),

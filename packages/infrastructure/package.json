@@ -26,7 +26,7 @@
     "@effect/platform": "catalog:effect3",
     "@effect/sql": "catalog:effect3",
     "@effect/sql-pg": "catalog:effect3",
-    "@polar-sh/sdk": "^0.42.5",
+    "@polar-sh/sdk": "^0.34.16",
     "@workspace/application": "workspace:*",
     "@workspace/domain": "workspace:*",
     "drizzle-orm": "^0.45.1",

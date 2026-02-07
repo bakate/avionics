@@ -45,6 +45,7 @@ export interface SegmentRow {
   readonly cabin_class: string;
   readonly price_amount: number;
   readonly price_currency: string;
+  readonly seat_number: string | null;
 }
 
 // --- Mappers ---
@@ -105,6 +106,7 @@ export const fromBookingRow = (
           Number(s.price_amount),
           Schema.decodeUnknownSync(CurrencyCodeSchema)(s.price_currency),
         ),
+        seatNumber: Option.fromNullable(s.seat_number),
       }),
   ) as [BookingSegment, ...Array<BookingSegment>];
 

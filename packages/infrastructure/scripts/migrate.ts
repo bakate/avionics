@@ -23,6 +23,8 @@ async function runMigrations() {
     const db = drizzle(pool);
     await migrate(db, { migrationsFolder: "./drizzle" });
   } catch (_error) {
+    // biome-ignore lint/suspicious/noConsole: Migration script
+    console.error("Migration failed:", _error);
     process.exit(1);
   } finally {
     await pool.end();

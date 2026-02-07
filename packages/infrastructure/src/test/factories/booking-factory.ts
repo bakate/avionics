@@ -58,6 +58,7 @@ export const createTestBooking = ({
         ),
         cabin: CabinClass.ECONOMY,
         price: Money.of(100 + index * 10, "EUR"),
+        seatNumber: O.some(`1${String.fromCharCode(65 + index)}`),
       }),
   ) as [BookingSegment, ...Array<BookingSegment>];
 

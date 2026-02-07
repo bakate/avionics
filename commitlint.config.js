@@ -1,3 +1,4 @@
+// biome-ignore lint/style/noCommonJs: Commitlint config
 module.exports = {
   extends: ["@commitlint/config-conventional"],
   prompt: {
@@ -23,7 +24,8 @@ module.exports = {
             title: "Styles",
           },
           refactor: {
-            description: "A code change that neither fixes a bug nor adds a feature",
+            description:
+              "A code change that neither fixes a bug nor adds a feature",
             title: "Code Refactoring",
           },
           perf: {
@@ -55,16 +57,18 @@ module.exports = {
         },
       },
       scope: {
-        description: "What is the scope of this change (e.g. a feature or a component or file name)",
+        description:
+          "What is the scope of this change (e.g. a feature or a component or file name)",
       },
       subject: {
-        description: "Write a short, imperative tense description of the change",
+        description:
+          "Write a short, imperative tense description of the change",
       },
       body: {
         description: "Provide a longer description of the change",
       },
       isBreaking: {
-        description: "Are there any breaking changes?",
+        description: "Are there breaking changes?",
       },
       breakingBody: {
         description:
@@ -74,7 +78,7 @@ module.exports = {
         description: "Describe the breaking changes",
       },
       isIssueAffected: {
-        description: "Does this change affect any open issues?",
+        description: "Does this change affect open issues?",
       },
       issuesBody: {
         description:

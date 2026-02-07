@@ -7,6 +7,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   timestamp,
   uuid,
   varchar,
@@ -124,6 +125,7 @@ export const segments = pgTable(
     cabinClass: varchar("cabin_class", { length: 20 }).notNull(),
     priceAmount: decimal("price_amount", { precision: 10, scale: 2 }).notNull(),
     priceCurrency: varchar("price_currency", { length: 3 }).notNull(),
+    seatNumber: varchar("seat_number", { length: 10 }),
   },
   (table) => [index("idx_segments_booking").on(table.bookingId)],
 );
@@ -156,3 +158,34 @@ export const auditLog = pgTable("audit_log", {
   userId: varchar("user_id", { length: 100 }),
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 });
+
+// 7. Tickets
+export const tickets = pgTable(
+  "tickets",
+  {
+    ticketNumber: varchar("ticket_number", { length: 13 }).primaryKey(),
+    pnrCode: varchar("pnr_code", { length: 6 }).notNull(),
+    status: varchar("status", { length: 20 }).notNull(),
+    passengerId: uuid("passenger_id").notNull(),
+    passengerName: varchar("passenger_name", { length: 255 }).notNull(),
+    issuedAt: timestamp("issued_at").notNull().defaultNow(),
+  },
+  (table) => [index("idx_tickets_pnr").on(table.pnrCode)],
+);
+
+// 8. Coupons
+export const coupons = pgTable(
+  "coupons",
+  {
+    ticketNumber: varchar("ticket_number", { length: 13 })
+      .notNull()
+      .references(() => tickets.ticketNumber, { onDelete: "cascade" }),
+    couponNumber: integer("coupon_number").notNull(),
+    flightId: varchar("flight_id", { length: 50 }).notNull(),
+    seatNumber: varchar("seat_number", { length: 10 }),
+    status: varchar("status", { length: 20 }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.ticketNumber, table.couponNumber] }),
+  ],
+);
