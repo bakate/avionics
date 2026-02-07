@@ -30,13 +30,21 @@ _For any_ valid amount and two different currencies, converting from A to B and 
 
 ## Outbox Processor Properties
 
-**Property 4: All unpublished events are fetched**
+**Property 5a: All unpublished events are fetched** ✅
 _For any_ set of unpublished events in the outbox, running the processor should fetch all of them.
 **Validates:** WHEN the Outbox_Processor runs, THE System SHALL fetch all unpublished events from the outbox table
 
-**Property 5: Published events have timestamps**
+**Property 5b: Published events have timestamps** ✅
 _For any_ event that is successfully published, it should be marked with a non-null publishedAt timestamp.
 **Validates:** WHEN an event is successfully published, THE System SHALL mark it as published with a timestamp
+
+**Property 5c: Retry logic increments retry count on failure** ✅
+_For any_ publishing failure, the retry count should be incremented.
+**Validates:** WHEN publishing fails, THE System SHALL increment the retry count for that outbox event
+
+**Property 5d: Events with max retries are skipped** ✅
+_For any_ event that has reached the maximum retry count, it should be skipped in subsequent runs.
+**Validates:** WHEN an event reaches the configured max retry count, THE System SHALL skip publishing it (not attempt further retries)
 
 ## Query Handler Properties
 
@@ -174,8 +182,8 @@ _For any_ unexpected HTTP status code, the system should return an ExternalServi
 
 | Properties | Status         | Test File                                                                                                     |
 | ---------- | -------------- | ------------------------------------------------------------------------------------------------------------- |
-| 1-3, 4     | ✅ Implemented | `test/unit/gateways/currency-converter.property.test.ts`                                                      |
-| 4-5        | ⏳ Pending     | -                                                                                                             |
+| 1-4        | ✅ Implemented | `test/unit/gateways/currency-converter.property.test.ts`                                                      |
+| 5a-5d      | ✅ Implemented | `test/unit/events/outbox-processor.property.test.ts`                                                          |
 | 6          | ✅ Implemented | `test/unit/queries/booking-queries.property.test.ts`                                                          |
 | 7          | ✅ Implemented | `test/unit/queries/inventory-queries.property.test.ts`                                                        |
 | 8          | ✅ Implemented | `test/unit/queries/booking-queries.property.test.ts` & `test/unit/queries/inventory-queries.property.test.ts` |
@@ -206,7 +214,7 @@ Combining an operation with its inverse returns to original.
 
 Doing it twice = doing it once.
 
-- Example: Property 5 (published events stay published)
+- Example: Property 5b (published events stay published)
 
 ### 4. Error Conditions
 
