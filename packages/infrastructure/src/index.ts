@@ -2,6 +2,7 @@ import { Layer } from "effect";
 import { ConnectionPoolLive } from "./db/connection.js";
 import { EventBusLive } from "./events/event-bus.js";
 import { TransactionalOutboxLive } from "./events/transactional-outbox.js";
+import { CurrencyConverterGatewayLive } from "./gateways/currency-converter.gateway.js";
 import { NotificationGatewayLive } from "./gateways/notification-gateway.js";
 import { PaymentGatewayLive } from "./gateways/payment-gateway.js";
 import { PostgresBookingRepositoryLive } from "./repositories/postgres-booking.repository.js";
@@ -17,6 +18,7 @@ export const RepositoriesLive = Layer.mergeAll(
 
 // Grouping Gateways
 export const GatewaysLive = Layer.mergeAll(
+  CurrencyConverterGatewayLive,
   NotificationGatewayLive,
   PaymentGatewayLive,
 );
