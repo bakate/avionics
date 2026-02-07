@@ -124,9 +124,8 @@ export const PaymentGatewayLive = Layer.effect(
           currency: params.amount.currency,
         });
 
-        // Validate currency support
+        // Validate currency support (currency is set at product level in Polar)
         const currency = params.amount.currency.toLowerCase();
-        // Allowed: EUR, USD, GBP, CHF
         const supported = ["eur", "usd", "gbp", "chf"];
         if (!supported.includes(currency)) {
           return yield* Effect.fail(
@@ -139,25 +138,28 @@ export const PaymentGatewayLive = Layer.effect(
 
         const amountCents = params.amount.toCents();
 
-        // Create checkout session with dynamic pricing
+        // Create checkout session
+        // Note: Currency is configured at the product level in Polar
+        // We pass amount override for dynamic pricing
         const response = yield* Effect.tryPromise({
           try: () =>
             polar.checkouts.create(
               {
                 products: [config.productId],
-                amount: amountCents, // Polar uses cents
-                currency: currency as "eur" | "usd" | "gbp", // CHF might need cast if SDK types are strict but API supports it
+                amount: amountCents, // Polar uses cents, overrides product price
                 customerEmail: params.customer.email,
                 externalCustomerId: params.customer.externalId,
                 successUrl: params.successUrl,
-                returnUrl: params.cancelUrl,
                 metadata: {
                   bookingReference: params.bookingReference,
+                  currency: params.amount.currency, // Store currency in metadata for reference
                 },
               },
               {
-                headers: {
-                  "Idempotency-Key": `checkout_${params.bookingReference}`,
+                fetchOptions: {
+                  headers: {
+                    "Idempotency-Key": `checkout-${params.bookingReference}`,
+                  },
                 },
               },
             ),

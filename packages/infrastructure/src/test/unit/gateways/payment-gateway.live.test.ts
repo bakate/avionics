@@ -35,18 +35,16 @@ describe("PaymentGatewayLive", () => {
   });
 
   // Helper to run effects with the Live layer
-  const runTest = <A, E>(effect: Effect.Effect<A, E, PaymentGateway>) => {
-    // Set dummy env vars required by Config
-    process.env.POLAR_API_KEY = "test_key";
-    process.env.POLAR_PRODUCT_ID = "test_product";
-
-    return Effect.runPromise(effect.pipe(Effect.provide(PaymentGatewayLive)));
+  const runTest = async <A, E>(effect: Effect.Effect<A, E, PaymentGateway>) => {
+    return await Effect.runPromise(
+      effect.pipe(Effect.provide(PaymentGatewayLive)),
+    );
   };
 
-  const runTestExit = <A, E>(effect: Effect.Effect<A, E, PaymentGateway>) => {
-    process.env.POLAR_API_KEY = "test_key";
-    process.env.POLAR_PRODUCT_ID = "test_product";
-    return Effect.runPromiseExit(
+  const runTestExit = async <A, E>(
+    effect: Effect.Effect<A, E, PaymentGateway>,
+  ) => {
+    return await Effect.runPromiseExit(
       effect.pipe(Effect.provide(PaymentGatewayLive)),
     );
   };
@@ -70,15 +68,21 @@ describe("PaymentGatewayLive", () => {
 
     const result = await runTest(program);
     expect(result.id).toBe("chk_123");
+    // Currency is stored in metadata since Polar SDK configures currency at product level
     expect(mocks.checkoutsCreate).toHaveBeenCalledWith(
       expect.objectContaining({
-        currency: "chf",
+        metadata: expect.objectContaining({
+          currency: "CHF",
+          bookingReference: "REF123",
+        }),
       }),
-      {
-        headers: {
-          "Idempotency-Key": "checkout_REF123",
+      expect.objectContaining({
+        fetchOptions: {
+          headers: {
+            "Idempotency-Key": "checkout-REF123",
+          },
         },
-      },
+      }),
     );
   });
 
@@ -86,7 +90,13 @@ describe("PaymentGatewayLive", () => {
     const program = Effect.gen(function* () {
       const gateway = yield* PaymentGateway;
       return yield* gateway.createCheckout({
-        amount: { amount: 100, currency: "JPY" } as unknown as Money, // Not supported
+        // Bypass Money schema validation by passing a plain object that mimics Money
+        // This avoids ParseError from Money constructor/schema validation
+        amount: {
+          amount: 100,
+          currency: "JPY",
+          toCents: () => 10000,
+        } as unknown as Money,
         customer: { email: "test@example.com" },
         bookingReference: "REF123",
         successUrl: "https://example.com",
@@ -98,23 +108,11 @@ describe("PaymentGatewayLive", () => {
       throw new Error("Expected failure");
     }
     const failure = Cause.failureOption(exit.cause).pipe(EOption.getOrNull);
-    // If Money schema validation fails before our check, we might get ParseError.
-    // For now, let's just inspect what we get.
-    if (
-      failure &&
-      (failure as unknown as { _tag: string })._tag === "ParseError"
-    ) {
-      // If Money schema is stricter than our gateway, we accept ParseError as "rejection"
-      // but ideally we want to test our specific error.
-      // However, if we can't bypass Money schema, we might need to skip this specific check
-      // or accept that Money validation catches it first.
-      expect((failure as unknown as { _tag: string })._tag).toBe("ParseError");
-    } else {
-      expect(failure).toMatchObject({
-        _tag: "UnsupportedCurrencyError",
-        currency: "JPY",
-      });
-    }
+
+    expect(failure).toMatchObject({
+      _tag: "UnsupportedCurrencyError",
+      currency: "JPY",
+    });
   });
 
   it("should retry on transient errors (RequestTimeoutError)", async () => {
