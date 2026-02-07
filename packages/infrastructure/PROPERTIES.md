@@ -180,7 +180,7 @@ _For any_ unexpected HTTP status code, the system should return an ExternalServi
 | 7          | ✅ Implemented | `test/unit/queries/inventory-queries.property.test.ts`                                                        |
 | 8          | ✅ Implemented | `test/unit/queries/booking-queries.property.test.ts` & `test/unit/queries/inventory-queries.property.test.ts` |
 | 9          | ✅ Implemented | `test/unit/queries/booking-queries.property.test.ts` & `test/unit/queries/inventory-queries.property.test.ts` |
-| 10-13      | ⏳ Pending     | -                                                                                                             |
+| 10-13      | ✅ Implemented | `test/unit/gateways/payment-gateway.property.test.ts`                                                         |
 | 14-17      | ⏳ Pending     | -                                                                                                             |
 | 18-20      | ⏳ Pending     | -                                                                                                             |
 | 21-23      | ✅ Implemented | `config/infrastructure-config.property.test.ts`                                                               |

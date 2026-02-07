@@ -38,6 +38,9 @@ export type CurrencyConfig = Config.Config.Success<typeof CurrencyConfig>;
  */
 export const PolarConfig = Config.all({
   apiKey: secret("POLAR_API_KEY", "polar_test_mock"),
+  productId: Config.string("POLAR_PRODUCT_ID").pipe(
+    Config.withDefault("polar_product_test"), // Default for tests
+  ),
   baseUrl: Config.string("POLAR_BASE_URL").pipe(
     Config.withDefault("https://api.polar.sh/v1"),
   ),

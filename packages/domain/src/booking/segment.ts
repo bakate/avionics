@@ -9,4 +9,5 @@ export class BookingSegment extends Schema.Class<BookingSegment>(
   flightId: FlightId,
   cabin: CabinClassSchema,
   price: Money,
+  seatNumber: Schema.Option(Schema.String),
 }) {}
