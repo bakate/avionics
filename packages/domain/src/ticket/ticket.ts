@@ -16,6 +16,7 @@ export const TicketStatus = {
   REFUNDED: "REFUNDED",
   VOIDED: "VOIDED",
   EXCHANGED: "EXCHANGED",
+  NOTIFICATION_FAILED: "NOTIFICATION_FAILED",
 } as const;
 export type TicketStatus = (typeof TicketStatus)[keyof typeof TicketStatus];
 export const TicketStatusSchema = Schema.Enums(TicketStatus);

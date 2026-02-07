@@ -15,6 +15,13 @@
       "when": 1770209840628,
       "tag": "0001_adorable_wild_child",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770482700927,
+      "tag": "0002_organic_bedlam",
+      "breakpoints": true
     }
   ]
 }

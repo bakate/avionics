@@ -34,6 +34,7 @@ const makeExpiredBooking = (pnr: string, flightId = "FL-123") => {
     flightId: makeFlightId(flightId),
     cabin: "ECONOMY",
     price: Money.of(100, "EUR"),
+    seatNumber: O.none(),
   });
 
   return Booking.create({

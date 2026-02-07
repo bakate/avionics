@@ -15,6 +15,13 @@
  */
 
 import { Polar } from "@polar-sh/sdk";
+import { ExpiredCheckoutError } from "@polar-sh/sdk/models/errors/expiredcheckouterror.js";
+import {
+  ConnectionError,
+  RequestTimeoutError,
+} from "@polar-sh/sdk/models/errors/httpclienterrors.js";
+import { PaymentError as PolarPaymentError } from "@polar-sh/sdk/models/errors/paymenterror.js";
+import { ResourceNotFound } from "@polar-sh/sdk/models/errors/resourcenotfound.js";
 import {
   CheckoutNotFoundError,
   type CheckoutSession,
@@ -24,6 +31,7 @@ import {
   type PaymentError,
   PaymentGateway,
   type PaymentGatewayService,
+  UnsupportedCurrencyError,
 } from "@workspace/application/payment.gateway";
 import { Money } from "@workspace/domain/kernel";
 import { Duration, Effect, Layer, Redacted, Schedule } from "effect";
@@ -35,32 +43,45 @@ import { PolarConfig } from "../config/infrastructure-config.js";
 
 const mapPolarError = (error: unknown): PaymentError => {
   // Handle Polar SDK specific errors
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
+  if (
+    error instanceof RequestTimeoutError ||
+    error instanceof ConnectionError
+  ) {
+    return new PaymentApiUnavailableError({
+      message: `Polar API unavailable: ${error.message}`,
+      cause: error,
+    });
+  }
 
-    if (message.includes("timeout") || message.includes("network")) {
-      return new PaymentApiUnavailableError({
-        message: `Polar API unavailable: ${error.message}`,
-        cause: error,
-      });
-    }
+  if (error instanceof PolarPaymentError) {
+    return new PaymentDeclinedError({
+      reason: error.message,
+      code: "PAYMENT_DECLINED",
+      cause: error,
+    });
+  }
 
-    if (message.includes("declined") || message.includes("insufficient")) {
-      return new PaymentDeclinedError({
-        reason: error.message,
-        code: "PAYMENT_DECLINED",
-      });
-    }
+  if (
+    error instanceof ExpiredCheckoutError ||
+    error instanceof ResourceNotFound
+  ) {
+    // Try to extract ID from error if available
+    const errorObj = error as {
+      checkoutId?: unknown;
+      id?: unknown;
+      resourceId?: unknown;
+    };
+    const checkoutId =
+      errorObj.checkoutId || errorObj.id || errorObj.resourceId || "unknown";
 
-    if (message.includes("not found") || message.includes("expired")) {
-      return new CheckoutNotFoundError({
-        checkoutId: "unknown",
-      });
-    }
+    return new CheckoutNotFoundError({
+      checkoutId: String(checkoutId),
+      cause: error,
+    });
   }
 
   return new PaymentApiUnavailableError({
-    message: `Polar API error: ${String(error)}`,
+    message: `Polar API error: ${error instanceof Error ? error.message : String(error)}`,
     cause: error,
   });
 };
@@ -105,11 +126,13 @@ export const PaymentGatewayLive = Layer.effect(
 
         // Validate currency support
         const currency = params.amount.currency.toLowerCase();
-        if (currency !== "eur" && currency !== "usd" && currency !== "gbp") {
+        // Allowed: EUR, USD, GBP, CHF
+        const supported = ["eur", "usd", "gbp", "chf"];
+        if (!supported.includes(currency)) {
           return yield* Effect.fail(
-            new PaymentDeclinedError({
-              reason: `Unsupported currency: ${params.amount.currency}. Supported: EUR, USD, GBP`,
-              code: "UNSUPPORTED_CURRENCY",
+            new UnsupportedCurrencyError({
+              currency: params.amount.currency,
+              supported: ["EUR", "USD", "GBP", "CHF"],
             }),
           );
         }
@@ -123,7 +146,7 @@ export const PaymentGatewayLive = Layer.effect(
               {
                 products: [config.productId],
                 amount: amountCents, // Polar uses cents
-                currency: currency as "eur" | "usd" | "gbp",
+                currency: currency as "eur" | "usd" | "gbp", // CHF might need cast if SDK types are strict but API supports it
                 customerEmail: params.customer.email,
                 externalCustomerId: params.customer.externalId,
                 successUrl: params.successUrl,
@@ -139,7 +162,12 @@ export const PaymentGatewayLive = Layer.effect(
               },
             ),
           catch: mapPolarError,
-        }).pipe(Effect.retry(retryPolicy));
+        }).pipe(
+          Effect.retry({
+            schedule: retryPolicy,
+            while: (error) => error._tag === "PaymentApiUnavailableError",
+          }),
+        );
 
         yield* Effect.logInfo("Polar checkout session created", {
           checkoutId: response.id,
@@ -187,15 +215,19 @@ export const PaymentGatewayLive = Layer.effect(
         switch (response.status) {
           case "succeeded": {
             // Access potential timestamp fields that might be missing from strict SDK types
-            const detailedResponse = response as {
-              succeededAt?: string | number | Date | null;
-              completedAt?: string | number | Date | null;
-              paidAt?: string | number | Date | null;
-            };
+            // Using 'in' check for safety
+            const hasSucceededAt = "succeededAt" in response;
+            const hasCompletedAt = "completedAt" in response;
+            const hasPaidAt = "paidAt" in response;
+
             const explicitDate =
-              detailedResponse.succeededAt ||
-              detailedResponse.completedAt ||
-              detailedResponse.paidAt;
+              (hasSucceededAt
+                ? (response as { succeededAt: string }).succeededAt
+                : null) ??
+              (hasCompletedAt
+                ? (response as { completedAt: string }).completedAt
+                : null) ??
+              (hasPaidAt ? (response as { paidAt: string }).paidAt : null);
 
             let paidAt: Date;
             if (explicitDate) {
@@ -218,14 +250,26 @@ export const PaymentGatewayLive = Layer.effect(
                 paidAt,
                 amount: Money.of(
                   response.totalAmount / 100,
-                  response.currency.toUpperCase() as "EUR" | "USD" | "GBP",
+                  response.currency.toUpperCase() as
+                    | "EUR"
+                    | "USD"
+                    | "GBP"
+                    | "CHF",
                 ),
               },
             } satisfies CheckoutStatus;
           }
 
-          case "expired":
           case "failed":
+            return {
+              status: "failed",
+              reason:
+                "failureReason" in response
+                  ? (response as { failureReason: string }).failureReason
+                  : "unknown",
+            } satisfies CheckoutStatus;
+
+          case "expired":
             return { status: "expired" } satisfies CheckoutStatus;
 
           default:

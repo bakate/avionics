@@ -3,9 +3,9 @@
  * These tests verify state transition properties
  */
 
-import { fc, test } from "@fast-check/vitest";
+import { fc } from "@fast-check/vitest";
 import { Effect, Option as O } from "effect";
-import { describe, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
   type BookingId,
   type CabinClass,
@@ -82,6 +82,7 @@ const arbBookingSegment = fc
         flightId: makeFlightId(props.flightId),
         cabin: props.cabin as CabinClass,
         price: props.price,
+        seatNumber: O.none(),
       }),
   );
 
@@ -113,129 +114,143 @@ const arbBooking = fc
 // -----------------------------------------------------------------------------
 
 describe("Booking - Property-Based Tests", () => {
-  test.prop([arbBooking])(
-    "Property 1: New bookings start in HELD status",
-    (booking) => {
-      expect(booking.status).toBe(PnrStatus.HELD);
-    },
-  );
+  test("Property 1: New bookings start in HELD status", () => {
+    fc.assert(
+      fc.property(arbBooking, (booking) => {
+        expect(booking.status).toBe(PnrStatus.HELD);
+      }),
+    );
+  });
 
-  test.prop([arbBooking])(
-    "Property 2: Confirming a HELD booking transitions to CONFIRMED",
-    async (booking) => {
-      const program = Effect.gen(function* () {
-        const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
-        return confirmed.status === PnrStatus.CONFIRMED;
-      });
+  test("Property 2: Confirming a HELD booking transitions to CONFIRMED", async () => {
+    await fc.assert(
+      fc.asyncProperty(arbBooking, async (booking) => {
+        const program = Effect.gen(function* () {
+          const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
+          return confirmed.status === PnrStatus.CONFIRMED;
+        });
 
-      const result = await Effect.runPromise(program);
-      expect(result).toBe(true);
-    },
-  );
+        const result = await Effect.runPromise(program);
+        expect(result).toBe(true);
+      }),
+    );
+  });
 
-  test.prop([arbBooking])(
-    "Property 3: Confirmed bookings have no expiration",
-    async (booking) => {
-      const program = Effect.gen(function* () {
-        const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
-        return O.isNone(confirmed.expiresAt);
-      });
+  test("Property 3: Confirmed bookings have no expiration", async () => {
+    await fc.assert(
+      fc.asyncProperty(arbBooking, async (booking) => {
+        const program = Effect.gen(function* () {
+          const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
+          return O.isNone(confirmed.expiresAt);
+        });
 
-      const result = await Effect.runPromise(program);
-      expect(result).toBe(true);
-    },
-  );
+        const result = await Effect.runPromise(program);
+        expect(result).toBe(true);
+      }),
+    );
+  });
 
-  test.prop([arbBooking, fc.string({ minLength: 5, maxLength: 50 })])(
-    "Property 4: Cancelling a booking transitions to CANCELLED",
-    async (booking, reason) => {
-      const program = Effect.gen(function* () {
-        const cancelled = yield* booking.cancel(reason);
-        return cancelled.status === PnrStatus.CANCELLED;
-      });
+  test("Property 4: Cancelling a booking transitions to CANCELLED", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        arbBooking,
+        fc.string({ minLength: 5, maxLength: 50 }),
+        async (booking, reason) => {
+          const program = Effect.gen(function* () {
+            const cancelled = yield* booking.cancel(reason);
+            return cancelled.status === PnrStatus.CANCELLED;
+          });
 
-      const result = await Effect.runPromise(program);
-      expect(result).toBe(true);
-    },
-  );
+          const result = await Effect.runPromise(program);
+          expect(result).toBe(true);
+        },
+      ),
+    );
+  });
 
-  test.prop([arbBooking])(
-    "Property 5: Domain events are emitted on creation",
-    (booking) => {
-      expect(booking.domainEvents.length).toBeGreaterThan(0);
-    },
-  );
+  test("Property 5: Domain events are emitted on creation", () => {
+    fc.assert(
+      fc.property(arbBooking, (booking) => {
+        expect(booking.domainEvents.length).toBeGreaterThan(0);
+      }),
+    );
+  });
 
-  test.prop([arbBooking])(
-    "Property 6: State transitions emit domain events",
-    async (booking) => {
-      const program = Effect.gen(function* () {
-        const initialEventCount = booking.domainEvents.length;
-        const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
-        return confirmed.domainEvents.length > initialEventCount;
-      });
+  test("Property 6: State transitions emit domain events", async () => {
+    await fc.assert(
+      fc.asyncProperty(arbBooking, async (booking) => {
+        const program = Effect.gen(function* () {
+          const initialEventCount = booking.domainEvents.length;
+          const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
+          return confirmed.domainEvents.length > initialEventCount;
+        });
 
-      const result = await Effect.runPromise(program);
-      expect(result).toBe(true);
-    },
-  );
+        const result = await Effect.runPromise(program);
+        expect(result).toBe(true);
+      }),
+    );
+  });
 
-  test.prop([arbBooking])(
-    "Property 7: Expired bookings cannot be confirmed",
-    async (booking) => {
-      // Create an expired booking
-      const expiredBooking = new Booking({
-        ...booking,
-        expiresAt: O.some(new Date(FIXED_NOW - 1000)), // 1 second ago
-      });
+  test("Property 7: Expired bookings cannot be confirmed", async () => {
+    await fc.assert(
+      fc.asyncProperty(arbBooking, async (booking) => {
+        // Create an expired booking
+        const expiredBooking = new Booking({
+          ...booking,
+          expiresAt: O.some(new Date(FIXED_NOW - 1000)), // 1 second ago
+        });
 
-      const program = expiredBooking.confirm(new Date(FIXED_NOW)).pipe(
-        Effect.map(() => false), // Should not succeed
-        Effect.catchTag("BookingExpiredError", () => Effect.succeed(true)),
-      );
+        const program = expiredBooking.confirm(new Date(FIXED_NOW)).pipe(
+          Effect.map(() => false), // Should not succeed
+          Effect.catchTag("BookingExpiredError", () => Effect.succeed(true)),
+        );
 
-      const result = await Effect.runPromise(program);
-      expect(result).toBe(true);
-    },
-  );
+        const result = await Effect.runPromise(program);
+        expect(result).toBe(true);
+      }),
+    );
+  });
 
-  test.prop([arbBooking])(
-    "Property 8: Booking is payable when HELD or CONFIRMED",
-    async (booking) => {
-      const program = Effect.gen(function* () {
-        // HELD booking should be payable
-        const heldPayable = booking.isPayable();
+  test("Property 8: Booking is payable when HELD or CONFIRMED", async () => {
+    await fc.assert(
+      fc.asyncProperty(arbBooking, async (booking) => {
+        const program = Effect.gen(function* () {
+          // HELD booking should be payable
+          const heldPayable = booking.isPayable();
 
-        // CONFIRMED booking should be payable
-        const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
-        const confirmedPayable = confirmed.isPayable();
+          // CONFIRMED booking should be payable
+          const confirmed = yield* booking.confirm(new Date(FIXED_NOW));
+          const confirmedPayable = confirmed.isPayable();
 
-        return heldPayable && confirmedPayable;
-      });
+          return heldPayable && confirmedPayable;
+        });
 
-      const result = await Effect.runPromise(program);
-      expect(result).toBe(true);
-    },
-  );
+        const result = await Effect.runPromise(program);
+        expect(result).toBe(true);
+      }),
+    );
+  });
 
-  test.prop([arbBooking, fc.string()])(
-    "Property 9: Cancelled bookings are not payable",
-    async (booking, reason) => {
-      const program = Effect.gen(function* () {
-        const cancelled = yield* booking.cancel(reason);
-        return !cancelled.isPayable();
-      });
+  test("Property 9: Cancelled bookings are not payable", async () => {
+    await fc.assert(
+      fc.asyncProperty(arbBooking, fc.string(), async (booking, reason) => {
+        const program = Effect.gen(function* () {
+          const cancelled = yield* booking.cancel(reason);
+          return !cancelled.isPayable();
+        });
 
-      const result = await Effect.runPromise(program);
-      expect(result).toBe(true);
-    },
-  );
+        const result = await Effect.runPromise(program);
+        expect(result).toBe(true);
+      }),
+    );
+  });
 
-  test.prop([arbBooking])(
-    "Property 10: Clearing events removes all domain events",
-    (booking) => {
-      const cleared = booking.clearEvents();
-      expect(cleared.domainEvents.length).toBe(0);
-    },
-  );
+  test("Property 10: Clearing events removes all domain events", () => {
+    fc.assert(
+      fc.property(arbBooking, (booking) => {
+        const cleared = booking.clearEvents();
+        expect(cleared.domainEvents.length).toBe(0);
+      }),
+    );
+  });
 });

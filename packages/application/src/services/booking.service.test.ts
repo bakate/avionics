@@ -28,6 +28,7 @@ import {
   type BookingRepositoryPort,
 } from "../repositories/booking.repository.js";
 import { InventoryRepository } from "../repositories/inventory.repository.js";
+import { TicketRepository } from "../repositories/ticket.repository.js";
 import { BookFlightCommand, BookingService } from "./booking.service.js";
 import { InventoryService } from "./inventory.service.js";
 
@@ -187,17 +188,30 @@ describe("BookingService", () => {
       cabinClass: "ECONOMY",
       passenger: makePassenger(),
       seatNumber: Option.some("12A"),
-      creditCardToken: "tok_visa",
+      successUrl: "https://example.com/success",
     });
 
     const program = Effect.gen(function* () {
       const service = yield* BookingService;
-      return yield* service.bookFlight(command);
+      const result = yield* service.bookFlight(command);
+
+      // Verify intermediate state
+      if (result.booking.status !== "Held") {
+        throw new Error(`Expected Held, got ${result.booking.status}`);
+      }
+
+      // Simulate confirmation
+      const { booking: confirmedBooking } = yield* service.confirmBooking(
+        result.booking.id,
+      );
+      return { result, confirmedBooking };
     }).pipe(Effect.provide(TestLayer));
 
-    const result = await Effect.runPromise(program);
+    const { result, confirmedBooking } = await Effect.runPromise(program);
 
-    expect(result.status).toBe("Confirmed");
+    expect(result.booking.status).toBe("Held");
+    expect(result.checkout).toBeDefined();
+    expect(confirmedBooking.status).toBe("Confirmed");
   });
 
   it("should fail when no seats available", async () => {
@@ -222,7 +236,7 @@ describe("BookingService", () => {
       cabinClass: "ECONOMY",
       passenger: makePassenger(),
       seatNumber: Option.some("12A"),
-      creditCardToken: "tok_visa",
+      successUrl: "https://example.com/success",
     });
 
     const program = Effect.gen(function* () {
@@ -260,7 +274,7 @@ describe("BookingService", () => {
       cabinClass: "ECONOMY",
       passenger: makePassenger(),
       seatNumber: Option.some("12A"),
-      creditCardToken: "tok_visa",
+      successUrl: "https://example.com/success",
     });
 
     const program = Effect.gen(function* () {
@@ -270,7 +284,7 @@ describe("BookingService", () => {
 
     const result = await Effect.runPromise(program);
 
-    expect(result.status).toBe("Confirmed");
+    expect(result.booking.status).toBe("Held");
     expect(pnrCheckCount).toBe(2);
   });
 
@@ -306,11 +320,33 @@ describe("BookingService", () => {
     const program = Effect.gen(function* () {
       const inventoryRepo = yield* makeFakeInventoryRepo([initialInventory]);
       const bookingRepo = yield* makeFakeBookingRepo();
-      const paymentGateway = PaymentGateway.of({ charge: () => Effect.void });
+      const paymentGateway = PaymentGateway.of({
+        createCheckout: () =>
+          Effect.succeed({
+            id: "chk_123",
+            checkoutUrl: "https://example.com/checkout",
+            expiresAt: new Date(),
+          }),
+        getCheckoutStatus: () =>
+          Effect.succeed({
+            status: "completed",
+            confirmation: {
+              checkoutId: "chk_123",
+              transactionId: "tx_123",
+              amount: Money.of(100, "USD"),
+              paidAt: new Date(),
+            },
+          }),
+      });
       const notificationGateway = NotificationGateway.of({
         sendTicket: () => Effect.void,
       });
       const unitOfWork = UnitOfWork.of({ transaction: (eff) => eff });
+
+      const ticketRepo = TicketRepository.of({
+        save: (t) => Effect.succeed(t),
+        findByTicketNumber: () => Effect.succeed(null),
+      });
 
       const BookingServiceLive = BookingService.Live.pipe(
         Layer.provide(InventoryService.Live),
@@ -319,6 +355,7 @@ describe("BookingService", () => {
         Layer.provide(Layer.succeed(PaymentGateway, paymentGateway)),
         Layer.provide(Layer.succeed(NotificationGateway, notificationGateway)),
         Layer.provide(Layer.succeed(UnitOfWork, unitOfWork)),
+        Layer.provide(Layer.succeed(TicketRepository, ticketRepo)),
       );
 
       const bookingService = yield* BookingService.pipe(
@@ -333,7 +370,7 @@ describe("BookingService", () => {
             cabinClass: "ECONOMY",
             passenger: makePassenger(),
             seatNumber: Option.some(`1${i}A`),
-            creditCardToken: "tok_visa",
+            successUrl: "https://example.com/success",
           }),
       );
 
@@ -379,6 +416,7 @@ describe("BookingService", () => {
       flightId: makeFlightId("flight-1"),
       cabin: "ECONOMY",
       price: Money.of(100, "USD"),
+      seatNumber: Option.some("1A"),
     });
 
     return new Booking({
@@ -447,12 +485,13 @@ describe("BookingService", () => {
         flightId: "flight-1",
         cabinClass: "ECONOMY",
         passenger: makePassenger(),
-        creditCardToken: "tok_visa",
+        successUrl: "https://example.com/success",
         seatNumber: Option.none(),
       });
 
       // Execute
-      return yield* service.bookFlight(command);
+      const { booking } = yield* service.bookFlight(command);
+      return yield* service.confirmBooking(booking.id);
     });
 
     const layer = BookingService.Test({

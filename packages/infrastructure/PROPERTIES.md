@@ -24,7 +24,7 @@ _For any_ invalid currency code (not in ISO 4217), the converter should return a
 _For any_ positive amount and valid different currencies, the conversion should produce a positive result.
 **Validates:** WHEN a currency conversion is requested with valid currencies, THE Currency_Gateway SHALL return the converted amount using current exchange rates
 
-**Property 35: Conversion round-trip preserves approximate value** ✅
+**Property 4: Conversion round-trip preserves approximate value** ✅
 _For any_ valid amount and two different currencies, converting from A to B and back to A should return the original amount within floating-point tolerance.
 **Validates:** THE Currency_Gateway conversion SHALL be invertible with high precision
 
@@ -174,7 +174,7 @@ _For any_ unexpected HTTP status code, the system should return an ExternalServi
 
 | Properties | Status         | Test File                                                                                                     |
 | ---------- | -------------- | ------------------------------------------------------------------------------------------------------------- |
-| 1-3, 35    | ✅ Implemented | `test/unit/gateways/currency-converter.property.test.ts`                                                      |
+| 1-3, 4     | ✅ Implemented | `test/unit/gateways/currency-converter.property.test.ts`                                                      |
 | 4-5        | ⏳ Pending     | -                                                                                                             |
 | 6          | ✅ Implemented | `test/unit/queries/booking-queries.property.test.ts`                                                          |
 | 7          | ✅ Implemented | `test/unit/queries/inventory-queries.property.test.ts`                                                        |

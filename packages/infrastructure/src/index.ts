@@ -7,12 +7,14 @@ import { NotificationGatewayLive } from "./gateways/notification-gateway.js";
 import { PaymentGatewayLive } from "./gateways/payment-gateway.js";
 import { PostgresBookingRepositoryLive } from "./repositories/postgres-booking.repository.js";
 import { PostgresInventoryRepositoryLive } from "./repositories/postgres-inventory.repository.js";
+import { PostgresTicketRepositoryLive } from "./repositories/postgres-ticket.repository.js";
 import { UnitOfWorkLive } from "./repositories/unit-of-work.js";
 
 // Grouping Repositories
 export const RepositoriesLive = Layer.mergeAll(
   PostgresBookingRepositoryLive,
   PostgresInventoryRepositoryLive,
+  PostgresTicketRepositoryLive,
   UnitOfWorkLive,
 );
 

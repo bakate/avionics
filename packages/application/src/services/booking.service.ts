@@ -4,7 +4,7 @@ import { Coupon } from "@workspace/domain/coupon";
 import {
   type BookingExpiredError,
   BookingNotFoundError,
-  type BookingPersistenceError,
+  BookingPersistenceError,
   type BookingStatusError,
   type FlightFullError,
   type FlightNotFoundError,
@@ -51,6 +51,7 @@ import {
   BookingRepository,
   type BookingRepositoryPort,
 } from "../repositories/booking.repository.js";
+import { TicketRepository } from "../repositories/ticket.repository.js";
 import {
   InventoryService,
   type InventoryServiceSignature,
@@ -92,6 +93,14 @@ export interface BookingResult {
   readonly checkout?: CheckoutSession;
 }
 
+/**
+ * Result of a booking confirmation
+ */
+export interface BookingConfirmation {
+  readonly booking: Booking;
+  readonly ticket: Ticket;
+}
+
 export interface BookingServiceImpl {
   /**
    * Initiates a booking and creates a checkout session for payment
@@ -131,7 +140,7 @@ export interface BookingServiceImpl {
   confirmBooking: (
     bookingId: BookingId,
   ) => Effect.Effect<
-    Booking,
+    BookingConfirmation,
     | BookingNotFoundError
     | BookingPersistenceError
     | OptimisticLockingError
@@ -162,6 +171,7 @@ export class BookingService extends Context.Tag("BookingService")<
       const paymentGateway = yield* PaymentGateway;
       const notificationGateway = yield* NotificationGateway;
       const unitOfWork = yield* UnitOfWork;
+      const ticketRepo = yield* TicketRepository;
 
       // Retry policy: exponential backoff, max 3 attempts
       const retryPolicy = Schedule.exponential(Duration.millis(100)).pipe(
@@ -181,6 +191,16 @@ export class BookingService extends Context.Tag("BookingService")<
               }),
             ),
           );
+
+          if (!booking.passengers?.length || !booking.segments?.length) {
+            return yield* Effect.fail(
+              new BookingPersistenceError({
+                bookingId: booking.id,
+                reason:
+                  "Booking must have at least one passenger and one segment",
+              }),
+            );
+          }
 
           const confirmedBooking = yield* Effect.gen(function* () {
             const confirmed = yield* booking.confirm();
@@ -214,15 +234,36 @@ export class BookingService extends Context.Tag("BookingService")<
             issuedAt: new Date(),
           });
 
+          yield* ticketRepo.save(ticket).pipe(
+            Effect.mapError(
+              (error) =>
+                new BookingPersistenceError({
+                  bookingId: booking.id,
+                  reason: `Failed to save ticket: ${String(error)}`,
+                }),
+            ),
+          );
+
           yield* notificationGateway.sendTicket(ticket, passenger.email).pipe(
             Effect.retry(retryPolicy),
             Effect.timeout(Duration.seconds(10)),
             Effect.catchAll((err) =>
-              Effect.logError("Failed to send email notification", err),
+              Effect.gen(function* () {
+                yield* Effect.logError(
+                  "Failed to send email notification",
+                  err,
+                );
+                const failedTicket = new Ticket({
+                  ...ticket,
+                  status: TicketStatus.NOTIFICATION_FAILED,
+                });
+                // We ignore the error of saving the failed status as it is a compensation
+                yield* ticketRepo.save(failedTicket).pipe(Effect.ignore);
+              }),
             ),
           );
 
-          return confirmedBooking;
+          return { booking: confirmedBooking, ticket };
         });
 
       return {
@@ -272,7 +313,9 @@ export class BookingService extends Context.Tag("BookingService")<
             });
 
             // 2.6. Save Booking with HELD status (within transaction)
-            yield* unitOfWork.transaction(bookingRepo.save(booking));
+            const savedBooking = yield* unitOfWork.transaction(
+              bookingRepo.save(booking),
+            );
 
             // 3. Create Checkout Session for payment
             const checkoutSession = yield* paymentGateway
@@ -289,53 +332,35 @@ export class BookingService extends Context.Tag("BookingService")<
               .pipe(
                 Effect.retry(retryPolicy),
                 Effect.timeout(Duration.seconds(30)),
+                Effect.tapError((error) =>
+                  Effect.gen(function* () {
+                    yield* Effect.logError(
+                      "Checkout creation failed. Compensating...",
+                      error,
+                    );
+
+                    // Release seats
+                    yield* inventoryService.releaseSeats({
+                      flightId: makeFlightId(command.flightId),
+                      cabin: command.cabinClass,
+                      numberOfSeats: 1,
+                    });
+
+                    // Cancel booking
+                    const cancelled = yield* savedBooking.cancel(
+                      "Payment initialization failed",
+                    );
+                    yield* unitOfWork.transaction(bookingRepo.save(cancelled));
+                  }).pipe(
+                    Effect.catchAll((compensationError) =>
+                      Effect.logError("Compensation failed", compensationError),
+                    ),
+                  ),
+                ),
               );
 
-            // 4. Poll for checkout status (for tests) or return for redirect (production)
-            if (process.env.NODE_ENV !== "test") {
-              return {
-                booking,
-                checkout: checkoutSession,
-              } satisfies BookingResult;
-            }
-
-            // In test mode, getCheckoutStatus returns "completed" immediately
-            const checkoutStatus = yield* paymentGateway
-              .getCheckoutStatus(checkoutSession.id)
-              .pipe(
-                Effect.retry(retryPolicy),
-                Effect.timeout(Duration.seconds(5)),
-              );
-
-            // 5. Handle checkout status
-            if (checkoutStatus.status === "completed") {
-              const confirmedBooking = yield* confirmBooking(booking.id);
-              return { booking: confirmedBooking } satisfies BookingResult;
-            }
-
-            if (checkoutStatus.status === "expired") {
-              // Payment expired - release seats and cancel booking
-              // The expired checkout session is NOT returned to avoid confusion.
-              // Callers must create a new booking to retry payment.
-              yield* Effect.logError("Payment expired. Rolling back seats.");
-
-              yield* inventoryService.releaseSeats({
-                flightId: makeFlightId(command.flightId),
-                cabin: command.cabinClass,
-                numberOfSeats: 1,
-              });
-
-              const cancelledBooking = yield* booking.cancel("Payment expired");
-              yield* unitOfWork.transaction(bookingRepo.save(cancelledBooking));
-
-              // Only return the cancelled booking - no checkout property
-              // This signals to the caller that payment failed and a new booking is needed
-              return { booking: cancelledBooking } satisfies BookingResult;
-            }
-
-            // Status is "pending" - return booking with checkout URL for redirect
             return {
-              booking,
+              booking: savedBooking,
               checkout: checkoutSession,
             } satisfies BookingResult;
           }),
@@ -357,6 +382,7 @@ export class BookingService extends Context.Tag("BookingService")<
     paymentGateway?: Partial<PaymentGatewayService>;
     notificationGateway?: Partial<typeof NotificationGateway.Service>;
     unitOfWork?: Partial<typeof UnitOfWork.Service>;
+    ticketRepo?: Partial<typeof TicketRepository.Service>;
   };
 
   /**
@@ -458,6 +484,12 @@ export class BookingService extends Context.Tag("BookingService")<
       }),
     );
 
+    const TicketRepoTest = Layer.succeed(TicketRepository, {
+      save: (t: Ticket) => Effect.succeed(t),
+      findByTicketNumber: () => Effect.succeed(null),
+      ...overrides.ticketRepo,
+    });
+
     // Composition: BookingService.Live on top, mocks below.
     // Live will yield* each dep → it will find them in the layers below.
     return BookingService.Live.pipe(
@@ -467,6 +499,7 @@ export class BookingService extends Context.Tag("BookingService")<
           Layer.merge(PaymentGatewayTest),
           Layer.merge(NotificationGatewayTest),
           Layer.merge(UnitOfWorkTest),
+          Layer.merge(TicketRepoTest),
         ),
       ),
     );
@@ -480,6 +513,7 @@ export type TestOverrides = {
   paymentGateway?: Partial<PaymentGatewayService>;
   notificationGateway?: Partial<typeof NotificationGateway.Service>;
   unitOfWork?: Partial<typeof UnitOfWork.Service>;
+  ticketRepo?: Partial<typeof TicketRepository.Service>;
 };
 
 // ---------------------------------------------------------------------------
