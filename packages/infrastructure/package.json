@@ -31,7 +31,8 @@
     "@workspace/domain": "workspace:*",
     "drizzle-orm": "^0.45.1",
     "effect": "catalog:effect3",
-    "pg": "^8.17.2"
+    "pg": "^8.17.2",
+    "resend": "^6.9.1"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
@@ -40,8 +41,8 @@
     "@types/node": "catalog:node25",
     "@types/pg": "^8.16.0",
     "@vitest/coverage-v8": "catalog:vitest3",
-    "@workspace/tsconfig": "workspace:*",
     "@workspace/prettier-config": "workspace:*",
+    "@workspace/tsconfig": "workspace:*",
     "@workspace/vitest-config": "workspace:*",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.8",

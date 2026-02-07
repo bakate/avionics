@@ -244,24 +244,29 @@ export class BookingService extends Context.Tag("BookingService")<
             ),
           );
 
-          yield* notificationGateway.sendTicket(ticket, passenger.email).pipe(
-            Effect.retry(retryPolicy),
-            Effect.timeout(Duration.seconds(10)),
-            Effect.catchAll((err) =>
-              Effect.gen(function* () {
-                yield* Effect.logError(
-                  "Failed to send email notification",
-                  err,
-                );
-                const failedTicket = new Ticket({
-                  ...ticket,
-                  status: TicketStatus.NOTIFICATION_FAILED,
-                });
-                // We ignore the error of saving the failed status as it is a compensation
-                yield* ticketRepo.save(failedTicket).pipe(Effect.ignore);
-              }),
-            ),
-          );
+          yield* notificationGateway
+            .sendTicket(ticket, {
+              email: passenger.email,
+              name: `${passenger.firstName} ${passenger.lastName}`,
+            })
+            .pipe(
+              Effect.retry(retryPolicy),
+              Effect.timeout(Duration.seconds(10)),
+              Effect.catchAll((err) =>
+                Effect.gen(function* () {
+                  yield* Effect.logError(
+                    "Failed to send email notification",
+                    err,
+                  );
+                  const failedTicket = new Ticket({
+                    ...ticket,
+                    status: TicketStatus.NOTIFICATION_FAILED,
+                  });
+                  // We ignore the error of saving the failed status as it is a compensation
+                  yield* ticketRepo.save(failedTicket).pipe(Effect.ignore);
+                }),
+              ),
+            );
 
           return { booking: confirmedBooking, ticket };
         });
@@ -471,7 +476,8 @@ export class BookingService extends Context.Tag("BookingService")<
     const NotificationGatewayTest = Layer.succeed(
       NotificationGateway,
       NotificationGateway.of({
-        sendTicket: () => Effect.void,
+        sendTicket: () =>
+          Effect.succeed({ messageId: `test_msg_${Date.now()}` }),
         ...overrides.notificationGateway,
       }),
     );
