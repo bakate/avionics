@@ -7,16 +7,19 @@
 import { SqlClient } from "@effect/sql";
 import { fc, test } from "@fast-check/vitest";
 import { BookingQueries } from "@workspace/application/booking-queries";
+import { type PnrCode } from "@workspace/domain/kernel";
 import { Effect, Layer } from "effect";
 import { describe, expect } from "vitest";
-import { ConnectionPoolLive } from "../db/connection.js";
-import { BookingQueriesLive } from "./booking-queries.js";
+import { ConnectionPoolLive } from "../../../db/connection.js";
+import { BookingQueriesLive } from "../../../queries/booking-queries.js";
 
 // ============================================================================
 // Test Setup
 // ============================================================================
 
-const TestLayer = BookingQueriesLive.pipe(Layer.provide(ConnectionPoolLive));
+const TestLayer = BookingQueriesLive.pipe(
+  Layer.provideMerge(ConnectionPoolLive),
+);
 
 // ============================================================================
 // Property Tests
@@ -35,7 +38,7 @@ describe("BookingQueries Property Tests", () => {
 
         // Try to get booking summary - it may not exist, which is fine
         const result = yield* queries
-          .getSummaryByPnr(bookingId)
+          .getSummaryByPnr(bookingId as PnrCode)
           .pipe(Effect.either);
 
         // If successful, verify no domain events property exists
@@ -70,17 +73,19 @@ describe("BookingQueries Property Tests", () => {
 
         // Query for non-existent booking
         const result = yield* queries
-          .getSummaryByPnr(invalidPnr)
+          .getSummaryByPnr(invalidPnr as PnrCode)
           .pipe(Effect.either);
 
         // Should fail with a typed error
+        expect(result._tag).toBe("Left");
         if (result._tag === "Left") {
           const error = result.left;
-          // Error should be either BookingNotFoundError or PersistenceError
-          expect(
-            error._tag === "BookingNotFoundError" ||
-              error._tag === "PersistenceError",
-          ).toBe(true);
+          // Error should be either BookingNotFoundError, BookingPersistenceError or PersistenceError
+          expect([
+            "BookingNotFoundError",
+            "BookingPersistenceError",
+            "PersistenceError",
+          ]).toContain(error._tag);
         }
 
         return true;
@@ -143,13 +148,25 @@ describe("BookingQueries Property Tests", () => {
     "SQL errors are mapped to typed errors",
     async (pnr) => {
       // Create a layer with a mock SQL client that always fails
+      const makeFailingDataClient = () => {
+        const fn = () =>
+          Effect.fail({
+            _tag: "SqlError",
+            message: "Database connection failed",
+          });
+        fn.safe = fn;
+        fn.withTransaction = () =>
+          Effect.fail({
+            _tag: "SqlError",
+            message: "Database connection failed",
+          });
+        return fn;
+      };
+
       const FailingSqlLayer = Layer.succeed(
         SqlClient.SqlClient,
-        SqlClient.SqlClient.of({
-          // @ts-expect-error - Mocking for test
-          withTransaction: () =>
-            Effect.fail(new Error("Database connection failed")),
-        }),
+        // @ts-expect-error - Mocking for test
+        makeFailingDataClient(),
       );
 
       const FailingQueriesLayer = BookingQueriesLive.pipe(
@@ -159,15 +176,15 @@ describe("BookingQueries Property Tests", () => {
       const program = Effect.gen(function* () {
         const queries = yield* BookingQueries;
 
-        const result = yield* queries.getSummaryByPnr(pnr).pipe(Effect.either);
+        const result = yield* queries
+          .getSummaryByPnr(pnr as PnrCode)
+          .pipe(Effect.either);
 
-        // Should fail with PersistenceError
+        // Should fail with BookingPersistenceError
+        expect(result._tag).toBe("Left");
         if (result._tag === "Left") {
           const error = result.left;
-          expect(
-            error._tag === "PersistenceError" ||
-              error._tag === "BookingNotFoundError",
-          ).toBe(true);
+          expect(error._tag).toBe("BookingPersistenceError");
         }
 
         return true;

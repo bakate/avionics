@@ -13,9 +13,45 @@ import {
   CabinAvailability,
   FlightAvailability,
 } from "@workspace/application/read-models";
-import { FlightNotFoundError } from "@workspace/domain/errors";
+import {
+  FlightNotFoundError,
+  InvalidAmountError,
+} from "@workspace/domain/errors";
+import {
+  type CabinClass,
+  type CurrencyCode,
+  type FlightId,
+  Money,
+} from "@workspace/domain/kernel";
 import { Effect, Layer } from "effect";
-import { PersistenceError } from "../errors.js";
+
+const safeMoney = ({
+  amount,
+  currency,
+  field,
+}: {
+  amount: string;
+  currency: string;
+  field: string;
+}) => {
+  const value = Number.parseFloat(amount);
+  if (!Number.isFinite(value) || value < 0) {
+    return Effect.fail(
+      new InvalidAmountError({
+        amount: value,
+        message: `Invalid amount for field ${field}: ${amount}`,
+      }),
+    );
+  }
+  return Effect.try({
+    try: () => Money.of(value, currency as CurrencyCode),
+    catch: (error) =>
+      new InvalidAmountError({
+        amount: value,
+        message: `Error creating Money for field ${field}: ${error}`,
+      }),
+  });
+};
 
 // Database row types for queries
 interface FlightAvailabilityRow {
@@ -48,14 +84,141 @@ interface InventoryStatsRow {
   full_flights: number;
 }
 
+const CABIN_COLUMNS = {
+  economy: {
+    available: "economy_available",
+    capacity: "economy_total",
+    priceAmount: "economy_price_amount",
+    priceCurrency: "economy_price_currency",
+  },
+  business: {
+    available: "business_available",
+    capacity: "business_total",
+    priceAmount: "business_price_amount",
+    priceCurrency: "business_price_currency",
+  },
+  first: {
+    available: "first_available",
+    capacity: "first_total",
+    priceAmount: "first_price_amount",
+    priceCurrency: "first_price_currency",
+  },
+} as const;
+
 export const InventoryQueriesLive = Layer.effect(
   InventoryQueries,
   Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;
 
-    const getFlightAvailability: InventoryQueriesPort["getFlightAvailability"] =
-      (flightId) =>
+    return {
+      getFlightAvailability: (flightId) =>
         Effect.gen(function* () {
+          const rows = yield* sql<FlightAvailabilityRow>`
+            SELECT
+              flight_id,
+              economy_available,
+              business_available,
+              first_available,
+              economy_price_amount,
+              economy_price_currency,
+              business_price_amount,
+              business_price_currency,
+              first_price_amount,
+              first_price_currency,
+              last_updated
+            FROM flight_inventory
+            WHERE flight_id = ${flightId}
+          `;
+
+          const row = rows[0];
+          if (!row) {
+            return yield* Effect.fail(new FlightNotFoundError({ flightId }));
+          }
+
+          return new FlightAvailability({
+            flightId: row.flight_id as FlightId,
+            economyAvailable: row.economy_available,
+            businessAvailable: row.business_available,
+            firstAvailable: row.first_available,
+            economyPrice: yield* safeMoney({
+              amount: row.economy_price_amount,
+              currency: row.economy_price_currency,
+              field: "economy_price",
+            }),
+            businessPrice: yield* safeMoney({
+              amount: row.business_price_amount,
+              currency: row.business_price_currency,
+              field: "business_price",
+            }),
+            firstPrice: yield* safeMoney({
+              amount: row.first_price_amount,
+              currency: row.first_price_currency,
+              field: "first_price",
+            }),
+            lastUpdated: row.last_updated,
+          });
+        }).pipe(
+          Effect.catchTag("SqlError", () =>
+            Effect.fail(new FlightNotFoundError({ flightId })),
+          ),
+        ),
+
+      getCabinAvailability: (flightId, cabin) =>
+        Effect.gen(function* () {
+          // Map cabin name to database columns
+          const cabinLower = cabin.toLowerCase();
+          const columns =
+            CABIN_COLUMNS[cabinLower as keyof typeof CABIN_COLUMNS];
+
+          if (!columns) {
+            return yield* Effect.fail(new FlightNotFoundError({ flightId }));
+          }
+
+          const rows = yield* sql<CabinAvailabilityRow>`
+          SELECT
+            ${cabinLower} as cabin,
+            ${sql(columns.available)} as available,
+            ${sql(columns.capacity)} as capacity,
+            ${sql(columns.priceAmount)} as price_amount,
+            ${sql(columns.priceCurrency)} as price_currency,
+            ROUND(((${sql(columns.capacity)} - ${sql(columns.available)})::numeric / ${sql(columns.capacity)}::numeric) * 100, 2) as utilization_percent
+          FROM flight_inventory
+          WHERE flight_id = ${flightId}
+        `;
+
+          const row = rows[0];
+          if (!row) {
+            return yield* Effect.fail(new FlightNotFoundError({ flightId }));
+          }
+
+          return new CabinAvailability({
+            cabin: row.cabin as CabinClass,
+            available: row.available,
+            capacity: row.capacity,
+            price: Money.of(
+              Number.parseFloat(row.price_amount),
+              row.price_currency as CurrencyCode,
+            ),
+            utilizationPercent: row.utilization_percent,
+          });
+        }).pipe(
+          Effect.catchTag("SqlError", () =>
+            Effect.fail(new FlightNotFoundError({ flightId })),
+          ),
+        ),
+
+      findAvailableFlights: (params) =>
+        Effect.gen(function* () {
+          const { cabin, minSeats } = params;
+          const cabinLower = cabin.toLowerCase();
+          const columns =
+            CABIN_COLUMNS[cabinLower as keyof typeof CABIN_COLUMNS];
+
+          if (!columns) {
+            return [];
+          }
+
+          // Determine which column to check based on cabin
           const rows = yield* sql<FlightAvailabilityRow>`
             SELECT
               flight_id,
@@ -70,265 +233,45 @@ export const InventoryQueriesLive = Layer.effect(
               first_price_currency,
               NOW() as last_updated
             FROM flight_inventory
-            WHERE flight_id = ${flightId}
+            WHERE ${sql(columns.available)} >= ${minSeats}
+            ORDER BY flight_id
           `;
 
-          const row = rows[0];
-          if (!row) {
-            return yield* Effect.fail(new FlightNotFoundError({ flightId }));
-          }
-
-          return new FlightAvailability({
-            flightId: row.flight_id,
-            economyAvailable: row.economy_available,
-            businessAvailable: row.business_available,
-            firstAvailable: row.first_available,
-            economyPrice: {
-              amount: Number.parseFloat(row.economy_price_amount),
-              currency: row.economy_price_currency,
-            },
-            businessPrice: {
-              amount: Number.parseFloat(row.business_price_amount),
-              currency: row.business_price_currency,
-            },
-            firstPrice: {
-              amount: Number.parseFloat(row.first_price_amount),
-              currency: row.first_price_currency,
-            },
-            lastUpdated: row.last_updated,
-          });
-        }).pipe(
-          Effect.catchTag("SqlError", (e) =>
-            Effect.fail(
-              new PersistenceError({
-                message: `Failed to get flight availability: ${e.message}`,
-                cause: e,
-                timestamp: new Date(),
+          return yield* Effect.all(
+            rows.map((row) =>
+              Effect.gen(function* () {
+                return new FlightAvailability({
+                  flightId: row.flight_id as FlightId,
+                  economyAvailable: row.economy_available,
+                  businessAvailable: row.business_available,
+                  firstAvailable: row.first_available,
+                  economyPrice: yield* safeMoney({
+                    amount: row.economy_price_amount,
+                    currency: row.economy_price_currency,
+                    field: "economy_price",
+                  }),
+                  businessPrice: yield* safeMoney({
+                    amount: row.business_price_amount,
+                    currency: row.business_price_currency,
+                    field: "business_price",
+                  }),
+                  firstPrice: yield* safeMoney({
+                    amount: row.first_price_amount,
+                    currency: row.first_price_currency,
+                    field: "first_price",
+                  }),
+                  lastUpdated: row.last_updated,
+                });
               }),
             ),
-          ),
-        );
-
-    const getCabinAvailability: InventoryQueriesPort["getCabinAvailability"] = (
-      flightId,
-      cabin,
-    ) =>
-      Effect.gen(function* () {
-        // Map cabin name to database columns
-        const cabinLower = cabin.toLowerCase();
-
-        if (cabinLower === "economy") {
-          const rows = yield* sql<CabinAvailabilityRow>`
-            SELECT
-              'economy' as cabin,
-              economy_available as available,
-              economy_total as capacity,
-              economy_price_amount as price_amount,
-              economy_price_currency as price_currency,
-              ROUND(((economy_total - economy_available)::numeric / economy_total::numeric) * 100, 2) as utilization_percent
-            FROM flight_inventory
-            WHERE flight_id = ${flightId}
-          `;
-
-          const row = rows[0];
-          if (!row) {
-            return yield* Effect.fail(new FlightNotFoundError({ flightId }));
-          }
-
-          return new CabinAvailability({
-            cabin: row.cabin,
-            available: row.available,
-            capacity: row.capacity,
-            price: {
-              amount: Number.parseFloat(row.price_amount),
-              currency: row.price_currency,
-            },
-            utilizationPercent: row.utilization_percent,
-          });
-        } else if (cabinLower === "business") {
-          const rows = yield* sql<CabinAvailabilityRow>`
-            SELECT
-              'business' as cabin,
-              business_available as available,
-              business_total as capacity,
-              business_price_amount as price_amount,
-              business_price_currency as price_currency,
-              ROUND(((business_total - business_available)::numeric / business_total::numeric) * 100, 2) as utilization_percent
-            FROM flight_inventory
-            WHERE flight_id = ${flightId}
-          `;
-
-          const row = rows[0];
-          if (!row) {
-            return yield* Effect.fail(new FlightNotFoundError({ flightId }));
-          }
-
-          return new CabinAvailability({
-            cabin: row.cabin,
-            available: row.available,
-            capacity: row.capacity,
-            price: {
-              amount: Number.parseFloat(row.price_amount),
-              currency: row.price_currency,
-            },
-            utilizationPercent: row.utilization_percent,
-          });
-        } else if (cabinLower === "first") {
-          const rows = yield* sql<CabinAvailabilityRow>`
-            SELECT
-              'first' as cabin,
-              first_available as available,
-              first_total as capacity,
-              first_price_amount as price_amount,
-              first_price_currency as price_currency,
-              ROUND(((first_total - first_available)::numeric / first_total::numeric) * 100, 2) as utilization_percent
-            FROM flight_inventory
-            WHERE flight_id = ${flightId}
-          `;
-
-          const row = rows[0];
-          if (!row) {
-            return yield* Effect.fail(new FlightNotFoundError({ flightId }));
-          }
-
-          return new CabinAvailability({
-            cabin: row.cabin,
-            available: row.available,
-            capacity: row.capacity,
-            price: {
-              amount: Number.parseFloat(row.price_amount),
-              currency: row.price_currency,
-            },
-            utilizationPercent: row.utilization_percent,
-          });
-        } else {
-          return yield* Effect.fail(
-            new PersistenceError({
-              message: `Invalid cabin class: ${cabin}`,
-              timestamp: new Date(),
-            }),
           );
-        }
-      }).pipe(
-        Effect.catchTag("SqlError", (e) =>
-          Effect.fail(
-            new PersistenceError({
-              message: `Failed to get cabin availability: ${e.message}`,
-              cause: e,
-              timestamp: new Date(),
-            }),
+        }).pipe(
+          Effect.catchTag("SqlError", () =>
+            Effect.succeed([] as ReadonlyArray<FlightAvailability>),
           ),
         ),
-      );
 
-    const findAvailableFlights: InventoryQueriesPort["findAvailableFlights"] = (
-      params,
-    ) =>
-      Effect.gen(function* () {
-        const { cabin, minSeats } = params;
-        const cabinLower = cabin.toLowerCase();
-
-        // Determine which column to check based on cabin
-        let rows: FlightAvailabilityRow[];
-        if (cabinLower === "economy") {
-          rows = yield* sql<FlightAvailabilityRow>`
-            SELECT
-              flight_id,
-              economy_available,
-              business_available,
-              first_available,
-              economy_price_amount,
-              economy_price_currency,
-              business_price_amount,
-              business_price_currency,
-              first_price_amount,
-              first_price_currency,
-              NOW() as last_updated
-            FROM flight_inventory
-            WHERE economy_available >= ${minSeats}
-            ORDER BY flight_id
-          `;
-        } else if (cabinLower === "business") {
-          rows = yield* sql<FlightAvailabilityRow>`
-            SELECT
-              flight_id,
-              economy_available,
-              business_available,
-              first_available,
-              economy_price_amount,
-              economy_price_currency,
-              business_price_amount,
-              business_price_currency,
-              first_price_amount,
-              first_price_currency,
-              NOW() as last_updated
-            FROM flight_inventory
-            WHERE business_available >= ${minSeats}
-            ORDER BY flight_id
-          `;
-        } else if (cabinLower === "first") {
-          rows = yield* sql<FlightAvailabilityRow>`
-            SELECT
-              flight_id,
-              economy_available,
-              business_available,
-              first_available,
-              economy_price_amount,
-              economy_price_currency,
-              business_price_amount,
-              business_price_currency,
-              first_price_amount,
-              first_price_currency,
-              NOW() as last_updated
-            FROM flight_inventory
-            WHERE first_available >= ${minSeats}
-            ORDER BY flight_id
-          `;
-        } else {
-          return yield* Effect.fail(
-            new PersistenceError({
-              message: `Invalid cabin class: ${cabin}`,
-              timestamp: new Date(),
-            }),
-          );
-        }
-
-        return rows.map(
-          (row) =>
-            new FlightAvailability({
-              flightId: row.flight_id,
-              economyAvailable: row.economy_available,
-              businessAvailable: row.business_available,
-              firstAvailable: row.first_available,
-              economyPrice: {
-                amount: Number.parseFloat(row.economy_price_amount),
-                currency: row.economy_price_currency,
-              },
-              businessPrice: {
-                amount: Number.parseFloat(row.business_price_amount),
-                currency: row.business_price_currency,
-              },
-              firstPrice: {
-                amount: Number.parseFloat(row.first_price_amount),
-                currency: row.first_price_currency,
-              },
-              lastUpdated: row.last_updated,
-            }),
-        );
-      }).pipe(
-        Effect.catchTag("SqlError", (e) =>
-          Effect.fail(
-            new PersistenceError({
-              message: `Failed to find available flights: ${e.message}`,
-              cause: e,
-              timestamp: new Date(),
-            }),
-          ),
-        ),
-      );
-
-    const getLowInventoryAlerts: InventoryQueriesPort["getLowInventoryAlerts"] =
-      (threshold) =>
+      getLowInventoryAlerts: (threshold) =>
         Effect.gen(function* () {
           const rows = yield* sql<FlightAvailabilityRow>`
             SELECT
@@ -351,90 +294,84 @@ export const InventoryQueriesLive = Layer.effect(
               LEAST(economy_available, business_available, first_available) ASC
           `;
 
-          return rows.map(
-            (row) =>
-              new FlightAvailability({
-                flightId: row.flight_id,
-                economyAvailable: row.economy_available,
-                businessAvailable: row.business_available,
-                firstAvailable: row.first_available,
-                economyPrice: {
-                  amount: Number.parseFloat(row.economy_price_amount),
-                  currency: row.economy_price_currency,
-                },
-                businessPrice: {
-                  amount: Number.parseFloat(row.business_price_amount),
-                  currency: row.business_price_currency,
-                },
-                firstPrice: {
-                  amount: Number.parseFloat(row.first_price_amount),
-                  currency: row.first_price_currency,
-                },
-                lastUpdated: row.last_updated,
-              }),
-          );
-        }).pipe(
-          Effect.catchTag("SqlError", (e) =>
-            Effect.fail(
-              new PersistenceError({
-                message: `Failed to get low inventory alerts: ${e.message}`,
-                cause: e,
-                timestamp: new Date(),
+          return yield* Effect.all(
+            rows.map((row) =>
+              Effect.gen(function* () {
+                return new FlightAvailability({
+                  flightId: row.flight_id as FlightId,
+                  economyAvailable: row.economy_available,
+                  businessAvailable: row.business_available,
+                  firstAvailable: row.first_available,
+                  economyPrice: yield* safeMoney({
+                    amount: row.economy_price_amount,
+                    currency: row.economy_price_currency,
+                    field: "economy_price",
+                  }),
+                  businessPrice: yield* safeMoney({
+                    amount: row.business_price_amount,
+                    currency: row.business_price_currency,
+                    field: "business_price",
+                  }),
+                  firstPrice: yield* safeMoney({
+                    amount: row.first_price_amount,
+                    currency: row.first_price_currency,
+                    field: "first_price",
+                  }),
+                  lastUpdated: row.last_updated,
+                });
               }),
             ),
+          );
+        }).pipe(
+          Effect.catchTag("SqlError", () =>
+            Effect.succeed([] as ReadonlyArray<FlightAvailability>),
           ),
-        );
+        ),
 
-    const getInventoryStats: InventoryQueriesPort["getInventoryStats"] = () =>
-      Effect.gen(function* () {
-        const rows = yield* sql<InventoryStatsRow>`
+      getInventoryStats: () =>
+        Effect.gen(function* () {
+          const rows = yield* sql<InventoryStatsRow>`
           SELECT
             COUNT(*)::int as total_flights,
-            (SUM(economy_available) + SUM(business_available) + SUM(first_available))::int as total_seats_available,
-            ROUND(
+            COALESCE((SUM(economy_available) + SUM(business_available) + SUM(first_available))::int, 0) as total_seats_available,
+            COALESCE(ROUND(
               AVG(
                 ((economy_total - economy_available + business_total - business_available + first_total - first_available)::numeric /
                  (economy_total + business_total + first_total)::numeric) * 100
               ), 2
-            ) as average_utilization,
+            ), 0) as average_utilization,
             COUNT(CASE WHEN economy_available = 0 AND business_available = 0 AND first_available = 0 THEN 1 END)::int as full_flights
           FROM flight_inventory
         `;
 
-        const row = rows[0];
-        if (!row) {
-          return {
-            totalFlights: 0,
-            totalSeatsAvailable: 0,
-            averageUtilization: 0,
-            fullFlights: 0,
-          };
-        }
+          const row = rows[0];
+          if (!row) {
+            return {
+              totalFlights: 0,
+              totalSeatsAvailable: 0,
+              averageUtilization: 0,
+              fullFlights: 0,
+            };
+          }
 
-        return {
-          totalFlights: row.total_flights,
-          totalSeatsAvailable: row.total_seats_available,
-          averageUtilization: row.average_utilization,
-          fullFlights: row.full_flights,
-        };
-      }).pipe(
-        Effect.catchTag("SqlError", (e) =>
-          Effect.fail(
-            new PersistenceError({
-              message: `Failed to get inventory stats: ${e.message}`,
-              cause: e,
-              timestamp: new Date(),
+          return {
+            totalFlights: row.total_flights,
+            totalSeatsAvailable: row.total_seats_available,
+            averageUtilization: Number.parseFloat(
+              String(row.average_utilization),
+            ),
+            fullFlights: row.full_flights,
+          };
+        }).pipe(
+          Effect.catchAll(() =>
+            Effect.succeed({
+              totalFlights: 0,
+              totalSeatsAvailable: 0,
+              averageUtilization: 0,
+              fullFlights: 0,
             }),
           ),
         ),
-      );
-
-    return {
-      getFlightAvailability,
-      getCabinAvailability,
-      findAvailableFlights,
-      getLowInventoryAlerts,
-      getInventoryStats,
-    };
+    } satisfies InventoryQueriesPort;
   }),
 );

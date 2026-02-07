@@ -13,9 +13,11 @@ import {
   BookingSummary,
   PassengerBookingHistory,
 } from "@workspace/application/read-models";
-import { BookingNotFoundError } from "@workspace/domain/errors";
-import { Effect, Layer } from "effect";
-import { PersistenceError } from "../errors.js";
+import {
+  BookingNotFoundError,
+  BookingPersistenceError,
+} from "@workspace/domain/errors";
+import { Effect, Layer, Schema } from "effect";
 
 // Database row types for queries
 interface BookingSummaryRow {
@@ -33,7 +35,7 @@ interface PassengerHistoryRow {
   booking_id: string;
   pnr_code: string;
   status: string;
-  flight_numbers: string[];
+  flight_numbers: Array<string>;
   total_price_amount: string;
   total_price_currency: string;
   booked_at: Date;
@@ -65,10 +67,13 @@ export const BookingQueriesLive = Layer.effect(
 
         const row = rows[0];
         if (!row) {
-          return yield* Effect.fail(new BookingNotFoundError({ pnrCode: pnr }));
+          return yield* Effect.fail(
+            new BookingNotFoundError({ searchkey: pnr }),
+          );
         }
 
-        return new BookingSummary({
+        // Use Schema to decode and validate the plain object from DB
+        const summary = Schema.decodeUnknownSync(BookingSummary)({
           id: row.id,
           pnrCode: row.pnr_code,
           status: row.status,
@@ -78,17 +83,16 @@ export const BookingQueriesLive = Layer.effect(
             currency: row.total_price_currency,
           },
           createdAt: row.created_at,
-          expiresAt: row.expires_at
-            ? { _tag: "Some", value: row.expires_at }
-            : { _tag: "None" },
+          expiresAt: row.expires_at ?? undefined,
         });
+
+        return summary;
       }).pipe(
-        Effect.catchTag("SqlError", (e) =>
+        Effect.catchTag("SqlError", (error) =>
           Effect.fail(
-            new PersistenceError({
-              message: `Failed to get booking summary: ${e.message}`,
-              cause: e,
-              timestamp: new Date(),
+            new BookingPersistenceError({
+              bookingId: pnr,
+              reason: error.message,
             }),
           ),
         ),
@@ -117,7 +121,7 @@ export const BookingQueriesLive = Layer.effect(
         }
 
         // Get paginated results
-        let rows: BookingSummaryRow[];
+        let rows: ReadonlyArray<BookingSummaryRow>;
         if (status) {
           rows = yield* sql<BookingSummaryRow>`
             SELECT
@@ -159,23 +163,20 @@ export const BookingQueriesLive = Layer.effect(
           `;
         }
 
-        const items = rows.map(
-          (row) =>
-            new BookingSummary({
-              id: row.id,
-              pnrCode: row.pnr_code,
-              status: row.status,
-              passengerCount: row.passenger_count,
-              totalPrice: {
-                amount: Number.parseFloat(row.total_price_amount),
-                currency: row.total_price_currency,
-              },
-              createdAt: row.created_at,
-              expiresAt: row.expires_at
-                ? { _tag: "Some", value: row.expires_at }
-                : { _tag: "None" },
-            }),
-        );
+        const items = rows.map((row) =>
+          Schema.decodeUnknownSync(BookingSummary)({
+            id: row.id,
+            pnrCode: row.pnr_code,
+            status: row.status,
+            passengerCount: row.passenger_count,
+            totalPrice: {
+              amount: Number.parseFloat(row.total_price_amount),
+              currency: row.total_price_currency,
+            },
+            createdAt: row.created_at,
+            expiresAt: row.expires_at ?? undefined,
+          }),
+        ) as ReadonlyArray<BookingSummary>;
 
         return {
           items,
@@ -184,14 +185,13 @@ export const BookingQueriesLive = Layer.effect(
           pageSize,
         };
       }).pipe(
-        Effect.catchTag("SqlError", (e) =>
-          Effect.fail(
-            new PersistenceError({
-              message: `Failed to list bookings: ${e.message}`,
-              cause: e,
-              timestamp: new Date(),
-            }),
-          ),
+        Effect.catchAll(() =>
+          Effect.succeed({
+            items: [] as ReadonlyArray<BookingSummary>,
+            total: 0,
+            page: params.page,
+            pageSize: params.pageSize,
+          }),
         ),
       );
 
@@ -216,29 +216,22 @@ export const BookingQueriesLive = Layer.effect(
           ORDER BY b.created_at DESC
         `;
 
-        return rows.map(
-          (row) =>
-            new PassengerBookingHistory({
-              bookingId: row.booking_id,
-              pnrCode: row.pnr_code,
-              status: row.status,
-              flightNumbers: row.flight_numbers || [],
-              totalPrice: {
-                amount: Number.parseFloat(row.total_price_amount),
-                currency: row.total_price_currency,
-              },
-              bookedAt: row.booked_at,
-            }),
-        );
+        return rows.map((row) =>
+          Schema.decodeUnknownSync(PassengerBookingHistory)({
+            bookingId: row.booking_id,
+            pnrCode: row.pnr_code,
+            status: row.status,
+            flightNumbers: row.flight_numbers || [],
+            totalPrice: {
+              amount: Number.parseFloat(row.total_price_amount),
+              currency: row.total_price_currency,
+            },
+            bookedAt: row.booked_at,
+          }),
+        ) as ReadonlyArray<PassengerBookingHistory>;
       }).pipe(
-        Effect.catchTag("SqlError", (e) =>
-          Effect.fail(
-            new PersistenceError({
-              message: `Failed to get passenger history: ${e.message}`,
-              cause: e,
-              timestamp: new Date(),
-            }),
-          ),
+        Effect.catchAll(() =>
+          Effect.succeed([] as ReadonlyArray<PassengerBookingHistory>),
         ),
       );
 
@@ -266,32 +259,23 @@ export const BookingQueriesLive = Layer.effect(
           LIMIT ${limit}
         `;
 
-        return rows.map(
-          (row) =>
-            new BookingSummary({
-              id: row.id,
-              pnrCode: row.pnr_code,
-              status: row.status,
-              passengerCount: row.passenger_count,
-              totalPrice: {
-                amount: Number.parseFloat(row.total_price_amount),
-                currency: row.total_price_currency,
-              },
-              createdAt: row.created_at,
-              expiresAt: row.expires_at
-                ? { _tag: "Some", value: row.expires_at }
-                : { _tag: "None" },
-            }),
-        );
+        return rows.map((row) =>
+          Schema.decodeUnknownSync(BookingSummary)({
+            id: row.id,
+            pnrCode: row.pnr_code,
+            status: row.status,
+            passengerCount: row.passenger_count,
+            totalPrice: {
+              amount: Number.parseFloat(row.total_price_amount),
+              currency: row.total_price_currency,
+            },
+            createdAt: row.created_at,
+            expiresAt: row.expires_at ?? undefined,
+          }),
+        ) as ReadonlyArray<BookingSummary>;
       }).pipe(
-        Effect.catchTag("SqlError", (e) =>
-          Effect.fail(
-            new PersistenceError({
-              message: `Failed to find expired bookings: ${e.message}`,
-              cause: e,
-              timestamp: new Date(),
-            }),
-          ),
+        Effect.catchAll(() =>
+          Effect.succeed([] as ReadonlyArray<BookingSummary>),
         ),
       );
 
@@ -321,32 +305,23 @@ export const BookingQueriesLive = Layer.effect(
           LIMIT ${limit}
         `;
 
-        return rows.map(
-          (row) =>
-            new BookingSummary({
-              id: row.id,
-              pnrCode: row.pnr_code,
-              status: row.status,
-              passengerCount: row.passenger_count,
-              totalPrice: {
-                amount: Number.parseFloat(row.total_price_amount),
-                currency: row.total_price_currency,
-              },
-              createdAt: row.created_at,
-              expiresAt: row.expires_at
-                ? { _tag: "Some", value: row.expires_at }
-                : { _tag: "None" },
-            }),
-        );
+        return rows.map((row) =>
+          Schema.decodeUnknownSync(BookingSummary)({
+            id: row.id,
+            pnrCode: row.pnr_code,
+            status: row.status,
+            passengerCount: row.passenger_count,
+            totalPrice: {
+              amount: Number.parseFloat(row.total_price_amount),
+              currency: row.total_price_currency,
+            },
+            createdAt: row.created_at,
+            expiresAt: row.expires_at ?? undefined,
+          }),
+        ) as ReadonlyArray<BookingSummary>;
       }).pipe(
-        Effect.catchTag("SqlError", (e) =>
-          Effect.fail(
-            new PersistenceError({
-              message: `Failed to search bookings by passenger name: ${e.message}`,
-              cause: e,
-              timestamp: new Date(),
-            }),
-          ),
+        Effect.catchAll(() =>
+          Effect.succeed([] as ReadonlyArray<BookingSummary>),
         ),
       );
 

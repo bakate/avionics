@@ -4,7 +4,10 @@
  * @description Query service for inventory read models (CQRS read side)
  */
 
-import { type FlightNotFoundError } from "@workspace/domain/errors";
+import {
+  type FlightNotFoundError,
+  type InvalidAmountError,
+} from "@workspace/domain/errors";
 import { type FlightId } from "@workspace/domain/kernel";
 import { Context, type Effect } from "effect";
 import {
@@ -22,7 +25,10 @@ export interface InventoryQueriesPort {
    */
   getFlightAvailability(
     flightId: FlightId,
-  ): Effect.Effect<FlightAvailability, FlightNotFoundError>;
+  ): Effect.Effect<
+    FlightAvailability,
+    FlightNotFoundError | InvalidAmountError
+  >;
 
   /**
    * Get specific cabin availability
@@ -30,7 +36,7 @@ export interface InventoryQueriesPort {
   getCabinAvailability(
     flightId: FlightId,
     cabin: string,
-  ): Effect.Effect<CabinAvailability, FlightNotFoundError>;
+  ): Effect.Effect<CabinAvailability, FlightNotFoundError | InvalidAmountError>;
 
   /**
    * Find flights with available seats
@@ -40,14 +46,14 @@ export interface InventoryQueriesPort {
     minSeats: number;
     departureDate?: Date;
     route?: { origin: string; destination: string };
-  }): Effect.Effect<ReadonlyArray<FlightAvailability>>;
+  }): Effect.Effect<ReadonlyArray<FlightAvailability>, InvalidAmountError>;
 
   /**
    * Get low inventory alerts (flights with < threshold seats)
    */
   getLowInventoryAlerts(
     threshold: number,
-  ): Effect.Effect<ReadonlyArray<FlightAvailability>>;
+  ): Effect.Effect<ReadonlyArray<FlightAvailability>, InvalidAmountError>;
 
   /**
    * Get inventory statistics

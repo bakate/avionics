@@ -14,11 +14,12 @@ export const DatabaseConfig = Config.all({
 const isDevOrTest =
   process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
 
-const secret = (name: string, mock: string) => {
+export const secret = (name: string, mock?: string) => {
   const config = Config.redacted(name);
-  return isDevOrTest
-    ? config.pipe(Config.withDefault(Redacted.make(mock)))
-    : config;
+  if (isDevOrTest && mock) {
+    return config.pipe(Config.withDefault(Redacted.make(mock)));
+  }
+  return config;
 };
 
 export const SecretsConfig = Config.all({

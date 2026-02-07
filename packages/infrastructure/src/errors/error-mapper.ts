@@ -6,6 +6,7 @@ import {
   ExternalServiceServerError,
   ExternalServiceTimeoutError,
   ExternalServiceUnavailableError,
+  ExternalServiceUnexpectedStatusError,
   NetworkError,
   PersistenceError,
   PersistenceTimeoutError,
@@ -159,7 +160,9 @@ export function mapHttpError(
   body: unknown,
 ): Effect.Effect<
   never,
-  ExternalServiceClientError | ExternalServiceServerError
+  | ExternalServiceClientError
+  | ExternalServiceServerError
+  | ExternalServiceUnexpectedStatusError
 > {
   const timestamp = new Date();
   const message = extractErrorMessage(body);
@@ -188,9 +191,9 @@ export function mapHttpError(
     );
   }
 
-  // Unexpected status code
+  // Unexpected status code (e.g. 2xx, 3xx treated as error)
   return Effect.fail(
-    new ExternalServiceServerError({
+    new ExternalServiceUnexpectedStatusError({
       service,
       status,
       message: `Unexpected status code: ${status}`,
@@ -209,9 +212,9 @@ export function sanitizeErrorMessage(message: string): string {
     "<connection-string>",
   );
 
-  // Also catch connection strings without explicit protocol
+  // Also catch connection strings with explicit protocol
   sanitized = sanitized.replace(
-    /[a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+@[0-9.]+/g,
+    /[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^\s@]+:[^\s@]+@[^\s]+/g,
     "<connection-string>",
   );
 
@@ -264,15 +267,16 @@ export function preserveStackTrace(
 function extractEntityTypeFromConstraint(constraint?: string): string {
   if (!constraint) return "unknown";
   // Extract table name from constraint like "bookings_pnr_key"
-  const match = constraint.match(/^([a-z_]+)_/);
-  return match ? match[1] : constraint;
+  // TODO: Handle cases where table names legitimately contain underscores (e.g. use a known-tables lookup or parsing based on known suffixes like _key/_pkey/_fkey)
+  const match = constraint.match(/^([^_]+)_/);
+  return match?.[1] ?? constraint;
 }
 
 function extractIdFromDetail(detail?: string): string {
   if (!detail) return "unknown";
   // Extract ID from detail like "Key (pnr)=(ABC123) already exists"
   const match = detail.match(/\(([^)]+)\)=\(([^)]+)\)/);
-  return match ? match[2] : "unknown";
+  return match?.[2] ?? "unknown";
 }
 
 function extractErrorMessage(body: unknown): string {

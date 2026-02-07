@@ -4,7 +4,10 @@
  * @description Query service for booking read models (CQRS read side)
  */
 
-import { type BookingNotFoundError } from "@workspace/domain/errors";
+import {
+  type BookingNotFoundError,
+  type BookingPersistenceError,
+} from "@workspace/domain/errors";
 import { type PnrCode } from "@workspace/domain/kernel";
 import { Context, type Effect } from "effect";
 import {
@@ -22,7 +25,10 @@ export interface BookingQueriesPort {
    */
   getSummaryByPnr(
     pnr: PnrCode,
-  ): Effect.Effect<BookingSummary, BookingNotFoundError>;
+  ): Effect.Effect<
+    BookingSummary,
+    BookingNotFoundError | BookingPersistenceError
+  >;
 
   /**
    * List all bookings with pagination

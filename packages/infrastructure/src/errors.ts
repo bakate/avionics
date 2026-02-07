@@ -105,6 +105,15 @@ export class ExternalServiceUnavailableError extends Data.TaggedError(
   readonly timestamp: Date;
 }> {}
 
+export class ExternalServiceUnexpectedStatusError extends Data.TaggedError(
+  "ExternalServiceUnexpectedStatusError",
+)<{
+  readonly service: string;
+  readonly status: number;
+  readonly message: string;
+  readonly timestamp: Date;
+}> {}
+
 // Network errors
 export class NetworkError extends Data.TaggedError("NetworkError")<{
   readonly message: string;
@@ -115,6 +124,6 @@ export class NetworkError extends Data.TaggedError("NetworkError")<{
 // Configuration errors
 export class ConfigurationError extends Data.TaggedError("ConfigurationError")<{
   readonly message: string;
-  readonly missingKeys?: string[];
+  readonly missingKeys?: Array<string>;
   readonly timestamp: Date;
 }> {}

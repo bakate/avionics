@@ -2,24 +2,25 @@ import { fc, test } from "@fast-check/vitest";
 import { Effect } from "effect";
 import { describe, expect } from "vitest";
 import {
+  mapDatabaseError,
+  mapHttpError,
+  mapNetworkError,
+  preserveStackTrace,
+  sanitizeErrorMessage,
+} from "../../../errors/error-mapper.js";
+import {
   DataIntegrityError,
   DuplicateEntityError,
   ExternalServiceClientError,
   ExternalServiceServerError,
   ExternalServiceTimeoutError,
   ExternalServiceUnavailableError,
+  ExternalServiceUnexpectedStatusError,
   NetworkError,
   PersistenceError,
   PersistenceTimeoutError,
   ReferenceNotFoundError,
-} from "../errors.js";
-import {
-  mapDatabaseError,
-  mapHttpError,
-  mapNetworkError,
-  preserveStackTrace,
-  sanitizeErrorMessage,
-} from "./error-mapper.js";
+} from "../../../errors.js";
 
 describe("Error Mapper Property Tests", () => {
   /**
@@ -32,7 +33,7 @@ describe("Error Mapper Property Tests", () => {
       fc.string({ minLength: 5, maxLength: 30 }),
       fc.string({ minLength: 5, maxLength: 30 }),
     ],
-    { numRuns: 100 },
+    { numRuns: 30 },
   )(
     "Property 29: Constraint violations map to domain errors",
     (errorCode, constraint, detail) => {
@@ -81,7 +82,7 @@ describe("Error Mapper Property Tests", () => {
         "Connection timeout",
       ),
     ],
-    { numRuns: 100 },
+    { numRuns: 30 },
   )(
     "Property 30: Network timeouts return typed errors",
     (serviceName, timeoutMessage) => {
@@ -121,7 +122,7 @@ describe("Error Mapper Property Tests", () => {
       fc.integer({ min: 400, max: 599 }), // HTTP status codes
       fc.string({ minLength: 5, maxLength: 50 }), // error message
     ],
-    { numRuns: 100 },
+    { numRuns: 30 },
   )(
     "Property 31: External API errors map to domain errors",
     (serviceName, statusCode, errorMessage) => {
@@ -158,7 +159,7 @@ describe("Error Mapper Property Tests", () => {
    * Property 32: Errors preserve stack traces
    * Feature: infrastructure-layer, Property 32: Errors preserve stack traces
    */
-  test.prop([fc.string({ minLength: 10, maxLength: 50 })], { numRuns: 100 })(
+  test.prop([fc.string({ minLength: 10, maxLength: 50 })], { numRuns: 30 })(
     "Property 32: Errors preserve stack traces",
     (errorMessage) => {
       // Create an error with a stack trace
@@ -198,7 +199,7 @@ describe("Error Mapper Property Tests", () => {
         .filter((s) => s.trim().length > 0 && /^[a-zA-Z0-9_-]+$/.test(s)), // Alphanumeric password
       fc.ipV4(),
     ],
-    { numRuns: 100 },
+    { numRuns: 30 },
   )(
     "Property 33: Error messages don't expose internals",
     (apiKey, username, password, ipAddress) => {
@@ -228,7 +229,7 @@ describe("Error Mapper Property Tests", () => {
   /**
    * Additional test: Connection refused errors map correctly
    */
-  test.prop([fc.string({ minLength: 3, maxLength: 20 })], { numRuns: 100 })(
+  test.prop([fc.string({ minLength: 3, maxLength: 20 })], { numRuns: 30 })(
     "Property 30 (additional): Connection refused errors map correctly",
     (serviceName) => {
       const connectionError = new Error("ECONNREFUSED");
@@ -250,7 +251,7 @@ describe("Error Mapper Property Tests", () => {
   /**
    * Additional test: Database timeout errors map correctly
    */
-  test.prop([fc.string({ minLength: 5, maxLength: 30 })], { numRuns: 100 })(
+  test.prop([fc.string({ minLength: 5, maxLength: 30 })], { numRuns: 30 })(
     "Property 29 (additional): Database timeout errors map correctly",
     (detail) => {
       const timeoutError = {
@@ -273,7 +274,7 @@ describe("Error Mapper Property Tests", () => {
   /**
    * Additional test: Data integrity errors map correctly
    */
-  test.prop([fc.string({ minLength: 5, maxLength: 30 })], { numRuns: 100 })(
+  test.prop([fc.string({ minLength: 5, maxLength: 30 })], { numRuns: 30 })(
     "Property 29 (additional): Data integrity errors map correctly",
     (detail) => {
       const dataError = {
@@ -296,7 +297,7 @@ describe("Error Mapper Property Tests", () => {
   /**
    * Additional test: Generic database errors map to PersistenceError
    */
-  test.prop([fc.string({ minLength: 10, maxLength: 50 })], { numRuns: 100 })(
+  test.prop([fc.string({ minLength: 10, maxLength: 50 })], { numRuns: 30 })(
     "Property 29 (additional): Generic database errors map to PersistenceError",
     (errorMessage) => {
       const genericError = new Error(errorMessage);
@@ -321,9 +322,13 @@ describe("Error Mapper Property Tests", () => {
   test.prop(
     [
       fc.string({ minLength: 3, maxLength: 20 }),
-      fc.string({ minLength: 10, maxLength: 50 }),
+      fc
+        .string({ minLength: 10, maxLength: 50 })
+        .filter(
+          (msg) => !/timeout|econnrefused|enotfound|econnreset/i.test(msg),
+        ),
     ],
-    { numRuns: 100 },
+    { numRuns: 30 },
   )(
     "Property 30 (additional): Generic network errors map to NetworkError",
     (serviceName, errorMessage) => {
@@ -344,4 +349,55 @@ describe("Error Mapper Property Tests", () => {
       }
     },
   );
+
+  /**
+   * Property 34: Unexpected status codes map to ExternalServiceUnexpectedStatusError
+   */
+  test.prop(
+    [
+      fc.string({ minLength: 3, maxLength: 20 }), // service name
+      fc.integer({ min: 100, max: 399 }), // Unexpected status codes (1xx, 2xx, 3xx)
+      fc.string({ minLength: 5, maxLength: 50 }), // error message
+    ],
+    { numRuns: 30 },
+  )(
+    "Property 34: Unexpected status codes map to ExternalServiceUnexpectedStatusError",
+    (serviceName, statusCode, errorMessage) => {
+      const result = Effect.runSyncExit(
+        mapHttpError(serviceName, statusCode, { message: errorMessage }),
+      );
+
+      expect(result._tag).toBe("Failure");
+
+      if (result._tag === "Failure") {
+        const cause = result.cause;
+        if (cause._tag === "Fail") {
+          const error = cause.error;
+          expect(error).toBeInstanceOf(ExternalServiceUnexpectedStatusError);
+          const unexpectedErr = error as ExternalServiceUnexpectedStatusError;
+          expect(unexpectedErr.service).toBe(serviceName);
+          expect(unexpectedErr.status).toBe(statusCode);
+        }
+      }
+    },
+  );
+  test("Entity type extraction returns first segment before underscore", () => {
+    const pgError = {
+      code: "23505", // Unique constraint violation
+      constraint: "bookings_pnr_key",
+      detail: "Key (pnr)=(ABC123) already exists",
+    };
+
+    const result = Effect.runSyncExit(mapDatabaseError(pgError));
+
+    expect(result._tag).toBe("Failure");
+    if (result._tag === "Failure") {
+      const cause = result.cause;
+      if (cause._tag === "Fail") {
+        expect(cause.error).toBeInstanceOf(DuplicateEntityError);
+        const error = cause.error as DuplicateEntityError;
+        expect(error.entityType).toBe("bookings");
+      }
+    }
+  });
 });

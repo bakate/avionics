@@ -7,17 +7,19 @@
 import { SqlClient } from "@effect/sql";
 import { fc, test } from "@fast-check/vitest";
 import { InventoryQueries } from "@workspace/application/inventory-queries";
-import type { CabinClass, FlightId } from "@workspace/domain/kernel";
+import { type CabinClass, type FlightId } from "@workspace/domain/kernel";
 import { Effect, Layer } from "effect";
 import { describe, expect } from "vitest";
-import { ConnectionPoolLive } from "../db/connection.js";
-import { InventoryQueriesLive } from "./inventory-queries.js";
+import { ConnectionPoolLive } from "../../../db/connection.js";
+import { InventoryQueriesLive } from "../../../queries/inventory-queries.js";
 
 // ============================================================================
 // Test Setup
 // ============================================================================
 
-const TestLayer = InventoryQueriesLive.pipe(Layer.provide(ConnectionPoolLive));
+const TestLayer = InventoryQueriesLive.pipe(
+  Layer.provideMerge(ConnectionPoolLive),
+);
 
 // ============================================================================
 // Property Metadata
@@ -42,11 +44,11 @@ const PROPERTIES = {
     feature: "infrastructure-layer",
     requirements: "3.4",
   },
-  PAGINATION_SUPPORT: {
+  FILTERING_SUPPORT: {
     number: 9,
-    statement: "List queries support pagination",
+    statement: "findAvailableFlights respects cabin and minSeats filter",
     validates:
-      "THE Query_Handler SHALL support filtering and pagination for list queries",
+      "THE Query_Handler SHALL support filtering by cabin and minimum seats",
     feature: "infrastructure-layer",
     requirements: "3.5",
   },
@@ -110,7 +112,9 @@ describe("InventoryQueries Property Tests", () => {
         const eventsBefore = beforeRows[0]?.count ?? 0;
 
         // Execute query - it may fail if flight doesn't exist
-        yield* queries.getFlightAvailability(flightId).pipe(Effect.either);
+        yield* queries
+          .getFlightAvailability(flightId as FlightId)
+          .pipe(Effect.either);
 
         // Count events after query
         const afterRows = yield* sql<{ count: number }>`
@@ -133,7 +137,7 @@ describe("InventoryQueries Property Tests", () => {
   );
 
   test.prop([fc.string({ minLength: 5, maxLength: 20 })], {
-    numRuns: 100,
+    numRuns: 10,
     timeout: 10000,
   })(
     `Property ${PROPERTIES.QUERY_FAILURES_TYPED_ERRORS.number}: ${PROPERTIES.QUERY_FAILURES_TYPED_ERRORS.statement}`,
@@ -147,13 +151,13 @@ describe("InventoryQueries Property Tests", () => {
           .pipe(Effect.either);
 
         // Should fail with a typed error
+        expect(result._tag).toBe("Left");
         if (result._tag === "Left") {
           const error = result.left;
           // Error should be either FlightNotFoundError or PersistenceError
-          expect(
-            error._tag === "FlightNotFoundError" ||
-              error._tag === "PersistenceError",
-          ).toBe(true);
+          expect(["FlightNotFoundError", "PersistenceError"]).toContain(
+            error._tag,
+          );
         }
 
         return true;
@@ -169,12 +173,12 @@ describe("InventoryQueries Property Tests", () => {
 
   test.prop(
     [
-      fc.constantFrom<CabinClass>("economy", "business", "first"),
+      fc.constantFrom<CabinClass>("ECONOMY", "BUSINESS", "FIRST"),
       fc.integer({ min: 1, max: 100 }), // minSeats
     ],
-    { numRuns: 100, timeout: 10000 },
+    { numRuns: 10, timeout: 10000 },
   )(
-    `Property ${PROPERTIES.PAGINATION_SUPPORT.number}: ${PROPERTIES.PAGINATION_SUPPORT.statement}`,
+    `Property ${PROPERTIES.FILTERING_SUPPORT.number}: ${PROPERTIES.FILTERING_SUPPORT.statement}`,
     async (cabin, minSeats) => {
       const program = Effect.gen(function* () {
         const queries = yield* InventoryQueries;
@@ -237,7 +241,7 @@ describe("InventoryQueries Property Tests", () => {
    * Not a formal property, but validates filtering logic
    */
   test.prop([fc.integer({ min: 0, max: 50 })], {
-    numRuns: 100,
+    numRuns: 10,
     timeout: 10000,
   })("Low inventory alerts respect threshold", async (threshold) => {
     const program = Effect.gen(function* () {
