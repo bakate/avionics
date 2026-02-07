@@ -1,4 +1,5 @@
 import { Config, Redacted } from "effect";
+import { secret } from "../config.js";
 
 /**
  * Database configuration
@@ -20,7 +21,7 @@ export type DatabaseConfig = Config.Config.Success<typeof DatabaseConfig>;
  * Currency API configuration
  */
 export const CurrencyConfig = Config.all({
-  apiKey: Config.redacted("CURRENCY_API_KEY"),
+  apiKey: secret("CURRENCY_API_KEY", "curr_test_mock"),
   cacheTTL: Config.number("CURRENCY_CACHE_TTL").pipe(Config.withDefault(3600)), // 1 hour in seconds
   rateLimitPerMinute: Config.number("CURRENCY_RATE_LIMIT").pipe(
     Config.withDefault(10),
@@ -36,7 +37,7 @@ export type CurrencyConfig = Config.Config.Success<typeof CurrencyConfig>;
  * Polar payment gateway configuration
  */
 export const PolarConfig = Config.all({
-  apiKey: Config.redacted("POLAR_API_KEY"),
+  apiKey: secret("POLAR_API_KEY", "polar_test_mock"),
   baseUrl: Config.string("POLAR_BASE_URL").pipe(
     Config.withDefault("https://api.polar.sh/v1"),
   ),
@@ -50,7 +51,7 @@ export type PolarConfig = Config.Config.Success<typeof PolarConfig>;
  * Resend notification gateway configuration
  */
 export const ResendConfig = Config.all({
-  apiKey: Config.redacted("RESEND_API_KEY"),
+  apiKey: secret("RESEND_API_KEY", "resend_test_mock"),
   fromEmail: Config.string("RESEND_FROM_EMAIL").pipe(
     Config.withDefault("noreply@avionics.com"),
   ),

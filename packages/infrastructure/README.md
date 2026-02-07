@@ -84,7 +84,7 @@ test.prop([fc.constantFrom("DB_HOST", "DB_PASSWORD", ...)], { numRuns: 100 })(
 Properties are numbered (1-33) and link to requirements:
 
 - **Property 21-23**: Configuration
-- **Property 29-33**: Error Mapping
+- **Property 29-34**: Error Mapping
 
 **Full list:** See [PROPERTIES.md](./PROPERTIES.md)
 

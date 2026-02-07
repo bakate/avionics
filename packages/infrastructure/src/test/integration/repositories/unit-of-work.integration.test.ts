@@ -2,8 +2,8 @@ import { SqlClient } from "@effect/sql";
 import { UnitOfWork } from "@workspace/application/unit-of-work";
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
-import { UnitOfWorkLive } from "../../repositories/unit-of-work.js";
-import { cleanDatabase, TestLayer } from "../helpers/db-test-helper.js";
+import { UnitOfWorkLive } from "../../../repositories/unit-of-work.js";
+import { cleanDatabase, TestLayer } from "../../helpers/db-test-helper.js";
 
 describe("UnitOfWork Integration", () => {
   // Explicitly compose layers for test execution

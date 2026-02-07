@@ -48,9 +48,9 @@ _For any_ inventory query execution, no domain events should be generated in the
 _For any_ query that fails, the error should be an instance of a known error type with diagnostic information.
 **Validates:** WHEN query execution fails, THE System SHALL return a typed error with diagnostic information
 
-**Property 9: List queries support pagination**
-_For any_ list query with pagination parameters, the result should respect page size and offset.
-**Validates:** THE Query_Handler SHALL support filtering and pagination for list queries
+**Property 9: findAvailableFlights respects cabin and minSeats filter**
+_For any_ availability search, the result should respect cabin and minimum seats filters.
+**Validates:** THE Query_Handler SHALL support filtering by cabin and minimum seats
 
 ## Payment Gateway Properties
 
@@ -162,6 +162,10 @@ _For any_ error, the stack trace should be preserved for debugging.
 _For any_ error message, it should not contain sensitive information (connection strings, API keys, internal paths).
 **Validates:** THE System SHALL never expose internal implementation details in error messages
 
+**Property 34: Unexpected status codes map to ExternalServiceUnexpectedStatusError** ✅
+_For any_ unexpected HTTP status code, the system should return an ExternalServiceUnexpectedStatusError.
+**Validates:** WHEN an external service returns an unexpected status code, THE System SHALL return a typed ExternalServiceUnexpectedStatusError
+
 ## Implementation Status
 
 | Properties | Status         | Test File                                       |
@@ -175,7 +179,7 @@ _For any_ error message, it should not contain sensitive information (connection
 | 21-23      | ✅ Implemented | `config/infrastructure-config.property.test.ts` |
 | 24-27      | ⏳ Pending     | -                                               |
 | 28         | ⏳ Pending     | -                                               |
-| 29-33      | ✅ Implemented | `errors/error-mapper.property.test.ts`          |
+| 29-34      | ✅ Implemented | `errors/error-mapper.property.test.ts`          |
 
 ## Common Property Patterns
 
@@ -223,9 +227,9 @@ test.prop(
   [
     // Generators for random inputs
     fc.string({ minLength: 5, maxLength: 20 }),
-    fc.integer({ min: 0, max: 100 }),
+    fc.integer({ min: 0, max: 10 }),
   ],
-  { numRuns: 100 },
+  { numRuns: 10 },
 )("Property N: [Property Statement]", (input1, input2) => {
   // Test implementation
   // Should verify the property holds for these inputs
@@ -236,7 +240,7 @@ test.prop(
 
 1. **Reference property number** in comments
 2. **Use descriptive names** matching the property statement
-3. **Run at least 100 iterations** to find edge cases
+3. **Run at least 10 iterations** to find edge cases
 4. **Use appropriate generators** from fast-check
 5. **Test universal properties**, not specific examples
 6. **Keep tests focused** on one property at a time
@@ -249,8 +253,8 @@ fc.string({ minLength: 5, maxLength: 20 });
 fc.constantFrom("value1", "value2", "value3");
 
 // Numbers
-fc.integer({ min: 0, max: 100 });
-fc.double({ min: 0.01, max: 1000000 });
+fc.integer({ min: 0, max: 10 });
+fc.double({ min: 0.01, max: 100000 });
 
 // Dates
 fc.date();

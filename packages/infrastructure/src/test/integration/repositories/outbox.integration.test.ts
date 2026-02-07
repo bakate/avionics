@@ -3,9 +3,9 @@ import { InventoryRepository } from "@workspace/application/inventory.repository
 import { SeatsHeld } from "@workspace/domain/events";
 import { Effect, Schema } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
-import { PostgresInventoryRepositoryLive } from "../../repositories/postgres-inventory.repository.js";
-import { createTestInventory } from "../factories/inventory-factory.js";
-import { cleanDatabase, TestLayer } from "../helpers/db-test-helper.js";
+import { PostgresInventoryRepositoryLive } from "../../../repositories/postgres-inventory.repository.js";
+import { createTestInventory } from "../../factories/inventory-factory.js";
+import { cleanDatabase, TestLayer } from "../../helpers/db-test-helper.js";
 
 describe("Transactional Outbox Integration", () => {
   beforeEach(async () => {

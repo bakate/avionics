@@ -2,10 +2,10 @@ import { InventoryRepository } from "@workspace/application/inventory.repository
 import { FlightId } from "@workspace/domain/kernel";
 import { Effect, Layer, Schema } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
-import { ConnectionPoolLive } from "../../db/connection.js";
-import { PostgresInventoryRepositoryLive } from "../../repositories/postgres-inventory.repository.js";
-import { createTestInventory } from "../factories/inventory-factory.js";
-import { cleanDatabase } from "../helpers/db-test-helper.js";
+import { ConnectionPoolLive } from "../../../db/connection.js";
+import { PostgresInventoryRepositoryLive } from "../../../repositories/postgres-inventory.repository.js";
+import { createTestInventory } from "../../factories/inventory-factory.js";
+import { cleanDatabase } from "../../helpers/db-test-helper.js";
 
 const TestLayer = PostgresInventoryRepositoryLive.pipe(
   Layer.provide(ConnectionPoolLive),

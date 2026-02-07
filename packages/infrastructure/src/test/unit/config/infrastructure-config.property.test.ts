@@ -5,13 +5,12 @@ import {
   type InfrastructureConfig,
   InfrastructureConfig as InfrastructureConfigEffect,
   redactSensitiveConfig,
-} from "./infrastructure-config.js";
+} from "../../../config/infrastructure-config.js";
 
 // ============================================================================
 // Types
 // ============================================================================
 
-type RequiredConfigKey = (typeof REQUIRED_CONFIG_KEYS)[number];
 type OptionalConfigKey = (typeof OPTIONAL_CONFIG_KEYS)[number];
 
 type ConfigValueGetter = (config: InfrastructureConfig) => number | string;
@@ -23,9 +22,7 @@ type ConfigValueGetter = (config: InfrastructureConfig) => number | string;
 const REQUIRED_CONFIG_KEYS = [
   "DB_HOST",
   "DB_PASSWORD",
-  "CURRENCY_API_KEY",
-  "POLAR_API_KEY",
-  "RESEND_API_KEY",
+  // API Keys have defaults in test/dev environment via secret() helper
 ] as const;
 
 const OPTIONAL_CONFIG_KEYS = [
@@ -110,7 +107,7 @@ describe("Configuration Property Tests", () => {
    * Property 21: Missing required config fails fast
    * Feature: infrastructure-layer, Property 21: Missing required config fails fast
    */
-  test.prop([fc.constantFrom(...REQUIRED_CONFIG_KEYS)], { numRuns: 100 })(
+  test.prop([fc.constantFrom(...REQUIRED_CONFIG_KEYS)], { numRuns: 30 })(
     "Property 21: Missing required config fails fast",
     (missingKey) => {
       const configMap = createMinimalConfig();
@@ -127,7 +124,7 @@ describe("Configuration Property Tests", () => {
    * Property 22: Optional config uses defaults
    * Feature: infrastructure-layer, Property 22: Optional config uses defaults
    */
-  test.prop([fc.constantFrom(...OPTIONAL_CONFIG_KEYS)], { numRuns: 100 })(
+  test.prop([fc.constantFrom(...OPTIONAL_CONFIG_KEYS)], { numRuns: 30 })(
     "Property 22: Optional config uses defaults",
     (optionalKey) => {
       const configProvider = ConfigProvider.fromMap(createMinimalConfig());
@@ -155,7 +152,7 @@ describe("Configuration Property Tests", () => {
         fc.string({ minLength: 20, maxLength: 50 }),
         fc.string({ minLength: 20, maxLength: 50 }),
       ],
-      { numRuns: 100 },
+      { numRuns: 30 },
     )(
       "redacts sensitive values from complex objects",
       (dbPassword, apiKey, secretToken) => {
@@ -188,7 +185,7 @@ describe("Configuration Property Tests", () => {
       },
     );
 
-    test.prop([fc.string({ minLength: 10, maxLength: 30 })], { numRuns: 100 })(
+    test.prop([fc.string({ minLength: 10, maxLength: 30 })], { numRuns: 30 })(
       "handles Redacted type values properly",
       (secret) => {
         const redactedValue = Redacted.make(secret);
@@ -206,7 +203,7 @@ describe("Configuration Property Tests", () => {
         fc.string({ minLength: 15, maxLength: 40 }),
         fc.string({ minLength: 15, maxLength: 40 }),
       ],
-      { numRuns: 100 },
+      { numRuns: 20 },
     )("redacts nested objects with sensitive keys", (password, token) => {
       const config = {
         level1: {

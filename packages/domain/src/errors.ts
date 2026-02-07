@@ -47,6 +47,7 @@ export class InvalidAmountError extends Schema.TaggedError<InvalidAmountError>()
   "InvalidAmountError",
   {
     amount: Schema.Number,
+    message: Schema.optional(Schema.String),
   },
 ) {}
 
