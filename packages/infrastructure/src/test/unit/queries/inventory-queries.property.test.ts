@@ -11,13 +11,13 @@ import { type CabinClass, type FlightId } from "@workspace/domain/kernel";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { describe, expect } from "vitest";
 import { ConnectionPoolLive } from "../../../db/connection.js";
-import { InventoryQueriesLive } from "../../../queries/inventory-queries.js";
+import { PostgresInventoryQueries } from "../../../queries/inventory-queries.js";
 
 // ============================================================================
 // Test Setup
 // ============================================================================
 
-const TestLayer = InventoryQueriesLive.pipe(
+const TestLayer = PostgresInventoryQueries.Live.pipe(
   Layer.provideMerge(ConnectionPoolLive),
 );
 

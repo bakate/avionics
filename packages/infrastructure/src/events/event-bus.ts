@@ -36,6 +36,9 @@ export class EventBus extends Context.Tag("EventBus")<
             yield* Effect.all(
               handlers.map((h) =>
                 h(event).pipe(
+                  Effect.catchAll((e) =>
+                    Effect.logError("Event Handler Error", e),
+                  ),
                   Effect.catchAllDefect((e) =>
                     Effect.logError("Event Handler Fault", e),
                   ),

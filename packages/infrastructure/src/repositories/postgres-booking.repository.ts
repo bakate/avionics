@@ -19,20 +19,24 @@ import {
 } from "./mappers/booking.mapper.js";
 
 // Simplified implementation focusing on structure
-export const PostgresBookingRepositoryLive = Layer.effect(
-  BookingRepository,
-  Effect.gen(function* () {
-    const sql = yield* SqlClient.SqlClient;
+export class PostgresBookingRepository {
+  /**
+   * Live Layer — PostgreSQL implementation.
+   */
+  static readonly Live = Layer.effect(
+    BookingRepository,
+    Effect.gen(function* () {
+      const sql = yield* SqlClient.SqlClient;
 
-    const save: BookingRepositoryPort["save"] = (booking) =>
-      sql
-        .withTransaction(
-          Effect.gen(function* () {
-            // 1. Insert/Update Booking Root
-            const row = toBookingRow(booking);
+      const save: BookingRepositoryPort["save"] = (booking) =>
+        sql
+          .withTransaction(
+            Effect.gen(function* () {
+              // 1. Insert/Update Booking Root
+              const row = toBookingRow(booking);
 
-            // Using explicit Optimistic Lock check
-            const result = yield* sql`
+              // Using explicit Optimistic Lock check
+              const result = yield* sql`
             INSERT INTO bookings (id, pnr_code, status, version, created_at, expires_at)
             VALUES (${row.id}, ${row.pnr_code}, ${row.status}, ${row.version + 1}, ${row.created_at}, ${row.expires_at})
             ON CONFLICT (id) DO UPDATE SET
@@ -44,297 +48,314 @@ export const PostgresBookingRepositoryLive = Layer.effect(
             RETURNING version
           `;
 
-            if (result.length === 0) {
-              // Retrieve current version to report actual
-              const existing = yield* sql<{
-                version: number;
-              }>`SELECT version FROM bookings WHERE id = ${booking.id}`;
-              const firstExisting = existing[0];
-              const actualVersion = firstExisting
-                ? (firstExisting.version as number)
-                : -1;
+              if (result.length === 0) {
+                // Retrieve current version to report actual
+                const existing = yield* sql<{
+                  version: number;
+                }>`SELECT version FROM bookings WHERE id = ${booking.id}`;
+                const firstExisting = existing[0];
+                const actualVersion = firstExisting
+                  ? (firstExisting.version as number)
+                  : -1;
 
-              return yield* Effect.fail(
-                new OptimisticLockingError({
-                  entityType: "Booking",
-                  id: booking.id,
-                  expectedVersion: booking.version,
-                  actualVersion: actualVersion,
-                }),
-              );
-            }
+                return yield* Effect.fail(
+                  new OptimisticLockingError({
+                    entityType: "Booking",
+                    id: booking.id,
+                    expectedVersion: booking.version,
+                    actualVersion: actualVersion,
+                  }),
+                );
+              }
 
-            const resultRow = result[0];
-            if (!resultRow) {
-              return yield* Effect.fail(
-                new BookingPersistenceError({
-                  bookingId: booking.id,
-                  reason: "Failed to retrieve update result",
-                }),
-              );
-            }
+              const resultRow = result[0];
+              if (!resultRow) {
+                return yield* Effect.fail(
+                  new BookingPersistenceError({
+                    bookingId: booking.id,
+                    reason: "Failed to retrieve update result",
+                  }),
+                );
+              }
 
-            const returnedVersion = resultRow.version as number;
-            if (returnedVersion !== booking.version + 1) {
-              return yield* Effect.fail(
-                new OptimisticLockingError({
-                  entityType: "Booking",
-                  id: booking.id,
-                  expectedVersion: booking.version,
-                  actualVersion: returnedVersion - 1,
-                }),
-              );
-            }
+              const returnedVersion = resultRow.version as number;
+              if (returnedVersion !== booking.version + 1) {
+                return yield* Effect.fail(
+                  new OptimisticLockingError({
+                    entityType: "Booking",
+                    id: booking.id,
+                    expectedVersion: booking.version,
+                    actualVersion: returnedVersion - 1,
+                  }),
+                );
+              }
 
-            // 2. Save Passengers/Segments (Full Replace strategy for simplicity within transaction)
-            yield* sql`DELETE FROM passengers WHERE booking_id = ${booking.id}`;
-            yield* sql`DELETE FROM segments WHERE booking_id = ${booking.id}`;
+              // 2. Save Passengers/Segments (Full Replace strategy for simplicity within transaction)
+              yield* sql`DELETE FROM passengers WHERE booking_id = ${booking.id}`;
+              yield* sql`DELETE FROM segments WHERE booking_id = ${booking.id}`;
 
-            // Re-insert passengers (Batch)
-            if (booking.passengers.length > 0) {
-              for (const p of booking.passengers) {
-                yield* sql`
+              // Re-insert passengers (Batch)
+              if (booking.passengers.length > 0) {
+                for (const p of booking.passengers) {
+                  yield* sql`
                 INSERT INTO passengers (id, booking_id, first_name, last_name, email, date_of_birth, gender, type)
                 VALUES (${p.id}, ${booking.id}, ${p.firstName}, ${p.lastName}, ${p.email}, ${p.dateOfBirth}, ${p.gender}, ${p.type})
               `;
+                }
               }
-            }
 
-            if (booking.segments.length > 0) {
-              for (const s of booking.segments) {
-                yield* sql`
+              if (booking.segments.length > 0) {
+                for (const s of booking.segments) {
+                  yield* sql`
                 INSERT INTO segments (id, booking_id, flight_id, cabin_class, price_amount, price_currency, seat_number)
                 VALUES (${s.id}, ${booking.id}, ${s.flightId}, ${s.cabin}, ${s.price.amount}, ${s.price.currency}, ${Option.getOrNull(s.seatNumber)})
               `;
+                }
               }
-            }
 
-            // 3. Save Domain Events (Transactional Outbox)
-            if (booking.domainEvents.length > 0) {
-              for (const event of booking.domainEvents as Array<DomainEventType>) {
-                yield* sql`
+              // 3. Save Domain Events (Transactional Outbox)
+              if (booking.domainEvents.length > 0) {
+                for (const event of booking.domainEvents as Array<DomainEventType>) {
+                  yield* sql`
                 INSERT INTO event_outbox (id, event_type, aggregate_id, payload)
                 VALUES (${String(event.eventId)}, ${"_tag" in event ? String(event._tag) : event.constructor.name}, ${String(booking.id)}, ${JSON.stringify(event)})
               `;
+                }
               }
-            }
 
-            return new Booking({
-              ...booking,
-              version: returnedVersion,
-            }).clearEvents();
-          }),
-        )
-        .pipe(
-          Effect.mapError((e) => {
-            return e instanceof OptimisticLockingError
-              ? e
-              : new BookingPersistenceError({
-                  bookingId: booking.id,
-                  reason: e instanceof Error ? e.message : String(e),
-                });
-          }),
-        );
+              return new Booking({
+                ...booking,
+                version: returnedVersion,
+              }).clearEvents();
+            }),
+          )
+          .pipe(
+            Effect.mapError((e) => {
+              return e instanceof OptimisticLockingError
+                ? e
+                : new BookingPersistenceError({
+                    bookingId: booking.id,
+                    reason: e instanceof Error ? e.message : String(e),
+                  });
+            }),
+          );
 
-    return {
-      save,
-      findById: (id) =>
-        Effect.gen(function* () {
-          const bookings = yield* sql<BookingRow>`
+      return {
+        save,
+        findById: (id) =>
+          Effect.gen(function* () {
+            const bookings = yield* sql<BookingRow>`
              SELECT * FROM bookings WHERE id = ${id}
            `;
 
-          const booking = bookings[0];
-          if (!booking) {
-            return Option.none();
-          }
+            const booking = bookings[0];
+            if (!booking) {
+              return Option.none();
+            }
 
-          const passengers = yield* sql<PassengerRow>`
+            const passengers = yield* sql<PassengerRow>`
              SELECT * FROM passengers WHERE booking_id = ${id}
            `;
 
-          const segments = yield* sql<SegmentRow>`
+            const segments = yield* sql<SegmentRow>`
              SELECT * FROM segments WHERE booking_id = ${id}
            `;
 
-          const domainBooking = yield* Effect.try({
-            try: () => fromBookingRow(booking, passengers, segments),
-            catch: (e) =>
-              new BookingPersistenceError({
-                bookingId: id,
-                reason: e instanceof Error ? e.message : String(e),
-              }),
-          });
-          return Option.some(domainBooking);
-        }).pipe(
-          Effect.catchTag("SqlError", (e) =>
-            Effect.fail(
-              new BookingPersistenceError({
-                bookingId: id,
-                reason: e.message,
-              }),
-            ),
-          ),
-        ),
-
-      findByPnr: (pnr) =>
-        Effect.gen(function* () {
-          const bookings = yield* sql<BookingRow>`
-             SELECT * FROM bookings WHERE pnr_code = ${pnr}
-           `;
-
-          const booking = bookings[0];
-          if (!booking) {
-            return Option.none();
-          }
-
-          const passengers = yield* sql<PassengerRow>`
-             SELECT * FROM passengers WHERE booking_id = ${booking.id}
-           `;
-
-          const segments = yield* sql<SegmentRow>`
-             SELECT * FROM segments WHERE booking_id = ${booking.id}
-           `;
-
-          const domainBooking = yield* Effect.try({
-            try: () => fromBookingRow(booking, passengers, segments),
-            catch: (e) =>
-              new BookingPersistenceError({
-                bookingId: pnr,
-                reason: e instanceof Error ? e.message : String(e),
-              }),
-          });
-          return Option.some(domainBooking);
-        }).pipe(
-          Effect.catchTag("SqlError", (e) =>
-            Effect.fail(
-              new BookingPersistenceError({
-                bookingId: pnr,
-                reason: e.message,
-              }),
-            ),
-          ),
-        ),
-
-      findExpired: (before) =>
-        Effect.gen(function* () {
-          const bookings = yield* sql<BookingRow>`
-             SELECT * FROM bookings WHERE expires_at < ${before}
-           `;
-
-          const results: Array<Booking> = [];
-          for (const row of bookings) {
-            const passengers = yield* sql<PassengerRow>`
-               SELECT * FROM passengers WHERE booking_id = ${row.id}
-             `;
-            const segments = yield* sql<SegmentRow>`
-               SELECT * FROM segments WHERE booking_id = ${row.id}
-             `;
-
-            // Wrap mapper in a try to catch runtime integrity errors as typed failures
-            const booking = yield* Effect.try({
-              try: () => fromBookingRow(row, passengers, segments),
+            const domainBooking = yield* Effect.try({
+              try: () => fromBookingRow(booking, passengers, segments),
               catch: (e) =>
                 new BookingPersistenceError({
-                  bookingId: row.id,
+                  bookingId: id,
                   reason: e instanceof Error ? e.message : String(e),
                 }),
             });
-            results.push(booking);
-          }
-          return results;
-        }).pipe(
-          Effect.catchTag("SqlError", (e) =>
-            Effect.fail(
-              new BookingPersistenceError({
-                bookingId: "all-expired",
-                reason: e.message,
-              }),
+            return Option.some(domainBooking);
+          }).pipe(
+            Effect.catchTag("SqlError", (e) =>
+              Effect.fail(
+                new BookingPersistenceError({
+                  bookingId: id,
+                  reason: e.message,
+                }),
+              ),
             ),
           ),
-        ),
 
-      findByPassengerId: (passengerId) =>
-        Effect.gen(function* () {
-          // Find booking IDs first
-          const rows = yield* sql<{ booking_id: string }>`
-             SELECT DISTINCT booking_id FROM passengers WHERE id = ${passengerId}
+        findByPnr: (pnr) =>
+          Effect.gen(function* () {
+            const bookings = yield* sql<BookingRow>`
+             SELECT * FROM bookings WHERE pnr_code = ${pnr}
            `;
 
-          const results: Array<Booking> = [];
-          for (const { booking_id } of rows) {
+            const booking = bookings[0];
+            if (!booking) {
+              return Option.none();
+            }
+
+            const passengers = yield* sql<PassengerRow>`
+             SELECT * FROM passengers WHERE booking_id = ${booking.id}
+           `;
+
+            const segments = yield* sql<SegmentRow>`
+             SELECT * FROM segments WHERE booking_id = ${booking.id}
+           `;
+
+            const domainBooking = yield* Effect.try({
+              try: () => fromBookingRow(booking, passengers, segments),
+              catch: (e) =>
+                new BookingPersistenceError({
+                  bookingId: pnr,
+                  reason: e instanceof Error ? e.message : String(e),
+                }),
+            });
+            return Option.some(domainBooking);
+          }).pipe(
+            Effect.catchTag("SqlError", (e) =>
+              Effect.fail(
+                new BookingPersistenceError({
+                  bookingId: pnr,
+                  reason: e.message,
+                }),
+              ),
+            ),
+          ),
+
+        findExpired: (before) =>
+          Effect.gen(function* () {
             const bookings = yield* sql<BookingRow>`
-               SELECT * FROM bookings WHERE id = ${booking_id}
-             `;
-            if (bookings.length > 0) {
+             SELECT * FROM bookings WHERE expires_at < ${before}
+           `;
+
+            const results: Array<Booking> = [];
+            for (const row of bookings) {
               const passengers = yield* sql<PassengerRow>`
-                 SELECT * FROM passengers WHERE booking_id = ${booking_id}
-               `;
+               SELECT * FROM passengers WHERE booking_id = ${row.id}
+             `;
               const segments = yield* sql<SegmentRow>`
-                 SELECT * FROM segments WHERE booking_id = ${booking_id}
-               `;
+               SELECT * FROM segments WHERE booking_id = ${row.id}
+             `;
 
-              const bookingRow = bookings[0];
-              if (!bookingRow) continue;
-
+              // Wrap mapper in a try to catch runtime integrity errors as typed failures
               const booking = yield* Effect.try({
-                try: () => fromBookingRow(bookingRow, passengers, segments),
+                try: () => fromBookingRow(row, passengers, segments),
                 catch: (e) =>
                   new BookingPersistenceError({
-                    bookingId: booking_id,
+                    bookingId: row.id,
                     reason: e instanceof Error ? e.message : String(e),
                   }),
               });
               results.push(booking);
             }
-          }
-          return results;
-        }).pipe(
-          Effect.catchTag("SqlError", (e) =>
-            Effect.fail(
-              new BookingPersistenceError({
-                bookingId: "by-passenger",
-                reason: e.message,
-              }),
+            return results;
+          }).pipe(
+            Effect.catchTag("SqlError", (e) =>
+              Effect.fail(
+                new BookingPersistenceError({
+                  bookingId: "all-expired",
+                  reason: e.message,
+                }),
+              ),
             ),
           ),
-        ),
 
-      findAll: () =>
-        Effect.gen(function* () {
-          const bookings = yield* sql<BookingRow>`
-             SELECT * FROM bookings ORDER BY created_at DESC
+        findByPassengerId: (passengerId) =>
+          Effect.gen(function* () {
+            // Find booking IDs first
+            const rows = yield* sql<{ booking_id: string }>`
+             SELECT DISTINCT booking_id FROM passengers WHERE id = ${passengerId}
            `;
 
-          const results: Array<Booking> = [];
-          for (const row of bookings) {
-            const passengers = yield* sql<PassengerRow>`
-               SELECT * FROM passengers WHERE booking_id = ${row.id}
+            const results: Array<Booking> = [];
+            for (const { booking_id } of rows) {
+              const bookings = yield* sql<BookingRow>`
+               SELECT * FROM bookings WHERE id = ${booking_id}
              `;
-            const segments = yield* sql<SegmentRow>`
-               SELECT * FROM segments WHERE booking_id = ${row.id}
-             `;
-            const booking = yield* Effect.try({
-              try: () => fromBookingRow(row, passengers, segments),
-              catch: (e) =>
+              if (bookings.length > 0) {
+                const passengers = yield* sql<PassengerRow>`
+                 SELECT * FROM passengers WHERE booking_id = ${booking_id}
+               `;
+                const segments = yield* sql<SegmentRow>`
+                 SELECT * FROM segments WHERE booking_id = ${booking_id}
+               `;
+
+                const bookingRow = bookings[0];
+                if (!bookingRow) continue;
+
+                const booking = yield* Effect.try({
+                  try: () => fromBookingRow(bookingRow, passengers, segments),
+                  catch: (e) =>
+                    new BookingPersistenceError({
+                      bookingId: booking_id,
+                      reason: e instanceof Error ? e.message : String(e),
+                    }),
+                });
+                results.push(booking);
+              }
+            }
+            return results;
+          }).pipe(
+            Effect.catchTag("SqlError", (e) =>
+              Effect.fail(
                 new BookingPersistenceError({
-                  bookingId: row.id,
-                  reason: e instanceof Error ? e.message : String(e),
+                  bookingId: "by-passenger",
+                  reason: e.message,
                 }),
-            });
-            results.push(booking);
-          }
-          return results;
-        }).pipe(
-          Effect.catchTag("SqlError", (e) =>
-            Effect.fail(
-              new BookingPersistenceError({
-                bookingId: "all",
-                reason: e.message,
-              }),
+              ),
             ),
           ),
-        ),
-    };
-  }),
-);
+
+        findAll: () =>
+          Effect.gen(function* () {
+            const bookings = yield* sql<BookingRow>`
+               SELECT * FROM bookings ORDER BY created_at DESC LIMIT 1000
+             `;
+            const results: Array<Booking> = [];
+            for (const row of bookings) {
+              const passengers = yield* sql<PassengerRow>`
+                 SELECT * FROM passengers WHERE booking_id = ${row.id}
+               `;
+              const segments = yield* sql<SegmentRow>`
+                 SELECT * FROM segments WHERE booking_id = ${row.id}
+               `;
+              const booking = yield* Effect.try({
+                try: () => fromBookingRow(row, passengers, segments),
+                catch: (e) =>
+                  new BookingPersistenceError({
+                    bookingId: row.id,
+                    reason: e instanceof Error ? e.message : String(e),
+                  }),
+              });
+              results.push(booking);
+            }
+            return results;
+          }).pipe(
+            Effect.catchTag("SqlError", (e) =>
+              Effect.fail(
+                new BookingPersistenceError({
+                  bookingId: "all",
+                  reason: e.message,
+                }),
+              ),
+            ),
+          ),
+      };
+    }),
+  );
+
+  /**
+   * Test Layer — Mock implementation.
+   */
+  static readonly Test = (overrides: Partial<BookingRepositoryPort> = {}) =>
+    Layer.succeed(
+      BookingRepository,
+      BookingRepository.of({
+        save: (booking) => Effect.succeed(booking),
+        findById: () => Effect.succeed(Option.none()),
+        findByPnr: () => Effect.succeed(Option.none()),
+        findExpired: () => Effect.succeed([]),
+        findByPassengerId: () => Effect.succeed([]),
+        findAll: () => Effect.succeed([]),
+        ...overrides,
+      }),
+    );
+}

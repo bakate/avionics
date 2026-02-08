@@ -92,6 +92,19 @@ export type Gender = (typeof Gender)[keyof typeof Gender];
 
 export const GenderSchema = Schema.Enums(Gender);
 
+// --- Coupon Status ---
+export const CouponStatus = {
+  OPEN: "OPEN",
+  USED: "USED",
+  VOID: "VOID",
+  EXCHANGED: "EXCHANGED",
+  CHECKED_IN: "CHECKED_IN",
+} as const;
+
+export type CouponStatus = (typeof CouponStatus)[keyof typeof CouponStatus];
+
+export const CouponStatusSchema = Schema.Enums(CouponStatus);
+
 // =============================================================================
 // COMPLEX VALUE OBJECTS (Structs with Invariants)
 // =============================================================================

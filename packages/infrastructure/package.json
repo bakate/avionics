@@ -4,7 +4,27 @@
   "description": "Infrastructure layer for Avionics system",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./config": "./src/config.ts",
+    "./infrastructure-config": "./src/config/infrastructure-config.ts",
+    "./connection": "./src/db/connection.ts",
+    "./schema": "./src/db/schema.ts",
+    "./errors": "./src/errors.ts",
+    "./event-bus": "./src/events/event-bus.ts",
+    "./outbox-processor": "./src/events/outbox-processor.ts",
+    "./transactional-outbox": "./src/events/transactional-outbox.ts",
+    "./currency-converter.gateway": "./src/gateways/currency-converter.gateway.ts",
+    "./notification-gateway": "./src/gateways/notification-gateway.ts",
+    "./payment-gateway": "./src/gateways/payment-gateway.ts",
+    "./booking-queries": "./src/queries/booking-queries.ts",
+    "./inventory-queries": "./src/queries/inventory-queries.ts",
+    "./booking.repository": "./src/repositories/postgres-booking.repository.ts",
+    "./inventory.repository": "./src/repositories/postgres-inventory.repository.ts",
+    "./ticket.repository": "./src/repositories/postgres-ticket.repository.ts",
+    "./unit-of-work": "./src/repositories/unit-of-work.ts",
+    "./audit-logger": "./src/services/audit-logger.ts",
+    "./health-check": "./src/services/health-check.ts",
+    "./shutdown-manager": "./src/services/shutdown-manager.ts"
   },
   "scripts": {
     "clean": "rm -rf dist",

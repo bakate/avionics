@@ -4,11 +4,11 @@ import { PnrCodeSchema } from "@workspace/domain/kernel";
 import { Effect, Layer, Option } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ConnectionPoolLive } from "../../../db/connection.js";
-import { PostgresBookingRepositoryLive } from "../../../repositories/postgres-booking.repository.js";
+import { PostgresBookingRepository } from "../../../repositories/postgres-booking.repository.js";
 import { createTestBooking } from "../../factories/booking-factory.js";
 import { cleanDatabase } from "../../helpers/db-test-helper.js";
 
-const TestLayer = PostgresBookingRepositoryLive.pipe(
+const TestLayer = PostgresBookingRepository.Live.pipe(
   Layer.provide(ConnectionPoolLive),
 );
 

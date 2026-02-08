@@ -5,7 +5,7 @@ import { PaymentGateway } from "@workspace/application/payment.gateway";
 import { Money } from "@workspace/domain/kernel";
 import { Cause, Effect, Option as EOption, Exit } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PaymentGatewayLive } from "../../../gateways/payment-gateway";
+import { PolarPaymentGateway } from "../../../gateways/payment-gateway";
 import { AuditLogger } from "../../../services/audit-logger.js";
 
 // Hoisted mocks to be accessible inside vi.mock factory
@@ -30,7 +30,7 @@ vi.mock("@polar-sh/sdk", async (importOriginal) => {
   };
 });
 
-describe("PaymentGatewayLive", () => {
+describe("PolarPaymentGateway.Live", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -39,7 +39,7 @@ describe("PaymentGatewayLive", () => {
   const runTest = async <A, E>(effect: Effect.Effect<A, E, PaymentGateway>) => {
     return await Effect.runPromise(
       effect.pipe(
-        Effect.provide(PaymentGatewayLive),
+        Effect.provide(PolarPaymentGateway.Live),
         Effect.provide(AuditLogger.Test()),
       ),
     );
@@ -50,7 +50,7 @@ describe("PaymentGatewayLive", () => {
   ) => {
     return await Effect.runPromiseExit(
       effect.pipe(
-        Effect.provide(PaymentGatewayLive),
+        Effect.provide(PolarPaymentGateway.Live),
         Effect.provide(AuditLogger.Test()),
       ),
     );
