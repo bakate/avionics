@@ -36,6 +36,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Run migrations
+        run: pnpm --filter @workspace/infrastructure run db:migrate
+        env:
+          PGHOST: ${{ secrets.NEON_DB_HOST }}
+          PGUSER: ${{ secrets.NEON_DB_USER }}
+          PGPASSWORD: ${{ secrets.NEON_DB_PASSWORD }}
+          PGDATABASE: ${{ secrets.NEON_DB_NAME }}
+          PGPORT: 5432
+          PGSSLMODE: require
+
       - name: Run tests
         run: pnpm turbo run test
         env:
@@ -44,6 +54,7 @@ jobs:
           PGUSER: ${{ secrets.NEON_DB_USER }}
           PGPASSWORD: ${{ secrets.NEON_DB_PASSWORD }}
           PGDATABASE: ${{ secrets.NEON_DB_NAME }}
+          PGPORT: 5432
           PGSSLMODE: require
   # uncomment the following lines if you want to deploy to vercel and only if the test job is successful
   # deploy:
