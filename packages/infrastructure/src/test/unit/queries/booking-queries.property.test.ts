@@ -11,13 +11,13 @@ import { type PnrCode } from "@workspace/domain/kernel";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { describe, expect } from "vitest";
 import { ConnectionPoolLive } from "../../../db/connection.js";
-import { BookingQueriesLive } from "../../../queries/booking-queries.js";
+import { PostgresBookingQueries } from "../../../queries/booking-queries.js";
 
 // ============================================================================
 // Test Setup
 // ============================================================================
 
-const TestLayer = BookingQueriesLive.pipe(
+const TestLayer = PostgresBookingQueries.Live.pipe(
   Layer.provideMerge(ConnectionPoolLive),
 );
 
@@ -159,11 +159,10 @@ describe("BookingQueries Property Tests", () => {
 
       const FailingSqlLayer = Layer.succeed(
         SqlClient.SqlClient,
-        // @ts-expect-error - Mocking for test
-        makeFailingDataClient() as any,
+        makeFailingDataClient() as unknown as SqlClient.SqlClient,
       );
 
-      const FailingQueriesLayer = BookingQueriesLive.pipe(
+      const FailingQueriesLayer = PostgresBookingQueries.Live.pipe(
         Layer.provide(FailingSqlLayer),
       );
 
@@ -184,7 +183,7 @@ describe("BookingQueries Property Tests", () => {
         return true;
       });
 
-      // For this specific test, we don't use the shared runtime because we need a failing layer
+      // Verify mapping of SqlError to BookingPersistenceError
       const result = await Effect.runPromise(
         program.pipe(Effect.provide(FailingQueriesLayer)),
       );

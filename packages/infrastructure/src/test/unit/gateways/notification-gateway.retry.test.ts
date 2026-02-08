@@ -5,7 +5,8 @@ import {
 import { type Ticket } from "@workspace/domain/ticket";
 import { Effect, Layer, Redacted } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createNotificationGatewayLive } from "../../../gateways/notification-gateway.js";
+import { ResendConfig } from "../../../config/infrastructure-config.js";
+import { ResendNotificationGateway } from "../../../gateways/notification-gateway.js";
 import { AuditLogger } from "../../../services/audit-logger.js";
 
 const mocks = vi.hoisted(() => ({
@@ -57,7 +58,7 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = createNotificationGatewayLive(config).pipe(
+    const gatewayLayer = ResendNotificationGateway.createLive(config).pipe(
       Layer.provide(AuditLogger.Test()),
     );
 
@@ -85,7 +86,7 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = createNotificationGatewayLive(config).pipe(
+    const gatewayLayer = ResendNotificationGateway.createLive(config).pipe(
       Layer.provide(AuditLogger.Test()),
     );
 
@@ -114,7 +115,7 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = createNotificationGatewayLive(config).pipe(
+    const gatewayLayer = ResendNotificationGateway.createLive(config).pipe(
       Layer.provide(AuditLogger.Test()),
     );
 
@@ -141,7 +142,7 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = createNotificationGatewayLive(config).pipe(
+    const gatewayLayer = ResendNotificationGateway.createLive(config).pipe(
       Layer.provide(AuditLogger.Test()),
     );
 
@@ -173,9 +174,9 @@ describe("NotificationGateway Rate Limit Handling", () => {
       error: apiError,
     });
 
-    const gatewayLayer = createNotificationGatewayLive(config).pipe(
-      Layer.provide(AuditLogger.Test()),
-    );
+    const gatewayLayer = ResendNotificationGateway.Live.pipe(
+      Layer.provide(Layer.succeed(ResendConfig, config)),
+    ).pipe(Layer.provide(AuditLogger.Test()));
 
     const program = Effect.gen(function* () {
       const gateway = yield* NotificationGateway;

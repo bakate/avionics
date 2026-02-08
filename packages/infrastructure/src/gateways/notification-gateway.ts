@@ -267,105 +267,120 @@ const maskEmail = (email: string): string => {
   return `${maskedLocal}@${domain}`;
 };
 
-export const createNotificationGatewayLive = (
-  config: ResendConfig,
-): Layer.Layer<NotificationGateway, never, AuditLogger> =>
-  Layer.effect(
-    NotificationGateway,
-    Effect.gen(function* () {
-      const auditLogger = yield* AuditLogger;
-      const resend = new Resend(Redacted.value(config.apiKey));
+export class ResendNotificationGateway {
+  /**
+   * Factory method to create a Live Layer with a specific configuration.
+   */
+  static readonly createLive = (config: ResendConfig) =>
+    Layer.effect(
+      NotificationGateway,
+      Effect.gen(function* () {
+        const auditLogger = yield* AuditLogger;
+        const resend = new Resend(Redacted.value(config.apiKey));
 
-      const retryPolicy = Schedule.exponential("500 millis").pipe(
-        Schedule.intersect(Schedule.recurs(config.maxRetries)),
-        Schedule.whileInput(
-          (error: NotificationError) =>
-            error._tag === "NotificationApiUnavailableError" ||
-            error._tag === "NotificationRateLimitError",
-        ),
-      );
+        const retryPolicy = Schedule.exponential("500 millis").pipe(
+          Schedule.intersect(Schedule.recurs(config.maxRetries)),
+          Schedule.whileInput(
+            (error: NotificationError) =>
+              error._tag === "NotificationApiUnavailableError" ||
+              error._tag === "NotificationRateLimitError",
+          ),
+        );
 
-      const sendTicket: NotificationGatewayService["sendTicket"] = (
-        ticket: Ticket,
-        recipient: EmailRecipient,
-      ) =>
-        Effect.gen(function* () {
-          yield* Effect.logInfo("Sending ticket confirmation email", {
-            ticketNumber: ticket.ticketNumber,
-            pnrCode: ticket.pnrCode,
-            recipientEmail: maskEmail(recipient.email),
-          });
-
-          // Audit log the notification
-          yield* auditLogger.log({
-            aggregateType: "Ticket",
-            aggregateId: ticket.ticketNumber,
-            operation: "UPDATE",
-            changes: {
-              notificationSent: "TicketConfirmation",
+        const sendTicket: NotificationGatewayService["sendTicket"] = (
+          ticket: Ticket,
+          recipient: EmailRecipient,
+        ) =>
+          Effect.gen(function* () {
+            yield* Effect.logInfo("Sending ticket confirmation email", {
+              ticketNumber: ticket.ticketNumber,
+              pnrCode: ticket.pnrCode,
               recipientEmail: maskEmail(recipient.email),
-            },
-          });
+            });
 
-          const recipientName = recipient.name ?? ticket.passengerName;
+            const recipientName = recipient.name ?? ticket.passengerName;
 
-          const result = yield* Effect.tryPromise({
-            try: () =>
-              resend.emails.send({
-                from: config.fromEmail,
-                to: [recipient.email],
-                subject: `Your E-Ticket Confirmation - ${ticket.pnrCode}`,
-                html: createTicketEmailHtml(ticket, recipientName),
-                text: createTicketEmailText(ticket, recipientName),
+            const result = yield* Effect.tryPromise({
+              try: () =>
+                resend.emails.send({
+                  from: config.fromEmail,
+                  to: [recipient.email],
+                  subject: `Your E-Ticket Confirmation - ${ticket.pnrCode}`,
+                  html: createTicketEmailHtml(ticket, recipientName),
+                  text: createTicketEmailText(ticket, recipientName),
+                }),
+              catch: (error) => mapResendError(error, recipient.email),
+            }).pipe(
+              Effect.flatMap((response) => {
+                if (response.error) {
+                  return Effect.fail(
+                    mapResendError(response.error, recipient.email),
+                  );
+                }
+                return Effect.succeed(response);
               }),
-            catch: (error) => mapResendError(error, recipient.email),
-          }).pipe(
-            Effect.flatMap((response) => {
-              if (response.error) {
-                return Effect.fail(
-                  mapResendError(response.error, recipient.email),
-                );
-              }
-              return Effect.succeed(response);
-            }),
-            Effect.retry(retryPolicy),
-          );
-
-          if (!result.data?.id) {
-            return yield* Effect.fail(
-              new NotificationApiUnavailableError({
-                message: "Resend API returned no message ID",
-              }),
+              Effect.retry(retryPolicy),
             );
-          }
 
-          yield* Effect.logInfo("Ticket confirmation email sent", {
-            messageId: result.data.id,
-            ticketNumber: ticket.ticketNumber,
+            if (!result.data?.id) {
+              return yield* Effect.fail(
+                new NotificationApiUnavailableError({
+                  message: "Resend API returned no message ID",
+                }),
+              );
+            }
+
+            yield* Effect.logInfo("Ticket confirmation email sent", {
+              messageId: result.data.id,
+              ticketNumber: ticket.ticketNumber,
+            });
+
+            // Audit log the notification
+            yield* auditLogger.log({
+              aggregateType: "Ticket",
+              aggregateId: ticket.ticketNumber,
+              operation: "UPDATE",
+              changes: {
+                notificationSent: "TicketConfirmation",
+                recipientEmail: maskEmail(recipient.email),
+              },
+            });
+            return { messageId: result.data.id } satisfies NotificationResult;
           });
 
-          return { messageId: result.data.id } satisfies NotificationResult;
-        });
+        return { sendTicket };
+      }),
+    );
 
-      return { sendTicket };
+  /**
+   * Live Layer — Implementation using Resend API.
+   */
+  static readonly Live = Layer.unwrapEffect(
+    Effect.gen(function* () {
+      const config = yield* ResendConfig;
+      return ResendNotificationGateway.createLive(config);
     }),
   );
 
-export const NotificationGatewayTest = Layer.succeed(NotificationGateway, {
-  sendTicket: (ticket, recipient) =>
-    Effect.gen(function* () {
-      yield* Effect.logInfo(
-        `[TEST] Sending Ticket ${ticket.ticketNumber} to ${recipient.email}`,
-      );
-      return {
-        messageId: `test_msg_${Date.now()}`,
-      } satisfies NotificationResult;
-    }),
-});
-
-export const NotificationGatewayLive = Layer.unwrapEffect(
-  Effect.gen(function* () {
-    const config = yield* ResendConfig;
-    return createNotificationGatewayLive(config);
-  }),
-);
+  /**
+   * Test Layer — Mock implementation.
+   */
+  static readonly Test = (
+    overrides: Partial<NotificationGatewayService> = {},
+  ) =>
+    Layer.succeed(
+      NotificationGateway,
+      NotificationGateway.of({
+        sendTicket: (ticket, recipient) =>
+          Effect.gen(function* () {
+            yield* Effect.logInfo(
+              `[TEST] Sending Ticket ${ticket.ticketNumber} to ${recipient.email}`,
+            );
+            return {
+              messageId: `test_msg_${Date.now()}`,
+            } satisfies NotificationResult;
+          }),
+        ...overrides,
+      }),
+    );
+}

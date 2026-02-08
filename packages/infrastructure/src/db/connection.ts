@@ -7,7 +7,8 @@ import { type ConfigError, type Layer } from "effect";
 // These are automatically picked up by the pg library
 export const ConnectionPoolLive: Layer.Layer<
   SqlClient.SqlClient,
-  ConfigError.ConfigError | SqlError.SqlError
+  ConfigError.ConfigError | SqlError.SqlError,
+  never
 > = PgClient.layer({
   // No config needed - pg will use PG* environment variables
 });

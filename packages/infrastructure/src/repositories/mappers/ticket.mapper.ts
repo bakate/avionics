@@ -1,5 +1,9 @@
 import { Coupon } from "@workspace/domain/coupon";
-import { FlightId, PnrCodeSchema } from "@workspace/domain/kernel";
+import {
+  CouponStatusSchema,
+  FlightId,
+  PnrCodeSchema,
+} from "@workspace/domain/kernel";
 import { PassengerId } from "@workspace/domain/passenger";
 import {
   Ticket,
@@ -61,7 +65,7 @@ export const fromTicketRow = (
         couponNumber: c.coupon_number,
         flightId: Schema.decodeUnknownSync(FlightId)(c.flight_id),
         seatNumber: Option.fromNullable(c.seat_number),
-        status: c.status as any,
+        status: Schema.decodeUnknownSync(CouponStatusSchema)(c.status),
       }),
   ) as [Coupon, ...Array<Coupon>];
 

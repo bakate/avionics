@@ -8,35 +8,26 @@ import { NotificationGateway } from "@workspace/application/notification.gateway
 import { PaymentGateway } from "@workspace/application/payment.gateway";
 import { TicketRepository } from "@workspace/application/ticket.repository";
 import { UnitOfWork } from "@workspace/application/unit-of-work";
-import { Deferred, Duration, Effect } from "effect";
+import { ConfigProvider, Deferred, Duration, Effect, Layer } from "effect";
 import { describe, expect, it } from "vitest";
-import {
-  AuditLogger,
-  EventBus,
-  HealthCheck,
-  InfrastructureLive,
-  ShutdownManager,
-} from "../../index.js";
+import { EventBus } from "../../events/event-bus.js";
+import { InfrastructureLive } from "../../index.js";
+import { AuditLogger } from "../../services/audit-logger.js";
+import { HealthCheck } from "../../services/health-check.js";
+import { ShutdownManager } from "../../services/shutdown-manager.js";
 
 describe("Infrastructure Composition Integration", () => {
   it("should resolve all essential services from the InfrastructureLive layer", async () => {
     const program = Effect.gen(function* () {
-      // Repositories
       const bookingRepo = yield* BookingRepository;
       const inventoryRepo = yield* InventoryRepository;
       const ticketRepo = yield* TicketRepository;
       const uow = yield* UnitOfWork;
-
-      // Queries
       const bookingQueries = yield* BookingQueries;
       const inventoryQueries = yield* InventoryQueries;
-
-      // Gateways
       const currencyGateway = yield* CurrencyConverterGateway;
       const notificationGateway = yield* NotificationGateway;
       const paymentGateway = yield* PaymentGateway;
-
-      // Services
       const auditLogger = yield* AuditLogger;
       const healthCheck = yield* HealthCheck;
       const shutdownManager = yield* ShutdownManager;
@@ -57,10 +48,15 @@ describe("Infrastructure Composition Integration", () => {
       };
     });
 
-    // Explicitly providing the layer and running the promise
-    // If the Context is not 'never' after provide, it's a type error
+    // We satisfy all requirements including Scope (required by Outbox/EventBus) and Config
     const result = await Effect.runPromise(
-      program.pipe(Effect.provide(InfrastructureLive)),
+      program.pipe(
+        Effect.provide(InfrastructureLive),
+        Effect.provide(
+          Layer.setConfigProvider(ConfigProvider.fromMap(new Map())),
+        ),
+        Effect.scoped,
+      ) as Effect.Effect<any, any, never>,
     );
 
     expect(result.bookingRepo).toBeDefined();
@@ -78,19 +74,15 @@ describe("Infrastructure Composition Integration", () => {
   });
 
   it("should verify that the outbox processor is running and processing events", async () => {
-    // The outbox processor starts a fiber in a polling loop when provided.
-    // We verify it by inserting a record and waiting for it to be published to the EventBus.
     const program = Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient;
       const eventBus = yield* EventBus;
       const deferred = yield* Deferred.make<string>();
 
-      // 1. Subscribe to a test event
-      yield* eventBus.subscribe("OutboxTestEvent", (event: any) =>
-        Deferred.succeed(deferred, event.data),
+      yield* eventBus.subscribe("OutboxTestEvent", (event: unknown) =>
+        Deferred.succeed(deferred, (event as { readonly data: string }).data),
       );
 
-      // 2. Insert into outbox manually
       const eventId = crypto.randomUUID();
       yield* sql`
         INSERT INTO event_outbox (id, event_type, payload, aggregate_id, created_at)
@@ -103,7 +95,6 @@ describe("Infrastructure Composition Integration", () => {
         )
       `;
 
-      // 3. Wait for the processor to pick it up (polling is 5s)
       const result = yield* Deferred.await(deferred).pipe(
         Effect.timeout(Duration.seconds(10)),
         Effect.catchAll(() => Effect.succeed("timeout")),
@@ -113,7 +104,13 @@ describe("Infrastructure Composition Integration", () => {
     });
 
     const result = await Effect.runPromise(
-      program.pipe(Effect.provide(InfrastructureLive)),
+      program.pipe(
+        Effect.provide(InfrastructureLive),
+        Effect.provide(
+          Layer.setConfigProvider(ConfigProvider.fromMap(new Map())),
+        ),
+        Effect.scoped,
+      ) as Effect.Effect<string, unknown, never>,
     );
 
     expect(result).toBe("processed");
