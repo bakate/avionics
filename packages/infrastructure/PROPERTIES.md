@@ -130,19 +130,19 @@ _For any_ log output containing configuration, sensitive values (API keys, passw
 
 ## Health Check Properties
 
-**Property 24: Health checks verify database**
+**Property 24: Health checks verify database** ✅
 _For any_ health check request, the response should include database connectivity status.
 **Validates:** WHEN a health check is requested, THE System SHALL verify database connectivity
 
-**Property 25: Health checks verify outbox processor**
+**Property 25: Health checks verify outbox processor** ✅
 _For any_ health check request, the response should include outbox processor status.
 **Validates:** WHEN a health check is requested, THE System SHALL verify outbox processor status
 
-**Property 26: Unhealthy services return unhealthy status**
+**Property 26: Unhealthy services return unhealthy status** ✅
 _For any_ health check where a critical service is down, the overall status should be "unhealthy".
 **Validates:** WHEN any critical service is unhealthy, THE System SHALL return an unhealthy status
 
-**Property 27: Health responses include version**
+**Property 27: Health responses include version** ✅
 _For any_ health check response, it should contain the system version.
 **Validates:** THE System SHALL include version information in health check responses
 
@@ -192,7 +192,7 @@ _For any_ unexpected HTTP status code, the system should return an ExternalServi
 | 14-17      | ✅ Implemented | `test/unit/gateways/notification-gateway.property.test.ts`                                                    |
 | 18-20      | ✅ Implemented | `test/unit/services/audit-logger.property.test.ts`                                                            |
 | 21-23      | ✅ Implemented | `config/infrastructure-config.property.test.ts`                                                               |
-| 24-27      | ⏳ Pending     | -                                                                                                             |
+| 24-27      | ✅ Implemented | `test/unit/services/health-check.property.test.ts`                                                            |
 | 28         | ⏳ Pending     | -                                                                                                             |
 | 29-33      | ✅ Implemented | `errors/error-mapper.property.test.ts`                                                                        |
 
