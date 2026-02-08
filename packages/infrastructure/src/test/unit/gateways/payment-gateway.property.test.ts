@@ -13,7 +13,7 @@
  * The Live layer uses the real SDK which is tested in integration tests.
  */
 
-import { test } from "@fast-check/vitest";
+import { fc, test } from "@fast-check/vitest";
 import {
   CheckoutNotFoundError,
   PaymentApiUnavailableError,
@@ -24,7 +24,6 @@ import {
 } from "@workspace/application/payment.gateway";
 import { Money, SupportedCurrencies } from "@workspace/domain/kernel";
 import { Effect, Layer, Ref } from "effect";
-import fc from "fast-check";
 import { describe, expect } from "vitest";
 
 // ============================================================================
@@ -204,10 +203,9 @@ describe("PaymentGateway Property Tests", () => {
   );
 
   // Property 11: Successful payments return transaction IDs
-  test.prop(
-    [checkoutIdArb, transactionIdArb, positiveAmountArb, currencyArb],
-    { numRuns: 30 },
-  )(
+  test.prop([checkoutIdArb, transactionIdArb, positiveAmountArb, currencyArb], {
+    numRuns: 30,
+  })(
     `Property ${PROPERTIES.SUCCESSFUL_PAYMENTS_RETURN_TRANSACTION_IDS.number}: ${PROPERTIES.SUCCESSFUL_PAYMENTS_RETURN_TRANSACTION_IDS.text}`,
     async (checkoutId, transactionId, amount, currency) => {
       const callLog = Ref.unsafeMake<readonly string[]>([]);
@@ -336,10 +334,9 @@ describe("PaymentGateway Property Tests", () => {
   });
 
   // Property 13: All payment attempts are logged
-  test.prop(
-    [emailArb, positiveAmountArb, currencyArb, bookingReferenceArb],
-    { numRuns: 20 },
-  )(
+  test.prop([emailArb, positiveAmountArb, currencyArb, bookingReferenceArb], {
+    numRuns: 20,
+  })(
     `Property ${PROPERTIES.ALL_ATTEMPTS_ARE_LOGGED.number}: ${PROPERTIES.ALL_ATTEMPTS_ARE_LOGGED.text}`,
     async (email, amount, currency, bookingRef) => {
       const callLog = Ref.unsafeMake<readonly string[]>([]);

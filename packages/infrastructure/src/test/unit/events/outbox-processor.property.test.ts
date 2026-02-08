@@ -1,6 +1,5 @@
-import { test } from "@fast-check/vitest";
+import { fc, test } from "@fast-check/vitest";
 import { Effect, Ref } from "effect";
-import fc from "fast-check";
 import { describe, expect } from "vitest";
 
 const PROPERTIES = {
