@@ -102,15 +102,15 @@ _For any_ ticket notification, the email body should contain the ticket number a
 
 ## Audit Logger Properties
 
-**Property 18: Aggregate saves create audit records**
+**Property 18: Aggregate saves create audit records** ✅
 _For any_ aggregate save operation, an audit record should be created with operation type, aggregate ID, and changes.
 **Validates:** WHEN an aggregate is saved, THE Audit_Logger SHALL record the operation type, aggregate ID, and changes
 
-**Property 19: User context is captured when available**
+**Property 19: User context is captured when available** ✅
 _For any_ operation with user context, the audit record should contain the user ID.
 **Validates:** THE Audit_Logger SHALL capture the user ID if available in the execution context
 
-**Property 20: Audit records have timestamps**
+**Property 20: Audit records have timestamps** ✅
 _For any_ audit record, it should have a non-null timestamp.
 **Validates:** THE Audit_Logger SHALL include timestamps for all audit entries
 
@@ -190,7 +190,7 @@ _For any_ unexpected HTTP status code, the system should return an ExternalServi
 | 9          | ✅ Implemented | `test/unit/queries/booking-queries.property.test.ts` & `test/unit/queries/inventory-queries.property.test.ts` |
 | 10-13      | ✅ Implemented | `test/unit/gateways/payment-gateway.property.test.ts`                                                         |
 | 14-17      | ✅ Implemented | `test/unit/gateways/notification-gateway.property.test.ts`                                                    |
-| 18-20      | ⏳ Pending     | -                                                                                                             |
+| 18-20      | ✅ Implemented | `test/unit/services/audit-logger.property.test.ts`                                                            |
 | 21-23      | ✅ Implemented | `config/infrastructure-config.property.test.ts`                                                               |
 | 24-27      | ⏳ Pending     | -                                                                                                             |
 | 28         | ⏳ Pending     | -                                                                                                             |
