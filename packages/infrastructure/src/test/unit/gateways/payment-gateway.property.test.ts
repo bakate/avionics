@@ -93,7 +93,7 @@ type MockBehavior = {
  */
 const createMockGateway = (
   behavior: MockBehavior,
-  callLog: Ref.Ref<readonly string[]>,
+  callLog: Ref.Ref<ReadonlyArray<string>>,
 ): PaymentGatewayService => ({
   createCheckout: (params) =>
     Effect.gen(function* () {
@@ -153,7 +153,7 @@ const createMockGateway = (
 
 const createTestLayer = (
   behavior: MockBehavior,
-  callLog: Ref.Ref<readonly string[]>,
+  callLog: Ref.Ref<ReadonlyArray<string>>,
 ) => Layer.succeed(PaymentGateway, createMockGateway(behavior, callLog));
 
 // ============================================================================
@@ -169,7 +169,7 @@ describe("PaymentGateway Property Tests", () => {
   })(
     `Property ${PROPERTIES.SDK_CONFIGURED_WITH_AUTH.number}: ${PROPERTIES.SDK_CONFIGURED_WITH_AUTH.text}`,
     async (email, amount, currency, bookingRef) => {
-      const callLog = Ref.unsafeMake<readonly string[]>([]);
+      const callLog = Ref.unsafeMake<ReadonlyArray<string>>([]);
       const checkoutId = `checkout_${Date.now()}`;
 
       const behavior: MockBehavior = {
@@ -208,7 +208,7 @@ describe("PaymentGateway Property Tests", () => {
   })(
     `Property ${PROPERTIES.SUCCESSFUL_PAYMENTS_RETURN_TRANSACTION_IDS.number}: ${PROPERTIES.SUCCESSFUL_PAYMENTS_RETURN_TRANSACTION_IDS.text}`,
     async (checkoutId, transactionId, amount, currency) => {
-      const callLog = Ref.unsafeMake<readonly string[]>([]);
+      const callLog = Ref.unsafeMake<ReadonlyArray<string>>([]);
 
       const behavior: MockBehavior = {
         createCheckoutResult: { type: "success", checkoutId },
@@ -268,7 +268,7 @@ describe("PaymentGateway Property Tests", () => {
       test.prop([bookingReferenceArb, positiveAmountArb], { numRuns: 10 })(
         scenario.name,
         async (bookingRef, amount) => {
-          const callLog = Ref.unsafeMake<readonly string[]>([]);
+          const callLog = Ref.unsafeMake<ReadonlyArray<string>>([]);
 
           const behavior: MockBehavior = {
             createCheckoutResult: { type: "error", error: scenario.error },
@@ -304,7 +304,7 @@ describe("PaymentGateway Property Tests", () => {
     test.prop([checkoutIdArb], { numRuns: 10 })(
       "getCheckoutStatus errors map to domain errors",
       async (checkoutId) => {
-        const callLog = Ref.unsafeMake<readonly string[]>([]);
+        const callLog = Ref.unsafeMake<ReadonlyArray<string>>([]);
 
         const behavior: MockBehavior = {
           createCheckoutResult: { type: "success", checkoutId },
@@ -339,7 +339,7 @@ describe("PaymentGateway Property Tests", () => {
   })(
     `Property ${PROPERTIES.ALL_ATTEMPTS_ARE_LOGGED.number}: ${PROPERTIES.ALL_ATTEMPTS_ARE_LOGGED.text}`,
     async (email, amount, currency, bookingRef) => {
-      const callLog = Ref.unsafeMake<readonly string[]>([]);
+      const callLog = Ref.unsafeMake<ReadonlyArray<string>>([]);
       const checkoutId = `checkout_${Date.now()}`;
 
       const behavior: MockBehavior = {
@@ -388,7 +388,7 @@ describe("PaymentGateway Property Tests", () => {
   test.prop([bookingReferenceArb, positiveAmountArb], { numRuns: 10 })(
     "Property 13b: Failed payment attempts are also logged",
     async (bookingRef, amount) => {
-      const callLog = Ref.unsafeMake<readonly string[]>([]);
+      const callLog = Ref.unsafeMake<ReadonlyArray<string>>([]);
 
       const behavior: MockBehavior = {
         createCheckoutResult: {

@@ -66,37 +66,37 @@ _For any_ availability search, the result should respect cabin and minimum seats
 
 ## Payment Gateway Properties
 
-**Property 10: Payment requests include authentication**
+**Property 10: Payment requests include authentication** ✅
 _For any_ payment charge request, the HTTP call should include an Authorization header with the API key.
 **Validates:** THE Payment_Gateway SHALL include proper authentication headers using the configured API key
 
-**Property 11: Successful payments return transaction IDs**
+**Property 11: Successful payments return transaction IDs** ✅
 _For any_ successful payment response, the result should contain a non-empty transaction ID.
 **Validates:** WHEN the Polar API returns success, THE Payment_Gateway SHALL return a success result with transaction ID
 
-**Property 12: Payment API errors map to domain errors**
+**Property 12: Payment API errors map to domain errors** ✅
 _For any_ Polar API error response, the gateway should return a domain error (not throw an exception).
 **Validates:** IF the Polar API returns an error, THEN THE Payment_Gateway SHALL map it to a domain error
 
-**Property 13: All payment attempts are logged**
+**Property 13: All payment attempts are logged** ✅
 _For any_ payment charge request, an audit log entry should be created regardless of success or failure.
 **Validates:** THE Payment_Gateway SHALL log all payment attempts for audit purposes
 
 ## Notification Gateway Properties
 
-**Property 14: Notification requests include authentication**
+**Property 14: Notification requests include authentication** ✅
 _For any_ email send request, the HTTP call should include an Authorization header with the API key.
 **Validates:** THE Notification_Gateway SHALL include proper authentication using the configured API key
 
-**Property 15: Successful sends return message IDs**
+**Property 15: Successful sends return message IDs** ✅
 _For any_ successful email send response, the result should contain a non-empty message ID.
 **Validates:** WHEN the email is successfully sent, THE Notification_Gateway SHALL return success with message ID
 
-**Property 16: Notification API errors map to domain errors**
+**Property 16: Notification API errors map to domain errors** ✅
 _For any_ Resend API error response, the gateway should return a domain error (not throw an exception).
 **Validates:** IF the Resend API returns an error, THEN THE Notification_Gateway SHALL map it to a domain error
 
-**Property 17: Tickets are formatted in emails**
+**Property 17: Tickets are formatted in emails** ✅
 _For any_ ticket notification, the email body should contain the ticket number and PNR code.
 **Validates:** THE Notification_Gateway SHALL format ticket information into a readable email template
 
@@ -195,6 +195,7 @@ _For any_ unexpected HTTP status code, the system should return an ExternalServi
 | 24-27      | ✅ Implemented | `test/unit/services/health-check.property.test.ts`                                                            |
 | 28         | ✅ Implemented | `test/unit/services/shutdown-manager.property.test.ts`                                                        |
 | 29-33      | ✅ Implemented | `errors/error-mapper.property.test.ts`                                                                        |
+| 34         | ✅ Implemented | `test/unit/gateways/notification-gateway.property.test.ts`                                                    |
 
 ## Common Property Patterns
 
