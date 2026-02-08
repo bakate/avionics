@@ -40,6 +40,11 @@ jobs:
         run: pnpm turbo run test
         env:
           CI: true
+          PGHOST: ${{ secrets.NEON_DB_HOST }}
+          PGUSER: ${{ secrets.NEON_DB_USER }}
+          PGPASSWORD: ${{ secrets.NEON_DB_PASSWORD }}
+          PGDATABASE: ${{ secrets.NEON_DB_NAME }}
+          PGSSLMODE: require
   # uncomment the following lines if you want to deploy to vercel and only if the test job is successful
   # deploy:
   #   needs: test
