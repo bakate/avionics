@@ -13,7 +13,7 @@
  * Integration tests with the real implementation are in integration/.
  */
 
-import { test } from "@fast-check/vitest";
+import { fc, test } from "@fast-check/vitest";
 import {
   CurrencyApiUnavailableError,
   type CurrencyConversionError,
@@ -26,7 +26,6 @@ import {
   SupportedCurrencies,
 } from "@workspace/domain/kernel";
 import { Effect, Layer } from "effect";
-import fc from "fast-check";
 import { describe, expect } from "vitest";
 import { isValidCurrency } from "../../../gateways/currency-converter.gateway";
 
