@@ -8,7 +8,7 @@ import { SqlClient } from "@effect/sql";
 import { fc, test } from "@fast-check/vitest";
 import { InventoryQueries } from "@workspace/application/inventory-queries";
 import { type CabinClass, type FlightId } from "@workspace/domain/kernel";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, ManagedRuntime } from "effect";
 import { describe, expect } from "vitest";
 import { ConnectionPoolLive } from "../../../db/connection.js";
 import { InventoryQueriesLive } from "../../../queries/inventory-queries.js";
@@ -21,13 +21,12 @@ const TestLayer = InventoryQueriesLive.pipe(
   Layer.provideMerge(ConnectionPoolLive),
 );
 
+// Create a persistent runtime for all tests in this file
+const runtime = ManagedRuntime.make(TestLayer);
+
 // ============================================================================
 // Property Metadata
 // ============================================================================
-/**
- * Property metadata for traceability and documentation.
- * Should match PROPERTIES.md
- */
 const PROPERTIES = {
   NO_DOMAIN_LOGIC_IN_QUERIES: {
     number: 7,
@@ -97,7 +96,7 @@ function hasLowInventoryInAnyCabin(
 describe("InventoryQueries Property Tests", () => {
   test.prop([fc.string({ minLength: 5, maxLength: 20 })], {
     numRuns: 10,
-    timeout: 10000,
+    timeout: 30000,
   })(
     `Property ${PROPERTIES.NO_DOMAIN_LOGIC_IN_QUERIES.number}: ${PROPERTIES.NO_DOMAIN_LOGIC_IN_QUERIES.statement}`,
     async (flightId) => {
@@ -128,17 +127,14 @@ describe("InventoryQueries Property Tests", () => {
         return true;
       });
 
-      const result = await Effect.runPromise(
-        program.pipe(Effect.provide(TestLayer)),
-      );
-
+      const result = await runtime.runPromise(program);
       expect(result).toBe(true);
     },
   );
 
   test.prop([fc.string({ minLength: 5, maxLength: 20 })], {
     numRuns: 10,
-    timeout: 10000,
+    timeout: 30000,
   })(
     `Property ${PROPERTIES.QUERY_FAILURES_TYPED_ERRORS.number}: ${PROPERTIES.QUERY_FAILURES_TYPED_ERRORS.statement}`,
     async (invalidFlightId) => {
@@ -163,10 +159,7 @@ describe("InventoryQueries Property Tests", () => {
         return true;
       });
 
-      const result = await Effect.runPromise(
-        program.pipe(Effect.provide(TestLayer)),
-      );
-
+      const result = await runtime.runPromise(program);
       expect(result).toBe(true);
     },
   );
@@ -176,7 +169,7 @@ describe("InventoryQueries Property Tests", () => {
       fc.constantFrom<CabinClass>("ECONOMY", "BUSINESS", "FIRST"),
       fc.integer({ min: 1, max: 100 }), // minSeats
     ],
-    { numRuns: 10, timeout: 10000 },
+    { numRuns: 10, timeout: 30000 },
   )(
     `Property ${PROPERTIES.FILTERING_SUPPORT.number}: ${PROPERTIES.FILTERING_SUPPORT.statement}`,
     async (cabin, minSeats) => {
@@ -200,17 +193,13 @@ describe("InventoryQueries Property Tests", () => {
         return true;
       });
 
-      const result = await Effect.runPromise(
-        program.pipe(Effect.provide(TestLayer)),
-      );
-
+      const result = await runtime.runPromise(program);
       expect(result).toBe(true);
     },
   );
 
   /**
    * Additional test: Verify inventory stats return valid data
-   * Not a formal property, but validates data invariants
    */
   test("Inventory stats return valid non-negative values", async () => {
     const program = Effect.gen(function* () {
@@ -229,20 +218,16 @@ describe("InventoryQueries Property Tests", () => {
       return true;
     });
 
-    const result = await Effect.runPromise(
-      program.pipe(Effect.provide(TestLayer)),
-    );
-
+    const result = await runtime.runPromise(program);
     expect(result).toBe(true);
   });
 
   /**
    * Additional test: Low inventory alerts respect threshold
-   * Not a formal property, but validates filtering logic
    */
   test.prop([fc.integer({ min: 0, max: 50 })], {
     numRuns: 10,
-    timeout: 10000,
+    timeout: 30000,
   })("Low inventory alerts respect threshold", async (threshold) => {
     const program = Effect.gen(function* () {
       const queries = yield* InventoryQueries;
@@ -258,10 +243,7 @@ describe("InventoryQueries Property Tests", () => {
       return true;
     });
 
-    const result = await Effect.runPromise(
-      program.pipe(Effect.provide(TestLayer)),
-    );
-
+    const result = await runtime.runPromise(program);
     expect(result).toBe(true);
   });
 });

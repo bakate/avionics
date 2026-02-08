@@ -11,6 +11,7 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.{test,spec}.ts"],
     hookTimeout: 30000,
+    testTimeout: 30000,
     fileParallelism: false,
     exclude: ["node_modules", "dist"],
     coverage: {

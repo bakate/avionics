@@ -1,20 +1,10 @@
 import { Config, ConfigError, Either, Redacted } from "effect";
-import { secret } from "../config.js";
+import { DatabaseConfig as BaseDatabaseConfig, secret } from "../config.js";
 
 /**
  * Database configuration
  */
-export const DatabaseConfig = Config.all({
-  host: Config.string("DB_HOST"),
-  port: Config.number("DB_PORT").pipe(Config.withDefault(5432)),
-  database: Config.string("DB_NAME").pipe(Config.withDefault("avionics")),
-  user: Config.string("DB_USER").pipe(Config.withDefault("postgres")),
-  password: Config.redacted("DB_PASSWORD"),
-  poolMin: Config.number("DB_POOL_MIN").pipe(Config.withDefault(2)),
-  poolMax: Config.number("DB_POOL_MAX").pipe(Config.withDefault(10)),
-  url: Config.string("DATABASE_URL").pipe(Config.option),
-});
-
+export const DatabaseConfig = BaseDatabaseConfig;
 export type DatabaseConfig = Config.Config.Success<typeof DatabaseConfig>;
 
 /**

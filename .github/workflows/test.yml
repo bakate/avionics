@@ -13,6 +13,15 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      PGHOST: ${{ secrets.NEON_DB_HOST }}
+      PGUSER: ${{ secrets.NEON_DB_USER }}
+      PGPASSWORD: ${{ secrets.NEON_DB_PASSWORD }}
+      PGDATABASE: ${{ secrets.NEON_DB_NAME }}
+      PGPORT: 5432
+      PGSSLMODE: require
+      CI: true
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,7 +32,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: ".nvmrc"
-          # Remove pnpm cache here because pnpm isn't installed yet
 
       - name: Enable Corepack
         run: corepack enable
@@ -33,43 +41,45 @@ jobs:
         with:
           run_install: false
 
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
       - name: Run migrations
         run: pnpm --filter @workspace/infrastructure run db:migrate
-        env:
-          PGHOST: ${{ secrets.NEON_DB_HOST }}
-          PGUSER: ${{ secrets.NEON_DB_USER }}
-          PGPASSWORD: ${{ secrets.NEON_DB_PASSWORD }}
-          PGDATABASE: ${{ secrets.NEON_DB_NAME }}
-          PGPORT: 5432
-          PGSSLMODE: require
 
       - name: Run tests
-        run: pnpm turbo run test
-        env:
-          CI: true
-          PGHOST: ${{ secrets.NEON_DB_HOST }}
-          PGUSER: ${{ secrets.NEON_DB_USER }}
-          PGPASSWORD: ${{ secrets.NEON_DB_PASSWORD }}
-          PGDATABASE: ${{ secrets.NEON_DB_NAME }}
-          PGPORT: 5432
-          PGSSLMODE: require
+        run: pnpm turbo run test --cache-dir=.turbo
+
   # uncomment the following lines if you want to deploy to vercel and only if the test job is successful
   # deploy:
   #   needs: test
   #   runs-on: ubuntu-latest
-  #   if: needs.test.result == 'success'
+  #   if: success()
   #   steps:
-  #     - name: Trigger Vercel Preview deploy (staging)
-  #       if: github.ref == 'refs/heads/staging'
-  #       run: curl -X POST "$VERCEL_DEPLOY_STAGING_HOOK"
-  #       env:
-  #         VERCEL_DEPLOY_STAGING_HOOK: ${{ secrets.VERCEL_DEPLOY_STAGING_HOOK }}
-
-  #     - name: Trigger Vercel Production deploy (main)
-  #       if: github.ref == 'refs/heads/main'
-  #       run: curl -X POST "$VERCEL_DEPLOY_MAIN_HOOK"
-  #       env:
-  #         VERCEL_DEPLOY_MAIN_HOOK: ${{ secrets.VERCEL_DEPLOY_MAIN_HOOK }}
+  #     - name: Trigger Vercel deploy
+  #       run: |
+  #         if [ "${{ github.ref }}" == "refs/heads/staging" ]; then
+  #           curl -X POST "${{ secrets.VERCEL_DEPLOY_STAGING_HOOK }}"
+  #         elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+  #           curl -X POST "${{ secrets.VERCEL_DEPLOY_MAIN_HOOK }}"
+  #         fi

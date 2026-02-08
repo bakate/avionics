@@ -8,7 +8,7 @@ import { SqlClient } from "@effect/sql";
 import { fc, test } from "@fast-check/vitest";
 import { BookingQueries } from "@workspace/application/booking-queries";
 import { type PnrCode } from "@workspace/domain/kernel";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, ManagedRuntime } from "effect";
 import { describe, expect } from "vitest";
 import { ConnectionPoolLive } from "../../../db/connection.js";
 import { BookingQueriesLive } from "../../../queries/booking-queries.js";
@@ -21,6 +21,9 @@ const TestLayer = BookingQueriesLive.pipe(
   Layer.provideMerge(ConnectionPoolLive),
 );
 
+// Create a persistent runtime for all tests in this file
+const runtime = ManagedRuntime.make(TestLayer);
+
 // ============================================================================
 // Property Tests
 // ============================================================================
@@ -30,7 +33,7 @@ describe("BookingQueries Property Tests", () => {
    * Property 6: Booking queries don't load full aggregates
    * Feature: infrastructure-layer, Property 6: Booking queries don't load full aggregates
    */
-  test.prop([fc.uuid()], { numRuns: 10, timeout: 10000 })(
+  test.prop([fc.uuid()], { numRuns: 10, timeout: 30000 })(
     "Property 6: Booking queries don't load full aggregates",
     async (bookingId) => {
       const program = Effect.gen(function* () {
@@ -53,10 +56,7 @@ describe("BookingQueries Property Tests", () => {
         return true;
       });
 
-      const result = await Effect.runPromise(
-        program.pipe(Effect.provide(TestLayer)),
-      );
-
+      const result = await runtime.runPromise(program);
       expect(result).toBe(true);
     },
   );
@@ -65,7 +65,7 @@ describe("BookingQueries Property Tests", () => {
    * Property 8: Query failures return typed errors
    * Feature: infrastructure-layer, Property 8: Query failures return typed errors
    */
-  test.prop([fc.uuid()], { numRuns: 10, timeout: 10000 })(
+  test.prop([fc.uuid()], { numRuns: 10, timeout: 30000 })(
     "Property 8: Query failures return typed errors (BookingQueries)",
     async (invalidPnr) => {
       const program = Effect.gen(function* () {
@@ -91,10 +91,7 @@ describe("BookingQueries Property Tests", () => {
         return true;
       });
 
-      const result = await Effect.runPromise(
-        program.pipe(Effect.provide(TestLayer)),
-      );
-
+      const result = await runtime.runPromise(program);
       expect(result).toBe(true);
     },
   );
@@ -108,7 +105,7 @@ describe("BookingQueries Property Tests", () => {
       fc.integer({ min: 1, max: 10 }), // page
       fc.integer({ min: 1, max: 50 }), // pageSize
     ],
-    { numRuns: 10, timeout: 10000 },
+    { numRuns: 10, timeout: 30000 },
   )(
     "Property 9: List queries support pagination (BookingQueries)",
     async (page, pageSize) => {
@@ -133,10 +130,7 @@ describe("BookingQueries Property Tests", () => {
         return true;
       });
 
-      const result = await Effect.runPromise(
-        program.pipe(Effect.provide(TestLayer)),
-      );
-
+      const result = await runtime.runPromise(program);
       expect(result).toBe(true);
     },
   );
@@ -144,7 +138,7 @@ describe("BookingQueries Property Tests", () => {
   /**
    * Additional test: Verify SQL errors are mapped to PersistenceError
    */
-  test.prop([fc.uuid()], { numRuns: 10, timeout: 10000 })(
+  test.prop([fc.uuid()], { numRuns: 10, timeout: 30000 })(
     "SQL errors are mapped to typed errors",
     async (pnr) => {
       // Create a layer with a mock SQL client that always fails
@@ -166,7 +160,7 @@ describe("BookingQueries Property Tests", () => {
       const FailingSqlLayer = Layer.succeed(
         SqlClient.SqlClient,
         // @ts-expect-error - Mocking for test
-        makeFailingDataClient(),
+        makeFailingDataClient() as any,
       );
 
       const FailingQueriesLayer = BookingQueriesLive.pipe(
@@ -190,6 +184,7 @@ describe("BookingQueries Property Tests", () => {
         return true;
       });
 
+      // For this specific test, we don't use the shared runtime because we need a failing layer
       const result = await Effect.runPromise(
         program.pipe(Effect.provide(FailingQueriesLayer)),
       );

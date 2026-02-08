@@ -10,7 +10,7 @@
     "clean": "rm -rf dist",
     "build": "tsc -b",
     "test": "vitest run",
-    "test:integration": "vitest run src/test/repositories",
+    "test:integration": "vitest run src/test/integration/repositories",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\" --cache --cache-location .cache/.prettiercache",
