@@ -148,7 +148,7 @@ _For any_ health check response, it should contain the system version.
 
 ## Graceful Shutdown Properties
 
-**Property 28: Shutdown closes database connections**
+**Property 28: Shutdown closes database connections** ✅
 _For any_ shutdown sequence, all database connections should be closed cleanly.
 **Validates:** THE System SHALL close database connections cleanly
 
@@ -193,7 +193,7 @@ _For any_ unexpected HTTP status code, the system should return an ExternalServi
 | 18-20      | ✅ Implemented | `test/unit/services/audit-logger.property.test.ts`                                                            |
 | 21-23      | ✅ Implemented | `config/infrastructure-config.property.test.ts`                                                               |
 | 24-27      | ✅ Implemented | `test/unit/services/health-check.property.test.ts`                                                            |
-| 28         | ⏳ Pending     | -                                                                                                             |
+| 28         | ✅ Implemented | `test/unit/services/shutdown-manager.property.test.ts`                                                        |
 | 29-33      | ✅ Implemented | `errors/error-mapper.property.test.ts`                                                                        |
 
 ## Common Property Patterns
