@@ -36,6 +36,7 @@ import {
 import { Money } from "@workspace/domain/kernel";
 import { Duration, Effect, Layer, Redacted, Schedule } from "effect";
 import { PolarConfig } from "../config/infrastructure-config.js";
+import { AuditLogger } from "../services/audit-logger.js";
 
 // ============================================================================
 // Polar SDK Error Mapping
@@ -101,6 +102,7 @@ export const PaymentGatewayLive = Layer.effect(
   PaymentGateway,
   Effect.gen(function* () {
     const config = yield* PolarConfig;
+    const auditLogger = yield* AuditLogger;
 
     // Initialize Polar SDK
     const polar = new Polar({
@@ -123,6 +125,26 @@ export const PaymentGatewayLive = Layer.effect(
           amount: params.amount.amount,
           currency: params.amount.currency,
         });
+
+        // Audit log the attempt
+        yield* auditLogger
+          .log({
+            aggregateType: "Booking",
+            aggregateId: params.bookingReference,
+            operation: "UPDATE",
+            changes: {
+              paymentAttempt: true,
+              amount: params.amount.amount,
+              currency: params.amount.currency,
+            },
+          })
+          .pipe(
+            Effect.catchAll((err) =>
+              Effect.logWarning("Audit log failed for payment attempt", {
+                error: err,
+              }),
+            ),
+          );
 
         // Validate currency support (currency is set at product level in Polar)
         const currency = params.amount.currency.toLowerCase();

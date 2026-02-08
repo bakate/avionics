@@ -6,6 +6,7 @@ import { Money } from "@workspace/domain/kernel";
 import { Cause, Effect, Option as EOption, Exit } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PaymentGatewayLive } from "../../../gateways/payment-gateway";
+import { AuditLogger } from "../../../services/audit-logger.js";
 
 // Hoisted mocks to be accessible inside vi.mock factory
 const mocks = vi.hoisted(() => {
@@ -37,7 +38,10 @@ describe("PaymentGatewayLive", () => {
   // Helper to run effects with the Live layer
   const runTest = async <A, E>(effect: Effect.Effect<A, E, PaymentGateway>) => {
     return await Effect.runPromise(
-      effect.pipe(Effect.provide(PaymentGatewayLive)),
+      effect.pipe(
+        Effect.provide(PaymentGatewayLive),
+        Effect.provide(AuditLogger.Test()),
+      ),
     );
   };
 
@@ -45,7 +49,10 @@ describe("PaymentGatewayLive", () => {
     effect: Effect.Effect<A, E, PaymentGateway>,
   ) => {
     return await Effect.runPromiseExit(
-      effect.pipe(Effect.provide(PaymentGatewayLive)),
+      effect.pipe(
+        Effect.provide(PaymentGatewayLive),
+        Effect.provide(AuditLogger.Test()),
+      ),
     );
   };
 

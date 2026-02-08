@@ -3,9 +3,10 @@ import {
   NotificationRateLimitError,
 } from "@workspace/application/notification.gateway";
 import { type Ticket } from "@workspace/domain/ticket";
-import { Effect, Redacted } from "effect";
+import { Effect, Layer, Redacted } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createNotificationGatewayLive } from "../../../gateways/notification-gateway.js";
+import { AuditLogger } from "../../../services/audit-logger.js";
 
 const mocks = vi.hoisted(() => ({
   send: vi.fn(),
@@ -56,7 +57,9 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = createNotificationGatewayLive(config);
+    const gatewayLayer = createNotificationGatewayLive(config).pipe(
+      Layer.provide(AuditLogger.Test()),
+    );
 
     const program = Effect.gen(function* () {
       const gateway = yield* NotificationGateway;
@@ -82,7 +85,9 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = createNotificationGatewayLive(config);
+    const gatewayLayer = createNotificationGatewayLive(config).pipe(
+      Layer.provide(AuditLogger.Test()),
+    );
 
     const program = Effect.gen(function* () {
       const gateway = yield* NotificationGateway;
@@ -109,7 +114,9 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = createNotificationGatewayLive(config);
+    const gatewayLayer = createNotificationGatewayLive(config).pipe(
+      Layer.provide(AuditLogger.Test()),
+    );
 
     const program = Effect.gen(function* () {
       const gateway = yield* NotificationGateway;
@@ -134,7 +141,9 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = createNotificationGatewayLive(config);
+    const gatewayLayer = createNotificationGatewayLive(config).pipe(
+      Layer.provide(AuditLogger.Test()),
+    );
 
     const program = Effect.gen(function* () {
       const gateway = yield* NotificationGateway;
@@ -164,7 +173,9 @@ describe("NotificationGateway Rate Limit Handling", () => {
       error: apiError,
     });
 
-    const gatewayLayer = createNotificationGatewayLive(config);
+    const gatewayLayer = createNotificationGatewayLive(config).pipe(
+      Layer.provide(AuditLogger.Test()),
+    );
 
     const program = Effect.gen(function* () {
       const gateway = yield* NotificationGateway;
