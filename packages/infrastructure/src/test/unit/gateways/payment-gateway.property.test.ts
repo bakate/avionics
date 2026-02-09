@@ -106,6 +106,7 @@ const createMockGateway = (
       // Simulate logging that happens in real implementation
       yield* Effect.logInfo("Creating checkout session", {
         bookingReference: params.bookingReference,
+        bookingId: params.bookingId,
         amount: params.amount.amount,
         currency: params.amount.currency,
       });
@@ -187,6 +188,7 @@ describe("PaymentGateway Property Tests", () => {
           amount: Money.of(amount, currency),
           customer: { email, externalId: `user_${Date.now()}` },
           bookingReference: bookingRef,
+          bookingId: `booking_${Date.now()}`,
           successUrl: "https://example.com/success",
         });
       });
@@ -281,6 +283,7 @@ describe("PaymentGateway Property Tests", () => {
               amount: Money.of(amount, "EUR"),
               customer: { email: "test@example.com", externalId: "user_1" },
               bookingReference: bookingRef,
+              bookingId: `booking_${Date.now()}`,
               successUrl: "https://example.com/success",
             });
           });
@@ -359,6 +362,7 @@ describe("PaymentGateway Property Tests", () => {
           amount: Money.of(amount, currency),
           customer: { email, externalId: `user_${Date.now()}` },
           bookingReference: bookingRef,
+          bookingId: `booking_${Date.now()}`,
           successUrl: "https://example.com/success",
         });
 
@@ -404,6 +408,7 @@ describe("PaymentGateway Property Tests", () => {
           amount: Money.of(amount, "EUR"),
           customer: { email: "test@example.com", externalId: "user_1" },
           bookingReference: bookingRef,
+          bookingId: `booking_${Date.now()}`,
           successUrl: "https://example.com/success",
         });
       });

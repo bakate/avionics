@@ -8,6 +8,7 @@
  * - Status polling for checkout completion
  * - Retry policy with exponential backoff
  * - Audit logging for all payment attempts
+ * - Sandbox mode detection (forces USD currency)
  *
  * Two layers provided:
  * - PaymentGatewayLive: Real Polar API integration
@@ -15,6 +16,7 @@
  */
 
 import { Polar } from "@polar-sh/sdk";
+import { type PresentmentCurrency } from "@polar-sh/sdk/models/components/presentmentcurrency.js";
 import { ExpiredCheckoutError } from "@polar-sh/sdk/models/errors/expiredcheckouterror.js";
 import {
   ConnectionError,
@@ -111,7 +113,7 @@ export class PolarPaymentGateway {
       // Initialize Polar SDK
       const polar = new Polar({
         accessToken: Redacted.value(config.apiKey),
-        server: config.baseUrl.includes("sandbox") ? "sandbox" : "production",
+        serverURL: config.baseUrl,
       });
 
       // Retry policy: 2 attempts with exponential backoff
@@ -128,18 +130,21 @@ export class PolarPaymentGateway {
         Effect.gen(function* () {
           yield* Effect.logInfo("Creating Polar checkout session", {
             bookingReference: params.bookingReference,
+            bookingId: params.bookingId,
             amount: params.amount.amount,
             currency: params.amount.currency,
+            isSandbox: config.isSandbox,
           });
 
           // Audit log the attempt
           yield* auditLogger
             .log({
               aggregateType: "Booking",
-              aggregateId: params.bookingReference,
+              aggregateId: params.bookingId,
               operation: "UPDATE",
               changes: {
                 paymentAttempt: true,
+                pnr: params.bookingReference,
                 amount: params.amount.amount,
                 currency: params.amount.currency,
               },
@@ -152,15 +157,35 @@ export class PolarPaymentGateway {
               ),
             );
 
-          // Validate currency support (currency is set at product level in Polar)
+          // Validate currency support
           const currency = params.amount.currency.toLowerCase();
-          const supported = ["eur", "usd", "gbp", "chf"];
+
+          // Sandbox only supports USD
+          const checkoutCurrency = config.isSandbox ? "usd" : currency;
+          const supported = config.isSandbox
+            ? ["usd"]
+            : ["eur", "usd", "gbp", "chf"];
+
           if (!supported.includes(currency)) {
             return yield* Effect.fail(
               new UnsupportedCurrencyError({
                 currency: params.amount.currency,
-                supported: ["EUR", "USD", "GBP", "CHF"],
+                supported: config.isSandbox
+                  ? ["USD"]
+                  : ["EUR", "USD", "GBP", "CHF"],
               }),
+            );
+          }
+
+          // Warn if sandbox forces currency conversion
+          if (config.isSandbox && currency !== "usd") {
+            yield* Effect.logWarning(
+              "Sandbox mode: forcing USD currency (requested currency not supported in sandbox)",
+              {
+                requestedCurrency: params.amount.currency,
+                forcedCurrency: "USD",
+                bookingReference: params.bookingReference,
+              },
             );
           }
 
@@ -174,13 +199,16 @@ export class PolarPaymentGateway {
               polar.checkouts.create(
                 {
                   products: [config.productId],
-                  amount: amountCents, // Polar uses cents, overrides product price
+                  amount: amountCents,
+                  currency: checkoutCurrency as PresentmentCurrency, // 'usd' in sandbox, actual currency in prod
                   customerEmail: params.customer.email,
                   externalCustomerId: params.customer.externalId,
                   successUrl: params.successUrl,
                   metadata: {
+                    bookingId: params.bookingId,
                     bookingReference: params.bookingReference,
-                    currency: params.amount.currency, // Store currency in metadata for reference
+                    requestedCurrency: params.amount.currency, // Original currency
+                    actualCurrency: checkoutCurrency.toUpperCase(), // Currency used for payment
                   },
                 },
                 {
@@ -202,6 +230,7 @@ export class PolarPaymentGateway {
           yield* Effect.logInfo("Polar checkout session created", {
             checkoutId: response.id,
             bookingReference: params.bookingReference,
+            currency: checkoutCurrency,
           });
 
           return {
@@ -348,6 +377,7 @@ export class PolarPaymentGateway {
             yield* Effect.logDebug("Test checkout created", {
               checkoutId,
               bookingReference: params.bookingReference,
+              bookingId: params.bookingId,
             });
 
             return {

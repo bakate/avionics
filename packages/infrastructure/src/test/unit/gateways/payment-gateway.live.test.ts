@@ -3,7 +3,7 @@ import { PaymentError as PolarPaymentError } from "@polar-sh/sdk/models/errors/p
 import { ResourceNotFound } from "@polar-sh/sdk/models/errors/resourcenotfound.js";
 import { PaymentGateway } from "@workspace/application/payment.gateway";
 import { Money } from "@workspace/domain/kernel";
-import { Cause, Effect, Option as EOption, Exit } from "effect";
+import { Cause, ConfigProvider, Effect, Option as EOption, Exit } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PolarPaymentGateway } from "../../../gateways/payment-gateway";
 import { AuditLogger } from "../../../services/audit-logger.js";
@@ -69,18 +69,37 @@ describe("PolarPaymentGateway.Live", () => {
         amount: Money.of(100, "CHF"),
         customer: { email: "test@example.com" },
         bookingReference: "REF123",
+        bookingId: "BOOKING123",
         successUrl: "https://example.com",
       });
     });
 
-    const result = await runTest(program);
+    const result = await Effect.runPromise(
+      program.pipe(
+        Effect.provide(PolarPaymentGateway.Live),
+        Effect.provide(AuditLogger.Test()),
+        Effect.withConfigProvider(
+          ConfigProvider.fromMap(
+            new Map([
+              ["POLAR_BASE_URL", "https://api.polar.sh"],
+              ["POLAR_API_KEY", "test_key"],
+              ["POLAR_PRODUCT_ID", "polar_product_test"],
+            ]),
+          ),
+        ),
+      ),
+    );
     expect(result.id).toBe("chk_123");
     // Currency is stored in metadata since Polar SDK configures currency at product level
     expect(mocks.checkoutsCreate).toHaveBeenCalledWith(
       expect.objectContaining({
+        amount: 10000,
+        currency: "chf",
         metadata: expect.objectContaining({
-          currency: "CHF",
+          bookingId: "BOOKING123",
           bookingReference: "REF123",
+          requestedCurrency: "CHF",
+          actualCurrency: "CHF",
         }),
       }),
       expect.objectContaining({
@@ -99,13 +118,11 @@ describe("PolarPaymentGateway.Live", () => {
       return yield* gateway.createCheckout({
         // Bypass Money schema validation by passing a plain object that mimics Money
         // This avoids ParseError from Money constructor/schema validation
-        amount: {
-          amount: 100,
-          currency: "JPY",
-          toCents: () => 10000,
-        } as unknown as Money,
+        // @ts-expect-error
+        amount: { amount: 100, currency: "INVALID" },
         customer: { email: "test@example.com" },
         bookingReference: "REF123",
+        bookingId: "BOOKING123",
         successUrl: "https://example.com",
       });
     });
@@ -118,7 +135,7 @@ describe("PolarPaymentGateway.Live", () => {
 
     expect(failure).toMatchObject({
       _tag: "UnsupportedCurrencyError",
-      currency: "JPY",
+      currency: "INVALID",
     });
   });
 
@@ -138,6 +155,7 @@ describe("PolarPaymentGateway.Live", () => {
         amount: Money.of(100, "USD"),
         customer: { email: "test@example.com" },
         bookingReference: "REF123",
+        bookingId: "BOOKING123",
         successUrl: "https://example.com",
       });
     });
@@ -169,6 +187,7 @@ describe("PolarPaymentGateway.Live", () => {
         amount: Money.of(100, "USD"),
         customer: { email: "test@example.com" },
         bookingReference: "REF123",
+        bookingId: "BOOKING123",
         successUrl: "https://example.com",
       });
     });

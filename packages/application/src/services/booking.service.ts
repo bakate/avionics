@@ -75,7 +75,7 @@ export class BookFlightCommand extends Schema.Class<BookFlightCommand>(
     gender: GenderSchema,
     type: PassengerTypeSchema,
   }),
-  seatNumber: Schema.Option(Schema.String),
+  seatNumber: Schema.optionalWith(Schema.String, { as: "Option" }),
   successUrl: Schema.String, // URL for payment redirect success
   cancelUrl: Schema.optional(Schema.String), // Optional cancel URL
 }) {}
@@ -331,6 +331,7 @@ export class BookingService extends Context.Tag("BookingService")<
                   externalId: command.passenger.id, // Future: userId when auth is implemented
                 },
                 bookingReference: pnr,
+                bookingId: savedBooking.id,
                 successUrl: command.successUrl,
                 ...(command.cancelUrl ? { cancelUrl: command.cancelUrl } : {}),
               })
@@ -449,6 +450,7 @@ export class BookingService extends Context.Tag("BookingService")<
           yield* Effect.logDebug("Test checkout created", {
             checkoutId,
             bookingReference: params.bookingReference,
+            bookingId: params.bookingId,
           });
           return {
             id: checkoutId,

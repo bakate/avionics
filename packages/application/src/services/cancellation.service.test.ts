@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker";
 import { Booking, PnrStatus } from "@workspace/domain/booking";
 import { InventoryPersistenceError } from "@workspace/domain/errors";
 import {
@@ -20,17 +21,18 @@ import { InventoryService } from "./inventory.service.js";
 
 const makeExpiredBooking = (pnr: string, flightId = "FL-123") => {
   const passenger = new Passenger({
-    id: PassengerId.make("pass-1"),
-    firstName: "John",
-    lastName: "Doe",
-    email: Schema.decodeSync(EmailSchema)("john@example.com"),
-    dateOfBirth: new Date(1990, 1, 1),
+    // it should be a UUID
+    id: PassengerId.make(faker.string.uuid()),
+    firstName: faker.person.firstName(),
+    lastName: faker.person.lastName(),
+    email: Schema.decodeSync(EmailSchema)(faker.internet.email()),
+    dateOfBirth: faker.date.birthdate(),
     gender: "MALE",
     type: "ADULT",
   });
 
   const segment = new BookingSegment({
-    id: makeSegmentId("seg-1"),
+    id: makeSegmentId(faker.string.uuid()),
     flightId: makeFlightId(flightId),
     cabin: "ECONOMY",
     price: Money.of(100, "EUR"),
@@ -38,7 +40,7 @@ const makeExpiredBooking = (pnr: string, flightId = "FL-123") => {
   });
 
   return Booking.create({
-    id: BookingId.make(`book-${pnr}`),
+    id: BookingId.make(faker.string.uuid()),
     pnrCode: Schema.decodeSync(PnrCodeSchema)(pnr),
     passengers: [passenger],
     segments: [segment],

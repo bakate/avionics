@@ -46,11 +46,17 @@ export const PolarConfig = Config.all({
     }),
   ),
   baseUrl: Config.string("POLAR_BASE_URL").pipe(
-    Config.withDefault("https://api.polar.sh/v1"),
+    Config.withDefault("https://sandbox-api.polar.sh"),
   ),
   timeout: Config.number("POLAR_TIMEOUT").pipe(Config.withDefault(30)), // seconds
   maxRetries: Config.number("POLAR_MAX_RETRIES").pipe(Config.withDefault(2)),
-});
+}).pipe(
+  // we add isSandbox flag after loading config
+  Config.map((config) => ({
+    ...config,
+    isSandbox: config.baseUrl.includes("sandbox"),
+  })),
+);
 
 export type PolarConfig = Config.Config.Success<typeof PolarConfig>;
 
