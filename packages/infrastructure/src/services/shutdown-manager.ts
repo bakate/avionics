@@ -1,4 +1,4 @@
-import { Context, Duration, Effect, Layer, Ref } from "effect";
+import { Context, Data, Duration, Effect, Layer, Ref } from "effect";
 
 type ShutdownStage =
   | "running"
@@ -15,14 +15,45 @@ export interface ShutdownState {
 }
 
 export interface ShutdownManagerSignature {
+  /**
+   * Get current shutdown state
+   */
   readonly getState: () => Effect.Effect<ShutdownState>;
-  readonly shutdown: () => Effect.Effect<void, never, never>;
+
+  /**
+   * Initiate graceful shutdown
+   * Will execute all registered cleanup handlers in reverse order
+   */
+  readonly shutdown: () => Effect.Effect<void, ShutdownError>;
+
+  /**
+   * Register a cleanup handler to run during shutdown
+   * Handlers are executed in LIFO order (last registered runs first)
+   *
+   * @param name - Unique identifier for this cleanup handler
+   * @param handler - Effect to run during shutdown
+   *                  Errors are caught and logged, but don't stop other handlers
+   */
   readonly registerCleanup: (
     name: string,
-    handler: Effect.Effect<void, never, never>,
-  ) => Effect.Effect<void, never, never>;
+    handler: Effect.Effect<void, any>,
+  ) => Effect.Effect<void>;
+
+  /**
+   * Check if shutdown is in progress
+   */
   readonly isShuttingDown: () => Effect.Effect<boolean>;
 }
+
+/**
+ * Error type for shutdown failures
+ */
+export class ShutdownError extends Data.TaggedError("ShutdownError")<{
+  readonly failures: ReadonlyArray<{
+    readonly name: string;
+    readonly error: unknown;
+  }>;
+}> {}
 
 export interface ShutdownManagerConfig {
   readonly gracePeriodSeconds: number;
@@ -36,9 +67,6 @@ export class ShutdownManager extends Context.Tag("ShutdownManager")<
   ShutdownManager,
   ShutdownManagerSignature
 >() {
-  /**
-   * Internal constructor logic shared between Live and Test.
-   */
   private static make = (config: Partial<ShutdownManagerConfig> = {}) =>
     Effect.gen(function* () {
       const finalConfig = { ...DEFAULT_CONFIG, ...config };
@@ -49,10 +77,11 @@ export class ShutdownManager extends Context.Tag("ShutdownManager")<
         completedAt: null,
       });
 
+      // Store handlers with their full Effect type
       const cleanupHandlers = yield* Ref.make<
         ReadonlyArray<{
           name: string;
-          handler: Effect.Effect<void, never, never>;
+          handler: Effect.Effect<void, any>;
         }>
       >([]);
 
@@ -70,23 +99,34 @@ export class ShutdownManager extends Context.Tag("ShutdownManager")<
         Effect.gen(function* () {
           const handlers = yield* Ref.get(cleanupHandlers);
           const reversedHandlers = [...handlers].reverse();
+          const failures: Array<{ name: string; error: unknown }> = [];
 
           for (const { name, handler } of reversedHandlers) {
             yield* Effect.logInfo(`Running cleanup handler: ${name}`);
+
+            // Catch all errors (including defects)
             yield* handler.pipe(
-              Effect.catchAll((error) =>
-                Effect.logWarning(`Cleanup handler ${name} failed`, {
-                  error: String(error),
+              Effect.catchAllCause((cause) =>
+                Effect.gen(function* () {
+                  failures.push({ name, error: cause });
+                  yield* Effect.logWarning(`Cleanup handler ${name} failed`, {
+                    error: String(cause),
+                  });
                 }),
               ),
             );
           }
+
+          // Return failures for potential error reporting
+          return failures;
         });
 
-      const shutdownProgram: Effect.Effect<void, never, never> = Effect.gen(
+      const shutdownProgram: Effect.Effect<void, ShutdownError> = Effect.gen(
         function* () {
           const currentState = yield* Ref.get(stateRef);
-          if (currentState.stage !== "running") return;
+          if (currentState.stage !== "running") {
+            return;
+          }
 
           yield* Ref.set(stateRef, {
             stage: "stopping_requests",
@@ -99,35 +139,58 @@ export class ShutdownManager extends Context.Tag("ShutdownManager")<
           yield* setStage("completing_transactions");
           yield* setStage("stopping_processor");
           yield* setStage("closing_connections");
-          yield* executeCleanupHandlers();
+
+          const failures = yield* executeCleanupHandlers();
+
           yield* setStage("completed");
 
-          yield* Effect.logInfo("Graceful shutdown completed");
+          if (failures.length > 0) {
+            yield* Effect.logWarning(
+              `Shutdown completed with ${failures.length} handler failure(s)`,
+              { failures },
+            );
+            return yield* Effect.fail(new ShutdownError({ failures }));
+          }
+
+          yield* Effect.logInfo("Graceful shutdown completed successfully");
         },
       ).pipe(
         Effect.timeout(Duration.seconds(finalConfig.gracePeriodSeconds)),
-        Effect.catchAll(() =>
+        Effect.catchTag("TimeoutException", () =>
           Effect.gen(function* () {
             yield* Effect.logError(
-              `Shutdown timed out after ${finalConfig.gracePeriodSeconds}s, forcing completion state`,
+              `Shutdown timed out after ${finalConfig.gracePeriodSeconds}s, forcing completion`,
             );
             yield* setStage("completed");
+            return yield* Effect.fail(
+              new ShutdownError({
+                failures: [
+                  {
+                    name: "TimeoutException",
+                    error: `Shutdown timed out after ${finalConfig.gracePeriodSeconds}s`,
+                  },
+                ],
+              }),
+            );
           }),
         ),
       );
-
       return {
         stateRef,
         shutdownProgram,
         cleanupHandlers,
         impl: {
           getState: () => Ref.get(stateRef),
+
           isShuttingDown: () =>
             Ref.get(stateRef).pipe(Effect.map((s) => s.stage !== "running")),
+
           registerCleanup: (
             name: string,
-            handler: Effect.Effect<void, never, never>,
-          ) => Ref.update(cleanupHandlers, (hs) => [...hs, { name, handler }]),
+            handler: Effect.Effect<void, any>,
+          ): Effect.Effect<void> =>
+            Ref.update(cleanupHandlers, (hs) => [...hs, { name, handler }]),
+
           shutdown: () => shutdownProgram,
         },
       };
@@ -143,8 +206,12 @@ export class ShutdownManager extends Context.Tag("ShutdownManager")<
         const { impl, shutdownProgram } = yield* ShutdownManager.make(config);
 
         if (typeof process !== "undefined") {
-          process.once("SIGTERM", () => Effect.runFork(shutdownProgram));
-          process.once("SIGINT", () => Effect.runFork(shutdownProgram));
+          process.once("SIGTERM", () => {
+            Effect.runFork(shutdownProgram);
+          });
+          process.once("SIGINT", () => {
+            Effect.runFork(shutdownProgram);
+          });
         }
 
         return impl;
@@ -157,7 +224,7 @@ export class ShutdownManager extends Context.Tag("ShutdownManager")<
    */
   static readonly Test = (
     overrides: Partial<ShutdownManagerSignature> = {},
-    config: Partial<ShutdownManagerConfig> = { gracePeriodSeconds: 1 }, // Faster for tests
+    config: Partial<ShutdownManagerConfig> = { gracePeriodSeconds: 1 },
   ) =>
     Layer.effect(
       ShutdownManager,

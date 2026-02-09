@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 import { EmailSchema, GenderSchema, PassengerTypeSchema } from "../kernel.js";
 
-export const PassengerId = Schema.String.pipe(Schema.brand("PassengerId"));
+export const PassengerId = Schema.UUID.pipe(Schema.brand("PassengerId"));
 export type PassengerId = typeof PassengerId.Type;
 
 export class Passenger extends Schema.Class<Passenger>("Passenger")({

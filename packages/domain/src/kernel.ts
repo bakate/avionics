@@ -21,7 +21,7 @@ import { CurrencyMismatchError } from "./errors.js";
 // =============================================================================
 
 // --- Aggregate IDs ---
-export const BookingId = Schema.String.pipe(Schema.brand("BookingId"));
+export const BookingId = Schema.UUID.pipe(Schema.brand("BookingId"));
 export type BookingId = typeof BookingId.Type;
 export const makeBookingId = (id: string): BookingId => BookingId.make(id);
 
@@ -29,7 +29,7 @@ export const FlightId = Schema.String.pipe(Schema.brand("FlightId"));
 export type FlightId = typeof FlightId.Type;
 export const makeFlightId = (id: string): FlightId => FlightId.make(id);
 
-export const SegmentId = Schema.String.pipe(Schema.brand("SegmentId"));
+export const SegmentId = Schema.UUID.pipe(Schema.brand("SegmentId"));
 export type SegmentId = typeof SegmentId.Type;
 export const makeSegmentId = (id: string): SegmentId => SegmentId.make(id);
 
@@ -53,6 +53,7 @@ export const PnrCodeSchema = Schema.String.pipe(
   Schema.brand("PnrCode"),
 );
 export type PnrCode = typeof PnrCodeSchema.Type;
+export const makePnrCode = (code: string): PnrCode => PnrCodeSchema.make(code);
 
 // =============================================================================
 // DOMAIN ENUMS (Finite Sets)

@@ -16,6 +16,9 @@ import { AuditLogger } from "./services/audit-logger.js";
 import { HealthCheck } from "./services/health-check.js";
 import { ShutdownManager } from "./services/shutdown-manager.js";
 
+export { PostgresBookingQueries } from "./queries/booking-queries.js";
+export { PostgresInventoryQueries } from "./queries/inventory-queries.js";
+
 // --- 1. Infrastructure Foundation ---
 // These provide the base tags: SqlClient and EventBus
 const CoreLive = Layer.merge(ConnectionPoolLive, EventBus.Live);
@@ -28,9 +31,8 @@ const ServicesLive = Layer.mergeAll(
   ShutdownManager.Live(),
 ).pipe(Layer.provideMerge(CoreLive));
 
-// --- 3. Application Adapters ---
-// These depend on Core + Services and provide: Repositories, Queries, Gateways, Workers
-const AdaptersLive = Layer.mergeAll(
+// --- 3. Application Adapters (Repositories, Queries, Gateways) ---
+export const CoreAdaptersLive = Layer.mergeAll(
   PostgresBookingRepository.Live,
   PostgresInventoryRepository.Live,
   PostgresTicketRepository.Live,
@@ -40,11 +42,16 @@ const AdaptersLive = Layer.mergeAll(
   HttpCurrencyConverterGateway.Live,
   ResendNotificationGateway.Live,
   PolarPaymentGateway.Live,
-  TransactionalOutboxLive,
-  OutboxProcessorLive,
 ).pipe(Layer.provideMerge(ServicesLive));
 
-// --- 4. Final Unified Layer ---
-// The final InfrastructureLive layer provides ALL tags to the application layer.
-// provideMerge ensures that Core and Services tags are also present in the final output.
-export const InfrastructureLive = AdaptersLive;
+// --- 4. Background Workers (Processes that consume the domain) ---
+export const BackgroundWorkersLive = Layer.mergeAll(
+  OutboxProcessorLive,
+  TransactionalOutboxLive,
+).pipe(Layer.provideMerge(CoreAdaptersLive));
+
+// --- 5. Final Unified Layer ---
+export const InfrastructureLive = Layer.merge(
+  CoreAdaptersLive,
+  BackgroundWorkersLive,
+);

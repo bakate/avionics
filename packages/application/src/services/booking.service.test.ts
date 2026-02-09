@@ -176,9 +176,10 @@ describe("BookingService", () => {
 
     const TestLayer = BookingService.Test({
       notificationGateway: {
-        sendTicket: (ticket) =>
+        sendTicket: (ticket, _recipient) =>
           Effect.sync(() => {
             expect(ticket.coupons[0].flightId).toBe(flightId);
+            return { messageId: "test-msg" };
           }),
       },
     });
@@ -321,7 +322,7 @@ describe("BookingService", () => {
       const inventoryRepo = yield* makeFakeInventoryRepo([initialInventory]);
       const bookingRepo = yield* makeFakeBookingRepo();
       const paymentGateway = PaymentGateway.of({
-        createCheckout: () =>
+        createCheckout: (_params) =>
           Effect.succeed({
             id: "chk_123",
             checkoutUrl: "https://example.com/checkout",
@@ -339,7 +340,7 @@ describe("BookingService", () => {
           }),
       });
       const notificationGateway = NotificationGateway.of({
-        sendTicket: () => Effect.void,
+        sendTicket: () => Effect.succeed({ messageId: "test-msg" }),
       });
       const unitOfWork = UnitOfWork.of({ transaction: (eff) => eff });
 

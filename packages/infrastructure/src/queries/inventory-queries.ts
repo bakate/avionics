@@ -236,7 +236,7 @@ export class PostgresInventoryQueries {
               business_price_currency,
               first_price_amount,
               first_price_currency,
-              NOW() as last_updated
+              last_updated
             FROM flight_inventory
             WHERE ${sql(columns.available)} >= ${minSeats}
             ORDER BY flight_id
@@ -290,7 +290,7 @@ export class PostgresInventoryQueries {
               business_price_currency,
               first_price_amount,
               first_price_currency,
-              NOW() as last_updated
+              last_updated
             FROM flight_inventory
             WHERE economy_available < ${threshold}
                OR business_available < ${threshold}

@@ -76,7 +76,9 @@ const createTestTicket = (
 ): Ticket => {
   const ticketNumber = Schema.decodeSync(TicketNumber)(ticketNumberRaw);
   const pnrCode = Schema.decodeSync(PnrCodeSchema)(pnrCodeRaw);
-  const passengerId = Schema.decodeSync(PassengerId)(`passenger_${Date.now()}`);
+  const passengerId = Schema.decodeSync(PassengerId)(
+    "550e8400-e29b-41d4-a716-446655440000",
+  );
 
   const coupon = new Coupon({
     couponNumber: 1,
@@ -401,11 +403,16 @@ describe("NotificationGateway Property Tests", () => {
           );
 
           const emails = Ref.get(capturedEmails).pipe(Effect.runSync);
-          expect(emails.length).toBe(1);
-          expect(emails[0].ticketNumber).toBe(ticketNumber);
-          expect(emails[0].pnrCode).toBe(pnrCode);
-          expect(emails[0].passengerName).toBe(passengerName);
-          expect(emails[0].to).toBe(email);
+          const firstEmail = emails[0];
+          if (firstEmail === undefined) {
+            throw new Error(
+              "Invariant violation: capturedEmails must contain one email",
+            );
+          }
+          expect(firstEmail.ticketNumber).toBe(ticketNumber);
+          expect(firstEmail.pnrCode).toBe(pnrCode);
+          expect(firstEmail.passengerName).toBe(passengerName);
+          expect(firstEmail.to).toBe(email);
         },
       ),
       { numRuns: 20 },

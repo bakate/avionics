@@ -87,7 +87,15 @@ describe("ShutdownManager Property Tests", () => {
           );
         }
 
-        yield* shutdownManager.shutdown();
+        yield* shutdownManager.shutdown().pipe(
+          Effect.catchTag("ShutdownError", (error) =>
+            Effect.gen(function* () {
+              expect(error.failures.length).toBe(1);
+              expect(error.failures[0]?.name).toBe("failing");
+              return yield* Effect.void;
+            }),
+          ),
+        );
       });
 
       await Effect.runPromise(program.pipe(Effect.provide(testLayer)));

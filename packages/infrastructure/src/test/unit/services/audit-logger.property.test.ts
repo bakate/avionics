@@ -91,6 +91,9 @@ describe("AuditLogger Property Tests", () => {
       for (let index = 0; index < operations.length; index++) {
         const op = operations[index];
         const record = capturedRecords[index];
+        if (!record || !op) {
+          throw new Error("Invariant violation: record or op must exist");
+        }
 
         expect(record.aggregateType).toBe(op.aggregateType);
         expect(record.aggregateId).toBe(op.aggregateId);

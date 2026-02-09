@@ -177,7 +177,11 @@ describe("OutboxProcessor Property Tests", () => {
       }));
 
       const rowsRef = Ref.unsafeMake(rows);
-      const failedEventId = rows[0].id;
+      const firstRow = rows[0];
+      if (firstRow === undefined) {
+        throw new Error("Invariant violation: rows must not be empty");
+      }
+      const failedEventId = firstRow.id;
 
       const processWithFailure = Effect.gen(function* () {
         const currentRows = yield* Ref.get(rowsRef);
@@ -262,7 +266,9 @@ describe("OutboxProcessor Property Tests", () => {
 
     const publishedIds = Ref.get(publishedEventsRef).pipe(Effect.runSync);
     const exhaustedRow = rows[0];
-
+    if (exhaustedRow === undefined) {
+      throw new Error("Invariant violation: exhaustedRow must exist");
+    }
     expect(publishedIds).not.toContain(exhaustedRow.id);
     expect(publishedIds.length).toBe(rows.length - 1);
   });

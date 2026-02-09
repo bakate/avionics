@@ -121,7 +121,8 @@ export interface PaymentGatewayService {
   readonly createCheckout: (params: {
     readonly amount: Money;
     readonly customer: CheckoutCustomer;
-    readonly bookingReference: string; // PNR code for tracking
+    readonly bookingReference: string; // The PNR/tracking code (e.g., "ABCDEF")
+    readonly bookingId: string; // The internal database/order ID (UUID)
     readonly successUrl: string;
     readonly cancelUrl?: string;
   }) => Effect.Effect<CheckoutSession, PaymentError>;
