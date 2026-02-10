@@ -1,7 +1,10 @@
 import { fc, test } from "@fast-check/vitest";
 import { Effect, Ref } from "effect";
 import { describe, expect, it } from "vitest";
-import { ShutdownManager } from "../../../services/shutdown-manager.js";
+import {
+  ShutdownManager,
+  ShutdownManagerTest,
+} from "../../../services/shutdown-manager.js";
 
 const PROPERTIES = {
   SHUTDOWN_CLOSES_CONNECTIONS: {
@@ -21,7 +24,7 @@ describe("ShutdownManager Property Tests", () => {
     async (handlerNames) => {
       const executedHandlersRef = Ref.unsafeMake<ReadonlyArray<string>>([]);
 
-      const testLayer = ShutdownManager.Test();
+      const testLayer = ShutdownManagerTest();
 
       const program = Effect.gen(function* () {
         const shutdownManager = yield* ShutdownManager;
@@ -58,7 +61,7 @@ describe("ShutdownManager Property Tests", () => {
     async (handlerNames) => {
       const executedHandlersRef = Ref.unsafeMake<ReadonlyArray<string>>([]);
 
-      const testLayer = ShutdownManager.Test();
+      const testLayer = ShutdownManagerTest();
 
       const program = Effect.gen(function* () {
         const shutdownManager = yield* ShutdownManager;
@@ -110,7 +113,7 @@ describe("ShutdownManager Property Tests", () => {
   );
 
   it("Property 28d: Shutdown transitions through expected stages", async () => {
-    const testLayer = ShutdownManager.Test();
+    const testLayer = ShutdownManagerTest();
 
     const program = Effect.gen(function* () {
       const shutdownManager = yield* ShutdownManager;
@@ -130,7 +133,7 @@ describe("ShutdownManager Property Tests", () => {
   });
 
   it("Property 28e: isShuttingDown returns true after shutdown starts", async () => {
-    const testLayer = ShutdownManager.Test();
+    const testLayer = ShutdownManagerTest();
 
     const program = Effect.gen(function* () {
       const shutdownManager = yield* ShutdownManager;

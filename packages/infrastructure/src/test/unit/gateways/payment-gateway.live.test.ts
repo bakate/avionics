@@ -5,8 +5,8 @@ import { PaymentGateway } from "@workspace/application/payment.gateway";
 import { Money } from "@workspace/domain/kernel";
 import { Cause, ConfigProvider, Effect, Option as EOption, Exit } from "effect";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PolarPaymentGateway } from "../../../gateways/payment-gateway";
-import { AuditLogger } from "../../../services/audit-logger.js";
+import { PolarPaymentGatewayLive } from "../../../gateways/payment-gateway";
+import { AuditLoggerTest } from "../../../services/audit-logger.js";
 
 // Hoisted mocks to be accessible inside vi.mock factory
 const mocks = vi.hoisted(() => {
@@ -39,8 +39,8 @@ describe("PolarPaymentGateway.Live", () => {
   const runTest = async <A, E>(effect: Effect.Effect<A, E, PaymentGateway>) => {
     return await Effect.runPromise(
       effect.pipe(
-        Effect.provide(PolarPaymentGateway.Live),
-        Effect.provide(AuditLogger.Test()),
+        Effect.provide(PolarPaymentGatewayLive),
+        Effect.provide(AuditLoggerTest()),
       ),
     );
   };
@@ -50,8 +50,8 @@ describe("PolarPaymentGateway.Live", () => {
   ) => {
     return await Effect.runPromiseExit(
       effect.pipe(
-        Effect.provide(PolarPaymentGateway.Live),
-        Effect.provide(AuditLogger.Test()),
+        Effect.provide(PolarPaymentGatewayLive),
+        Effect.provide(AuditLoggerTest()),
       ),
     );
   };
@@ -76,8 +76,8 @@ describe("PolarPaymentGateway.Live", () => {
 
     const result = await Effect.runPromise(
       program.pipe(
-        Effect.provide(PolarPaymentGateway.Live),
-        Effect.provide(AuditLogger.Test()),
+        Effect.provide(PolarPaymentGatewayLive),
+        Effect.provide(AuditLoggerTest()),
         Effect.withConfigProvider(
           ConfigProvider.fromMap(
             new Map([

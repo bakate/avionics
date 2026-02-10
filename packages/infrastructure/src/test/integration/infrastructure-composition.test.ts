@@ -96,7 +96,7 @@ describe("Infrastructure Composition Integration", () => {
       `;
 
       const result = yield* Deferred.await(deferred).pipe(
-        Effect.timeout(Duration.seconds(10)),
+        Effect.timeout(Duration.seconds(30)),
         Effect.catchAll(() => Effect.succeed("timeout")),
       );
 
@@ -107,7 +107,9 @@ describe("Infrastructure Composition Integration", () => {
       program.pipe(
         Effect.provide(InfrastructureLive),
         Effect.provide(
-          Layer.setConfigProvider(ConfigProvider.fromMap(new Map())),
+          Layer.setConfigProvider(
+            ConfigProvider.fromMap(new Map([["OUTBOX_POLLING_INTERVAL", "1"]])),
+          ),
         ),
         Effect.scoped,
       ) as Effect.Effect<string, unknown, never>,

@@ -13,23 +13,22 @@ import {
   toTicketRow,
 } from "./mappers/ticket.mapper.js";
 
-export class PostgresTicketRepository {
-  /**
-   * Live Layer — PostgreSQL implementation.
-   */
-  static readonly Live = Layer.effect(
-    TicketRepository,
-    Effect.gen(function* () {
-      const sql = yield* SqlClient.SqlClient;
+/**
+ * PostgreSQL implementation of the TicketRepository.
+ */
+export const PostgresTicketRepositoryLive = Layer.effect(
+  TicketRepository,
+  Effect.gen(function* () {
+    const sql = yield* SqlClient.SqlClient;
 
-      const save: TicketRepositoryPort["save"] = (ticket: Ticket) =>
-        sql.withTransaction(
-          Effect.gen(function* () {
-            const ticketRow = toTicketRow(ticket);
-            const couponRows = toCouponRows(ticket);
+    const save: TicketRepositoryPort["save"] = (ticket: Ticket) =>
+      sql.withTransaction(
+        Effect.gen(function* () {
+          const ticketRow = toTicketRow(ticket);
+          const couponRows = toCouponRows(ticket);
 
-            // Upsert Ticket
-            yield* sql`
+          // Upsert Ticket
+          yield* sql`
             INSERT INTO tickets ${sql.insert(ticketRow)}
             ON CONFLICT (ticket_number) DO UPDATE SET
               status = ${ticketRow.status},
@@ -38,54 +37,55 @@ export class PostgresTicketRepository {
               issued_at = ${ticketRow.issued_at}
           `;
 
-            // Replace Coupons
-            yield* sql`DELETE FROM coupons WHERE ticket_number = ${ticket.ticketNumber}`;
+          // Replace Coupons
+          yield* sql`DELETE FROM coupons WHERE ticket_number = ${ticket.ticketNumber}`;
 
-            if (couponRows.length > 0) {
-              yield* sql`INSERT INTO coupons ${sql.insert(couponRows)}`;
-            }
+          if (couponRows.length > 0) {
+            yield* sql`INSERT INTO coupons ${sql.insert(couponRows)}`;
+          }
 
-            return ticket;
-          }),
-        );
+          return ticket;
+        }),
+      );
 
-      const findByTicketNumber: TicketRepositoryPort["findByTicketNumber"] = (
-        ticketNumber: string,
-      ) =>
-        Effect.gen(function* () {
-          const ticketRows = yield* sql<TicketRow>`
+    const findByTicketNumber: TicketRepositoryPort["findByTicketNumber"] = (
+      ticketNumber: string,
+    ) =>
+      Effect.gen(function* () {
+        const ticketRows = yield* sql<TicketRow>`
           SELECT * FROM tickets WHERE ticket_number = ${ticketNumber}
         `;
 
-          const ticketRow = ticketRows[0];
-          if (!ticketRow) {
-            return null;
-          }
+        const ticketRow = ticketRows[0];
+        if (!ticketRow) {
+          return null;
+        }
 
-          const couponRows = yield* sql<CouponRow>`
+        const couponRows = yield* sql<CouponRow>`
           SELECT * FROM coupons WHERE ticket_number = ${ticketNumber} ORDER BY coupon_number ASC
         `;
 
-          return fromTicketRow(ticketRow, couponRows);
-        });
+        return fromTicketRow(ticketRow, couponRows);
+      });
 
-      return {
-        save,
-        findByTicketNumber,
-      };
+    return {
+      save,
+      findByTicketNumber,
+    };
+  }),
+);
+
+/**
+ * Test Layer — Mock implementation.
+ */
+export const PostgresTicketRepositoryTest = (
+  overrides: Partial<TicketRepositoryPort> = {},
+) =>
+  Layer.succeed(
+    TicketRepository,
+    TicketRepository.of({
+      save: (ticket) => Effect.succeed(ticket),
+      findByTicketNumber: () => Effect.succeed(null),
+      ...overrides,
     }),
   );
-
-  /**
-   * Test Layer — Mock implementation.
-   */
-  static readonly Test = (overrides: Partial<TicketRepositoryPort> = {}) =>
-    Layer.succeed(
-      TicketRepository,
-      TicketRepository.of({
-        save: (ticket) => Effect.succeed(ticket),
-        findByTicketNumber: () => Effect.succeed(null),
-        ...overrides,
-      }),
-    );
-}

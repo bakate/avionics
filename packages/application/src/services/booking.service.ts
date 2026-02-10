@@ -50,6 +50,7 @@ import { UnitOfWork } from "../ports/unit-of-work.js";
 import {
   BookingRepository,
   type BookingRepositoryPort,
+  type PaginationOptions,
 } from "../repositories/booking.repository.js";
 import { TicketRepository } from "../repositories/ticket.repository.js";
 import {
@@ -75,7 +76,7 @@ export class BookFlightCommand extends Schema.Class<BookFlightCommand>(
     gender: GenderSchema,
     type: PassengerTypeSchema,
   }),
-  seatNumber: Schema.optionalWith(Schema.String, { as: "Option" }),
+  seatNumber: Schema.Option(Schema.String).pipe(Schema.optional),
   successUrl: Schema.String, // URL for payment redirect success
   cancelUrl: Schema.optional(Schema.String), // Optional cancel URL
 }) {}
@@ -132,7 +133,9 @@ export interface BookingServiceImpl {
     | Cause.TimeoutException
     | { readonly _tag: "SqlError" }
   >;
-  findAll: () => Effect.Effect<ReadonlyArray<Booking>, BookingPersistenceError>;
+  findAll: (
+    options?: PaginationOptions,
+  ) => Effect.Effect<ReadonlyArray<Booking>, BookingPersistenceError>;
   /**
    * Confirms a booking after successful payment
    * Validates payment status, updates booking status, issues ticket, and sends notification
@@ -218,7 +221,7 @@ export class BookingService extends Context.Tag("BookingService")<
           const coupon = new Coupon({
             couponNumber: 1,
             flightId: segment.flightId,
-            seatNumber: segment.seatNumber,
+            seatNumber: segment.seatNumber ?? O.none(),
             status: "OPEN",
           });
 
@@ -305,7 +308,7 @@ export class BookingService extends Context.Tag("BookingService")<
               flightId: makeFlightId(command.flightId),
               cabin: command.cabinClass,
               price: holdResult.totalPrice,
-              seatNumber: command.seatNumber,
+              seatNumber: command.seatNumber ?? O.none(),
             });
 
             // 2.5. Create Booking using factory method (emits BookingCreated event)
@@ -371,7 +374,7 @@ export class BookingService extends Context.Tag("BookingService")<
             } satisfies BookingResult;
           }),
 
-        findAll: () => bookingRepo.findAll(),
+        findAll: (options) => bookingRepo.findAll(options),
         confirmBooking,
       } satisfies BookingServiceImpl;
     }),
@@ -436,7 +439,7 @@ export class BookingService extends Context.Tag("BookingService")<
           findByPnr: () => Effect.succeed(O.none()),
           findExpired: () => Effect.succeed([]),
           findByPassengerId: () => Effect.succeed([]),
-          findAll: () =>
+          findAll: (_options) =>
             Ref.get(store).pipe(Effect.map((map) => Array.from(map.values()))),
           ...overrides.bookingRepo,
         });

@@ -44,9 +44,16 @@ export interface BookingRepositoryPort {
   ): Effect.Effect<ReadonlyArray<Booking>, BookingPersistenceError>;
 
   /**
-   * Find all bookings.
+   * Find all bookings with pagination.
    */
-  findAll(): Effect.Effect<ReadonlyArray<Booking>, BookingPersistenceError>;
+  findAll(
+    options?: PaginationOptions,
+  ): Effect.Effect<ReadonlyArray<Booking>, BookingPersistenceError>;
+}
+
+export interface PaginationOptions {
+  readonly limit?: number;
+  readonly offset?: number;
 }
 
 export class BookingRepository extends Context.Tag("BookingRepository")<

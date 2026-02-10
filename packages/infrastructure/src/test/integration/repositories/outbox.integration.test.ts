@@ -3,7 +3,7 @@ import { InventoryRepository } from "@workspace/application/inventory.repository
 import { SeatsHeld } from "@workspace/domain/events";
 import { Effect, Schema } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
-import { PostgresInventoryRepository } from "../../../repositories/postgres-inventory.repository.js";
+import { PostgresInventoryRepositoryLive } from "../../../repositories/postgres-inventory.repository.js";
 import { createTestInventory } from "../../factories/inventory-factory.js";
 import { cleanDatabase, TestLayer } from "../../helpers/db-test-helper.js";
 
@@ -36,7 +36,7 @@ describe("Transactional Outbox Integration", () => {
 
     const rows = await Effect.runPromise(
       program.pipe(
-        Effect.provide(PostgresInventoryRepository.Live),
+        Effect.provide(PostgresInventoryRepositoryLive),
         Effect.provide(TestLayer),
       ),
     );

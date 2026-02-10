@@ -1,7 +1,10 @@
 import { fc, test } from "@fast-check/vitest";
 import { Effect, Ref } from "effect";
 import { describe, expect } from "vitest";
-import { HealthCheck } from "../../../services/health-check.js";
+import {
+  HealthCheck,
+  HealthCheckTest,
+} from "../../../services/health-check.js";
 
 const PROPERTIES = {
   HEALTH_CHECKS_VERIFY_DATABASE: {
@@ -36,7 +39,7 @@ describe("HealthCheck Property Tests", () => {
   test.prop([versionArb], { numRuns: 15 })(
     `Property ${PROPERTIES.HEALTH_CHECKS_VERIFY_DATABASE.number}: ${PROPERTIES.HEALTH_CHECKS_VERIFY_DATABASE.text}`,
     async (version) => {
-      const testLayer = HealthCheck.Test({
+      const testLayer = HealthCheckTest({
         check: () =>
           Effect.succeed({
             status: "healthy",
@@ -70,7 +73,7 @@ describe("HealthCheck Property Tests", () => {
   test.prop([versionArb], { numRuns: 15 })(
     `Property ${PROPERTIES.HEALTH_CHECKS_VERIFY_OUTBOX.number}: ${PROPERTIES.HEALTH_CHECKS_VERIFY_OUTBOX.text}`,
     async (version) => {
-      const testLayer = HealthCheck.Test({
+      const testLayer = HealthCheckTest({
         check: () =>
           Effect.succeed({
             status: "healthy",
@@ -124,7 +127,7 @@ describe("HealthCheck Property Tests", () => {
           ? "degraded"
           : "healthy";
 
-      const testLayer = HealthCheck.Test({
+      const testLayer = HealthCheckTest({
         check: () =>
           Effect.succeed({
             status: expectedStatus,
@@ -157,7 +160,7 @@ describe("HealthCheck Property Tests", () => {
   test.prop([versionArb], { numRuns: 20 })(
     `Property ${PROPERTIES.HEALTH_RESPONSES_INCLUDE_VERSION.number}: ${PROPERTIES.HEALTH_RESPONSES_INCLUDE_VERSION.text}`,
     async (version) => {
-      const testLayer = HealthCheck.Test({
+      const testLayer = HealthCheckTest({
         check: () =>
           Effect.succeed({
             status: "healthy",
@@ -187,7 +190,7 @@ describe("HealthCheck Property Tests", () => {
   test.prop([versionArb, latencyArb], { numRuns: 10 })(
     "Property 24b: Health check includes latency for database",
     async (version, latency) => {
-      const testLayer = HealthCheck.Test({
+      const testLayer = HealthCheckTest({
         check: () =>
           Effect.succeed({
             status: "healthy",
@@ -223,7 +226,7 @@ describe("HealthCheck Property Tests", () => {
     async (version) => {
       const beforeTest = new Date();
 
-      const testLayer = HealthCheck.Test({
+      const testLayer = HealthCheckTest({
         check: () =>
           Effect.succeed({
             status: "healthy",
@@ -259,7 +262,7 @@ describe("HealthCheck Property Tests", () => {
     async (version) => {
       const callCountRef = Ref.unsafeMake(0);
 
-      const testLayer = HealthCheck.Test({
+      const testLayer = HealthCheckTest({
         check: () =>
           Effect.gen(function* () {
             yield* Ref.update(callCountRef, (n) => n + 1);

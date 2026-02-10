@@ -37,19 +37,25 @@ export interface BookingQueriesPort {
     page: number;
     pageSize: number;
     status?: string;
-  }): Effect.Effect<{
-    items: ReadonlyArray<BookingSummary>;
-    total: number;
-    page: number;
-    pageSize: number;
-  }>;
+  }): Effect.Effect<
+    {
+      items: ReadonlyArray<BookingSummary>;
+      total: number;
+      page: number;
+      pageSize: number;
+    },
+    BookingPersistenceError
+  >;
 
   /**
    * Get passenger booking history
    */
   getPassengerHistory(
     passengerId: string,
-  ): Effect.Effect<ReadonlyArray<PassengerBookingHistory>>;
+  ): Effect.Effect<
+    ReadonlyArray<PassengerBookingHistory>,
+    BookingPersistenceError
+  >;
 
   /**
    * Find expired bookings (for cleanup jobs)
@@ -57,7 +63,7 @@ export interface BookingQueriesPort {
   findExpiredBookings(
     before: Date,
     limit: number,
-  ): Effect.Effect<ReadonlyArray<BookingSummary>>;
+  ): Effect.Effect<ReadonlyArray<BookingSummary>, BookingPersistenceError>;
 
   /**
    * Search bookings by passenger name
@@ -65,7 +71,7 @@ export interface BookingQueriesPort {
   searchByPassengerName(
     name: string,
     limit: number,
-  ): Effect.Effect<ReadonlyArray<BookingSummary>>;
+  ): Effect.Effect<ReadonlyArray<BookingSummary>, BookingPersistenceError>;
 }
 
 export class BookingQueries extends Context.Tag("BookingQueries")<
