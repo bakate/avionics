@@ -1,7 +1,11 @@
 import { fc, test } from "@fast-check/vitest";
 import { Effect, Layer, Ref } from "effect";
 import { describe, expect } from "vitest";
-import { AuditLogger, UserContext } from "../../../services/audit-logger.js";
+import {
+  AuditLogger,
+  AuditLoggerTest,
+  UserContext,
+} from "../../../services/audit-logger.js";
 
 const PROPERTIES = {
   AGGREGATE_SAVES_CREATE_RECORDS: {
@@ -66,7 +70,7 @@ describe("AuditLogger Property Tests", () => {
     async (operations) => {
       const capturedRecordsRef = Ref.unsafeMake<Array<CapturedAuditRecord>>([]);
 
-      const testLayer = AuditLogger.Test({
+      const testLayer = AuditLoggerTest({
         logSync: (params) =>
           Ref.update(capturedRecordsRef, (records) => [
             ...records,
@@ -113,7 +117,7 @@ describe("AuditLogger Property Tests", () => {
     async (aggregateType, aggregateId, operation, changes, userId) => {
       const capturedUserIdRef = Ref.unsafeMake<string | null>(null);
 
-      const auditLoggerLayer = AuditLogger.Test({
+      const auditLoggerLayer = AuditLoggerTest({
         logSync: () =>
           Effect.gen(function* () {
             const userContext = yield* Effect.serviceOption(UserContext);
@@ -162,7 +166,7 @@ describe("AuditLogger Property Tests", () => {
     async (operations) => {
       const capturedTimestampsRef = Ref.unsafeMake<Array<Date>>([]);
 
-      const testLayer = AuditLogger.Test({
+      const testLayer = AuditLoggerTest({
         logSync: () =>
           Ref.update(capturedTimestampsRef, (timestamps) => [
             ...timestamps,
@@ -206,7 +210,7 @@ describe("AuditLogger Property Tests", () => {
         undefined,
       );
 
-      const testLayer = AuditLogger.Test({
+      const testLayer = AuditLoggerTest({
         logSync: () =>
           Effect.gen(function* () {
             const userContext = yield* Effect.serviceOption(UserContext);
@@ -240,7 +244,7 @@ describe("AuditLogger Property Tests", () => {
     "Property 18c: fire-and-forget log doesn't block caller",
     async (aggregateType, aggregateId, operation, changes) => {
       // Use default Test layer - no overrides needed
-      const testLayer = AuditLogger.Test();
+      const testLayer = AuditLoggerTest();
 
       const program = Effect.gen(function* () {
         const auditLogger = yield* AuditLogger;

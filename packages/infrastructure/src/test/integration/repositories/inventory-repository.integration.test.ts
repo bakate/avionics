@@ -3,11 +3,11 @@ import { FlightId } from "@workspace/domain/kernel";
 import { Effect, Layer, Schema } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
 import { ConnectionPoolLive } from "../../../db/connection.js";
-import { PostgresInventoryRepository } from "../../../repositories/postgres-inventory.repository.js";
+import { PostgresInventoryRepositoryLive } from "../../../repositories/postgres-inventory.repository.js";
 import { createTestInventory } from "../../factories/inventory-factory.js";
 import { cleanDatabase } from "../../helpers/db-test-helper.js";
 
-const TestLayer = PostgresInventoryRepository.Live.pipe(
+const TestLayer = PostgresInventoryRepositoryLive.pipe(
   Layer.provide(ConnectionPoolLive),
 );
 

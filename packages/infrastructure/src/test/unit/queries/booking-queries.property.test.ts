@@ -11,13 +11,13 @@ import { type PnrCode } from "@workspace/domain/kernel";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { describe, expect } from "vitest";
 import { ConnectionPoolLive } from "../../../db/connection.js";
-import { PostgresBookingQueries } from "../../../queries/booking-queries.js";
+import { PostgresBookingQueriesLive } from "../../../queries/booking-queries.js";
 
 // ============================================================================
 // Test Setup
 // ============================================================================
 
-const TestLayer = PostgresBookingQueries.Live.pipe(
+const TestLayer = PostgresBookingQueriesLive.pipe(
   Layer.provideMerge(ConnectionPoolLive),
 );
 
@@ -162,7 +162,7 @@ describe("BookingQueries Property Tests", () => {
         makeFailingDataClient() as unknown as SqlClient.SqlClient,
       );
 
-      const FailingQueriesLayer = PostgresBookingQueries.Live.pipe(
+      const FailingQueriesLayer = PostgresBookingQueriesLive.pipe(
         Layer.provide(FailingSqlLayer),
       );
 

@@ -165,7 +165,7 @@ const makeFakeBookingRepo = () => {
       findByPnr: () => Effect.succeed(Option.none()),
       findExpired: () => Effect.succeed([]),
       findByPassengerId: () => Effect.succeed([]),
-      findAll: () => Effect.succeed([]),
+      findAll: (_options) => Effect.succeed([]),
     });
   });
 };
@@ -188,7 +188,6 @@ describe("BookingService", () => {
       flightId,
       cabinClass: "ECONOMY",
       passenger: makePassenger(),
-      seatNumber: Option.some("12A"),
       successUrl: "https://example.com/success",
     });
 
@@ -236,7 +235,6 @@ describe("BookingService", () => {
       flightId,
       cabinClass: "ECONOMY",
       passenger: makePassenger(),
-      seatNumber: Option.some("12A"),
       successUrl: "https://example.com/success",
     });
 
@@ -274,7 +272,6 @@ describe("BookingService", () => {
       flightId,
       cabinClass: "ECONOMY",
       passenger: makePassenger(),
-      seatNumber: Option.some("12A"),
       successUrl: "https://example.com/success",
     });
 
@@ -363,8 +360,7 @@ describe("BookingService", () => {
         Effect.provide(BookingServiceLive),
       );
 
-      const commands = Array.from(
-        { length: CONCURRENT_USERS },
+      const commands = Array.from({ length: CONCURRENT_USERS }).map(
         (_, i) =>
           new BookFlightCommand({
             flightId,
@@ -417,7 +413,6 @@ describe("BookingService", () => {
       flightId: makeFlightId("flight-1"),
       cabin: "ECONOMY",
       price: Money.of(100, "USD"),
-      seatNumber: Option.some("1A"),
     });
 
     return new Booking({
@@ -487,7 +482,6 @@ describe("BookingService", () => {
         cabinClass: "ECONOMY",
         passenger: makePassenger(),
         successUrl: "https://example.com/success",
-        seatNumber: Option.none(),
       });
 
       // Execute

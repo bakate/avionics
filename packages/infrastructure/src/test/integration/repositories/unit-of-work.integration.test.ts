@@ -2,7 +2,7 @@ import { SqlClient } from "@effect/sql";
 import { UnitOfWork } from "@workspace/application/unit-of-work";
 import { Effect } from "effect";
 import { beforeEach, describe, expect, it } from "vitest";
-import { PostgresUnitOfWork } from "../../../repositories/unit-of-work.js";
+import { PostgresUnitOfWorkLive } from "../../../repositories/unit-of-work.js";
 import { cleanDatabase, TestLayer } from "../../helpers/db-test-helper.js";
 
 describe("UnitOfWork Integration", () => {
@@ -48,7 +48,7 @@ describe("UnitOfWork Integration", () => {
 
     const rows = await Effect.runPromise(
       program.pipe(
-        Effect.provide(PostgresUnitOfWork.Live),
+        Effect.provide(PostgresUnitOfWorkLive),
         Effect.provide(TestLayer),
       ),
     );
@@ -95,7 +95,7 @@ describe("UnitOfWork Integration", () => {
 
     const rows = await Effect.runPromise(
       program.pipe(
-        Effect.provide(PostgresUnitOfWork.Live),
+        Effect.provide(PostgresUnitOfWorkLive),
         Effect.provide(TestLayer),
       ),
     );

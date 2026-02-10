@@ -35,113 +35,111 @@ export class UserContext extends Context.Tag("UserContext")<
 export class AuditLogger extends Context.Tag("AuditLogger")<
   AuditLogger,
   AuditLoggerSignature
->() {
-  /**
-   * Live Layer — Production implementation.
-   * Requires SqlClient in context.
-   */
-  static readonly Live = Layer.effect(
-    AuditLogger,
-    Effect.gen(function* () {
-      const sql = yield* SqlClient.SqlClient;
+>() {}
+/**
+ * Live Layer — Production implementation.
+ * Requires SqlClient in context.
+ */
+export const AuditLoggerLive = Layer.effect(
+  AuditLogger,
+  Effect.gen(function* () {
+    const sql = yield* SqlClient.SqlClient;
 
-      const insertAuditRecord = (
-        params: AuditLogParams,
-        userId: string | null,
-      ) =>
-        Effect.gen(function* () {
-          const timestamp = new Date();
+    const insertAuditRecord = (params: AuditLogParams, userId: string | null) =>
+      Effect.gen(function* () {
+        const timestamp = new Date();
 
-          yield* sql`
-            INSERT INTO audit_log (aggregate_type, aggregate_id, operation, changes, user_id, timestamp)
-            VALUES (
-              ${params.aggregateType},
-              ${params.aggregateId},
-              ${params.operation},
-              ${JSON.stringify(params.changes)},
-              ${userId},
-              ${timestamp}
-            )
-          `;
+        yield* sql`
+          INSERT INTO audit_log (aggregate_type, aggregate_id, operation, changes, user_id, timestamp)
+          VALUES (
+            ${params.aggregateType},
+            ${params.aggregateId},
+            ${params.operation},
+            ${JSON.stringify(params.changes)},
+            ${userId},
+            ${timestamp}
+          )
+        `;
 
-          yield* Effect.logDebug("Audit record created", {
-            aggregateType: params.aggregateType,
-            aggregateId: params.aggregateId,
-            operation: params.operation,
-          });
+        yield* Effect.logDebug("Audit record created", {
+          aggregateType: params.aggregateType,
+          aggregateId: params.aggregateId,
+          operation: params.operation,
         });
+      });
 
-      return {
-        log: (params) =>
-          Effect.gen(function* () {
-            const userContext = yield* Effect.serviceOption(UserContext);
-            const userId = Option.getOrNull(
-              Option.map(userContext, (ctx) => ctx.userId),
-            );
+    return {
+      log: (params) =>
+        Effect.gen(function* () {
+          const userContext = yield* Effect.serviceOption(UserContext);
+          const userId = Option.getOrNull(
+            Option.map(userContext, (ctx) => ctx.userId),
+          );
 
-            yield* insertAuditRecord(params, userId).pipe(
-              Effect.catchAll((error) =>
-                Effect.logWarning("Failed to create audit record", {
-                  error: String(error),
-                  aggregateType: params.aggregateType,
-                  aggregateId: params.aggregateId,
-                }),
-              ),
-              Effect.forkDaemon,
-            );
-          }),
+          yield* insertAuditRecord(params, userId).pipe(
+            Effect.catchAll((error) =>
+              Effect.logWarning("Failed to create audit record", {
+                error: String(error),
+                aggregateType: params.aggregateType,
+                aggregateId: params.aggregateId,
+              }),
+            ),
+            Effect.forkDaemon,
+          );
+        }),
 
-        logSync: (params) =>
-          Effect.gen(function* () {
-            const userContext = yield* Effect.serviceOption(UserContext);
-            const userId = Option.getOrNull(
-              Option.map(userContext, (ctx) => ctx.userId),
-            );
+      logSync: (params) =>
+        Effect.gen(function* () {
+          const userContext = yield* Effect.serviceOption(UserContext);
+          const userId = Option.getOrNull(
+            Option.map(userContext, (ctx) => ctx.userId),
+          );
 
-            yield* insertAuditRecord(params, userId).pipe(
-              Effect.catchAll((error) =>
-                Effect.logWarning("Failed to create audit record (sync)", {
-                  error: String(error),
-                  aggregateType: params.aggregateType,
-                  aggregateId: params.aggregateId,
-                }),
-              ),
-            );
-          }),
-      };
+          yield* insertAuditRecord(params, userId).pipe(
+            Effect.catchAll((error) =>
+              Effect.logWarning("Failed to create audit record (sync)", {
+                error: String(error),
+                aggregateType: params.aggregateType,
+                aggregateId: params.aggregateId,
+              }),
+            ),
+          );
+        }),
+    };
+  }),
+);
+
+/**
+ * Test Layer — Factory that returns a complete Layer for tests.
+ *
+ * Default behaviors (without override):
+ *   - log: Logs debug message without side effects
+ *   - logSync: Same as log
+ *
+ * Usage in a test:
+ *   const layer = AuditLoggerTest({ log: ... });
+ *   program.pipe(Effect.provide(layer))
+ */
+export const AuditLoggerTest = (
+  overrides: Partial<AuditLoggerSignature> = {},
+) =>
+  Layer.succeed(
+    AuditLogger,
+    AuditLogger.of({
+      log: (params) =>
+        Effect.logDebug("[TEST] Audit log (fire-and-forget)", {
+          aggregateType: params.aggregateType,
+          aggregateId: params.aggregateId,
+          operation: params.operation,
+        }),
+
+      logSync: (params) =>
+        Effect.logDebug("[TEST] Audit log (sync)", {
+          aggregateType: params.aggregateType,
+          aggregateId: params.aggregateId,
+          operation: params.operation,
+        }),
+
+      ...overrides,
     }),
   );
-
-  /**
-   * Test Layer — Factory that returns a complete Layer for tests.
-   *
-   * Default behaviors (without override):
-   *   - log: Logs debug message without side effects
-   *   - logSync: Same as log
-   *
-   * Usage in a test:
-   *   const layer = AuditLogger.Test({ log: ... });
-   *   program.pipe(Effect.provide(layer))
-   */
-  static readonly Test = (overrides: Partial<AuditLoggerSignature> = {}) =>
-    Layer.succeed(
-      AuditLogger,
-      AuditLogger.of({
-        log: (params) =>
-          Effect.logDebug("[TEST] Audit log (fire-and-forget)", {
-            aggregateType: params.aggregateType,
-            aggregateId: params.aggregateId,
-            operation: params.operation,
-          }),
-
-        logSync: (params) =>
-          Effect.logDebug("[TEST] Audit log (sync)", {
-            aggregateType: params.aggregateType,
-            aggregateId: params.aggregateId,
-            operation: params.operation,
-          }),
-
-        ...overrides,
-      }),
-    );
-}

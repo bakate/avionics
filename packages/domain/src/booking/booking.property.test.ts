@@ -74,6 +74,9 @@ const arbBookingSegment = fc
     flightId: fc.string({ minLength: 5, maxLength: 10 }),
     cabin: fc.constantFrom("ECONOMY", "BUSINESS", "FIRST"),
     price: arbMoney,
+    seatNumber: fc.option(fc.string({ minLength: 2, maxLength: 4 }), {
+      nil: undefined,
+    }),
   })
   .map(
     (props) =>
@@ -82,7 +85,7 @@ const arbBookingSegment = fc
         flightId: makeFlightId(props.flightId),
         cabin: props.cabin as CabinClass,
         price: props.price,
-        seatNumber: O.none(),
+        seatNumber: props.seatNumber ? O.some(props.seatNumber) : O.none(),
       }),
   );
 

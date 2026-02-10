@@ -8,7 +8,7 @@ import {
   Ref,
   Schedule,
 } from "effect";
-import { type OutboxConfig } from "../config/infrastructure-config.js";
+import { OutboxConfig } from "../config/infrastructure-config.js";
 import { EventBus } from "./event-bus.js";
 
 interface OutboxRow {
@@ -170,9 +170,11 @@ export const createOutboxProcessorLive = (config: OutboxConfig) =>
     }),
   );
 
-export const OutboxProcessorLive = createOutboxProcessorLive({
-  pollingInterval: 5,
-  batchSize: 100,
-  maxRetries: 3,
-  retryDelays: [1000, 2000, 4000],
-});
+export const OutboxProcessorLive = Layer.scopedDiscard(
+  Effect.gen(function* () {
+    const config = yield* OutboxConfig;
+    return yield* createOutboxProcessorLive(config).pipe(
+      Layer.buildWithScope(yield* Effect.scope),
+    );
+  }),
+);
