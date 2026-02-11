@@ -7,6 +7,7 @@ import {
 } from "@workspace/application/read-models";
 import { Booking } from "@workspace/domain/booking";
 import * as Errors from "@workspace/domain/errors";
+import { BookingId, PnrCodeSchema } from "@workspace/domain/kernel";
 import { Schema } from "effect";
 
 export class BookResponse extends Schema.Class<BookResponse>("BookResponse")({
@@ -46,7 +47,7 @@ export class BookingGroup extends HttpApiGroup.make("bookings")
   )
   .add(
     HttpApiEndpoint.post("confirm", "/:id/confirm")
-      .setPath(Schema.Struct({ id: Schema.String }))
+      .setPath(Schema.Struct({ id: BookingId }))
       .addSuccess(Booking) // Returns confirmed booking
       .addError(Errors.BookingNotFoundError, { status: 404 })
       .addError(Errors.BookingStatusError, { status: 400 })
@@ -56,7 +57,7 @@ export class BookingGroup extends HttpApiGroup.make("bookings")
   )
   .add(
     HttpApiEndpoint.get("getSummaryByPnr", "/pnr/:pnr")
-      .setPath(Schema.Struct({ pnr: Schema.String }))
+      .setPath(Schema.Struct({ pnr: PnrCodeSchema }))
       .addSuccess(BookingSummary)
       .addError(Errors.BookingNotFoundError, { status: 404 })
       .addError(Errors.BookingPersistenceError, { status: 500 }),

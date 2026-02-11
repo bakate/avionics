@@ -11,7 +11,7 @@ import {
   UnsupportedCurrencyError,
 } from "@workspace/application/payment.gateway";
 import * as Errors from "@workspace/domain/errors";
-import { BookingId, makePnrCode } from "@workspace/domain/kernel";
+// import { BookingId, makePnrCode } from "@workspace/domain/kernel";
 import { Effect } from "effect";
 import { Api } from "../api.js";
 
@@ -124,14 +124,14 @@ export const BookingApiLive = HttpApiBuilder.group(
       .handle("confirm", ({ path }) =>
         withBookingService((service) =>
           service
-            .confirmBooking(BookingId.make(path.id))
+            .confirmBooking(path.id)
             .pipe(Effect.map((res) => res.booking)),
         ).pipe(ensureContractErrors(path.id)),
       )
       .handle("getSummaryByPnr", ({ path }) =>
-        withBookingQueries((queries) =>
-          queries.getSummaryByPnr(makePnrCode(path.pnr)),
-        ).pipe(ensureContractErrors(path.pnr)),
+        withBookingQueries((queries) => queries.getSummaryByPnr(path.pnr)).pipe(
+          ensureContractErrors(path.pnr),
+        ),
       )
       .handle("getPassengerHistory", ({ path }) =>
         withBookingQueries((queries) =>
