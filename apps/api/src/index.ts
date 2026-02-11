@@ -101,7 +101,8 @@ const WorkersLive = Layer.mergeAll(
   Layer.scopedDiscard(
     Effect.gen(function* () {
       const cancellation = yield* CancellationService;
-      yield* cancellation.start().pipe(Effect.forkDaemon);
+      // Tie the cancellation fiber to the application scope so it interrupts on shutdown
+      yield* cancellation.start().pipe(Effect.forkScoped);
     }),
   ),
 ).pipe(Layer.provide(AppServicesLive));
@@ -110,12 +111,14 @@ const MainLive = Layer.mergeAll(ServerLive, WorkersLive).pipe(
   Layer.provide(Layer.setConfigProvider(ConfigProvider.fromEnv())),
 );
 
-const program = Effect.never.pipe(
-  Effect.provide(MainLive),
+const program = Effect.scoped(Layer.launch(MainLive)).pipe(
   Effect.catchAllCause((cause) =>
-    Effect.logFatal("Fatal error in main program", cause),
+    Effect.logFatal("Fatal error in main program", cause).pipe(
+      Effect.flatMap(() => Effect.failCause(cause)),
+    ),
   ),
   Effect.onInterrupt(() => Effect.logInfo("🛑 Shutting down backend...")),
 );
 
-NodeRuntime.runMain(program as Effect.Effect<never, never, never>);
+// We use runMain to execute the program. The type is explicitlynever for success and requirements.
+NodeRuntime.runMain(program as Effect.Effect<never, any, never>);

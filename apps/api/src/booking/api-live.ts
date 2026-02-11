@@ -43,13 +43,45 @@ const isPaymentError = (e: unknown) =>
   e instanceof CheckoutNotFoundError ||
   e instanceof UnsupportedCurrencyError;
 
+type BookingContractError =
+  | PaymentApiUnavailableError
+  | PaymentDeclinedError
+  | CheckoutNotFoundError
+  | UnsupportedCurrencyError
+  | Errors.FlightFullError
+  | Errors.FlightNotFoundError
+  | Errors.OptimisticLockingError
+  | Errors.BookingExpiredError
+  | Errors.InvalidAmountError
+  | Errors.BookingNotFoundError
+  | Errors.BookingStatusError
+  | Errors.InventoryOvercapacityError
+  | Errors.InventoryPersistenceError
+  | Errors.RequestTimeoutError
+  | Errors.BookingPersistenceError;
+
 const ensureContractErrors =
-  (bookingId: string) =>
-  <A, E, R>(effect: Effect.Effect<A, E, R>) =>
-    effect.pipe(
-      Effect.catchAll((e: unknown): Effect.Effect<A, any, R> => {
+  (bookingId?: string) =>
+  <A, E, R>(
+    effect: Effect.Effect<A, E, R>,
+  ): Effect.Effect<
+    A,
+    Extract<E, BookingContractError> | Errors.BookingPersistenceError,
+    R
+  > =>
+    Effect.catchAll(
+      effect,
+      (
+        e,
+      ): Effect.Effect<
+        A,
+        Extract<E, BookingContractError> | Errors.BookingPersistenceError,
+        R
+      > => {
         if (isPaymentError(e)) {
-          return Effect.fail(e);
+          // We know E may contain PaymentError, so this is safe if E includes it.
+          // If E doesn't, this branch is technically dead code for E, but runtime safe.
+          return Effect.fail(e as Extract<E, BookingContractError>);
         }
 
         if (e && typeof e === "object" && "_tag" in e) {
@@ -68,23 +100,25 @@ const ensureContractErrors =
             "BookingPersistenceError",
           ];
           if (allowedTags.includes(tag)) {
-            return Effect.fail(e);
+            return Effect.fail(e as Extract<E, BookingContractError>);
           }
-          return Effect.fail(
-            new Errors.BookingPersistenceError({
-              bookingId,
-              reason: (e as any).message || String(tag),
-            }),
-          );
         }
 
-        return Effect.fail(
-          new Errors.BookingPersistenceError({
-            bookingId,
-            reason: e instanceof Error ? e.message : String(e),
-          }),
+        // Log the original error to preserve the stack trace and actual message for debugging
+        return Effect.logError("Booking contract unexpected error", {
+          error: e,
+          bookingId: bookingId ?? "N/A",
+        }).pipe(
+          Effect.flatMap(() =>
+            Effect.fail(
+              new Errors.BookingPersistenceError({
+                bookingId: bookingId ?? "N/A",
+                reason: e instanceof Error ? e.message : String(e),
+              }),
+            ),
+          ),
         );
-      }),
+      },
     );
 
 // Helper: Map Booking to BookingResponse DTO
@@ -110,8 +144,12 @@ export const BookingApiLive = HttpApiBuilder.group(
     handlers
       .handle("list", () =>
         withBookingService((service) => service.findAll()).pipe(
-          Effect.map((bookings) => bookings.map(toBookingResponse)),
-          ensureContractErrors("all"),
+          Effect.map((bookings) =>
+            bookings
+              .filter((b) => b.passengers?.length > 0 && b.segments?.length > 0)
+              .map(toBookingResponse),
+          ),
+          ensureContractErrors(),
         ),
       )
       .handle("book", ({ payload }) =>
@@ -132,7 +170,7 @@ export const BookingApiLive = HttpApiBuilder.group(
               }),
             ),
           ),
-          ensureContractErrors("new"),
+          ensureContractErrors(),
         ),
       )
       .handle("confirm", ({ path }) =>
@@ -144,17 +182,17 @@ export const BookingApiLive = HttpApiBuilder.group(
       )
       .handle("getSummaryByPnr", ({ path }) =>
         withBookingQueries((queries) => queries.getSummaryByPnr(path.pnr)).pipe(
-          ensureContractErrors(path.pnr),
+          ensureContractErrors(),
         ),
       )
       .handle("getPassengerHistory", ({ path }) =>
         withBookingQueries((queries) =>
           queries.getPassengerHistory(path.id),
-        ).pipe(ensureContractErrors(path.id)),
+        ).pipe(ensureContractErrors()),
       )
       .handle("searchByPassengerName", ({ urlParams }) =>
         withBookingQueries((queries) =>
           queries.searchByPassengerName(urlParams.name, urlParams.limit ?? 10),
-        ).pipe(ensureContractErrors(urlParams.name)),
+        ).pipe(ensureContractErrors()),
       ),
 );
