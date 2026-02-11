@@ -8,6 +8,11 @@ export class TransientError extends Schema.TaggedError<TransientError>()(
   },
 ) {}
 
+export class WebhookAuthenticationError extends Schema.TaggedError<WebhookAuthenticationError>()(
+  "WebhookAuthenticationError",
+  {},
+) {}
+
 export class WebhookGroup extends HttpApiGroup.make("webhooks")
   .add(
     HttpApiEndpoint.post("polar", "/polar")
@@ -18,6 +23,7 @@ export class WebhookGroup extends HttpApiGroup.make("webhooks")
         }),
       )
       .addSuccess(Schema.Struct({ received: Schema.Boolean }))
-      .addError(TransientError, { status: 503 }),
+      .addError(TransientError, { status: 503 })
+      .addError(WebhookAuthenticationError, { status: 401 }),
   )
   .prefix("/webhooks") {}

@@ -34,6 +34,9 @@ export const ApiConfig = Config.all({
     }),
   ),
   nodeEnv,
+  polarWebhookSecret: Config.string("POLAR_WEBHOOK_SECRET").pipe(
+    Config.redacted,
+  ),
 });
 
 export type ApiConfig = Config.Config.Success<typeof ApiConfig>;
