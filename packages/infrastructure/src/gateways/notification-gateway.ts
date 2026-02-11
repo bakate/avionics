@@ -298,7 +298,6 @@ export const ResendNotificationGatewayCreateLive = (config: ResendConfig) =>
           });
 
           const recipientName = recipient.name ?? ticket.passengerName;
-
           const result = yield* Effect.tryPromise({
             try: () =>
               resend.emails.send({
@@ -320,7 +319,6 @@ export const ResendNotificationGatewayCreateLive = (config: ResendConfig) =>
             }),
             Effect.retry(retryPolicy),
           );
-
           if (!result.data?.id) {
             return yield* Effect.fail(
               new NotificationApiUnavailableError({

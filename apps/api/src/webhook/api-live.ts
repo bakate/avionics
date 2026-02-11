@@ -5,7 +5,11 @@ import { BookingId } from "@workspace/domain/kernel";
 import { Effect, Redacted } from "effect";
 import { Api } from "../api.js";
 import { ApiConfig } from "../config/api-config.js";
-import { TransientError, WebhookAuthenticationError } from "./api.js";
+import {
+  MalformedPayloadError,
+  TransientError,
+  WebhookAuthenticationError,
+} from "./api.js";
 
 const isTransientError = (e: unknown): boolean => {
   if (typeof e === "object" && e !== null && "_tag" in e) {
@@ -28,51 +32,102 @@ const verifySignature = (
 ) =>
   Effect.gen(function* () {
     const rawBody = yield* request.text;
-    const signature = request.headers["webhook-signature"];
+    const signatureHeader = request.headers["webhook-signature"];
 
-    if (!signature || typeof signature !== "string") {
+    if (!signatureHeader || typeof signatureHeader !== "string") {
       yield* Effect.logWarning("Missing webhook-signature header");
       return yield* Effect.fail(new WebhookAuthenticationError());
     }
 
-    if (!signature.startsWith("v1=")) {
+    // Split on whitespace to handle multiple signatures (rotation)
+    const tokens = signatureHeader.split(/\s+/);
+    const v1Token = tokens.find((t) => /^v1[=,]/.test(t));
+
+    let signature = "";
+    if (v1Token) {
+      signature = v1Token.slice(3);
+    } else {
+      // Fallback to first token value if no v1 found
+      const firstToken = tokens[0] ?? "";
+      const parts = firstToken.split(/[,=]/);
+      signature = parts[1] ?? parts[0] ?? "";
+    }
+
+    if (!signature) {
       yield* Effect.logWarning("Invalid webhook-signature format");
       return yield* Effect.fail(new WebhookAuthenticationError());
     }
 
-    // Cast secret to string to satisfy type checker if inference fails
-    // or assume Redacted.value returns string if secret is Redacted<string>
-    const hmac = crypto.createHmac("sha256", Redacted.value(secret));
-    const digest = `v1=${hmac.update(rawBody).digest("hex")}`;
+    // Verify timestamp for replay protection (Svix/Standard Webhooks format)
+    const msgId = request.headers["webhook-id"] ?? "unknown";
+    const msgTimestamp = request.headers["webhook-timestamp"];
 
-    const isValid = crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(digest),
+    if (!msgTimestamp || typeof msgTimestamp !== "string") {
+      yield* Effect.logWarning("Missing webhook-timestamp header");
+      return yield* Effect.fail(new WebhookAuthenticationError());
+    }
+
+    const timestampInSeconds = parseInt(msgTimestamp, 10);
+    if (Number.isNaN(timestampInSeconds)) {
+      yield* Effect.logWarning("Invalid webhook-timestamp header");
+      return yield* Effect.fail(new WebhookAuthenticationError());
+    }
+
+    const now = Date.now();
+    const timestampMs = timestampInSeconds * 1000;
+    const tolerance = 5 * 60 * 1000; // 5 minutes
+
+    if (Math.abs(now - timestampMs) > tolerance) {
+      yield* Effect.logWarning("Webhook timestamp outside tolerance window", {
+        now,
+        timestampMs,
+      });
+      return yield* Effect.fail(new WebhookAuthenticationError());
+    }
+
+    const signedContent = `${msgId}.${msgTimestamp}.${rawBody}`;
+
+    const hmac = crypto.createHmac("sha256", Redacted.value(secret));
+    const digest = hmac.update(signedContent).digest();
+
+    const signatureBuffer = Buffer.from(
+      signature,
+      signature.length === 64 ? "hex" : "base64",
     );
+
+    if (signatureBuffer.length !== digest.length) {
+      yield* Effect.logWarning("Webhook signature length mismatch");
+      return yield* Effect.fail(new WebhookAuthenticationError());
+    }
+
+    const isValid = crypto.timingSafeEqual(signatureBuffer, digest);
 
     if (!isValid) {
       yield* Effect.logWarning("Invalid webhook-signature");
       return yield* Effect.fail(new WebhookAuthenticationError());
     }
+
+    return rawBody;
   });
 
-export const handlePolarWebhook = (payload: {
-  readonly type: string;
-  readonly data: any;
-}): Effect.Effect<
-  { readonly received: boolean },
-  TransientError | WebhookAuthenticationError,
-  BookingService | ApiConfig | HttpServerRequest.HttpServerRequest
-> =>
+export const handlePolarWebhook = () =>
   Effect.gen(function* () {
     const config = yield* ApiConfig;
     const request = yield* HttpServerRequest.HttpServerRequest;
 
-    // Explicitly cast or trust the type from ApiConfig
-    yield* verifySignature(
+    const rawBody = yield* verifySignature(
       request,
       config.polarWebhookSecret as Redacted.Redacted<string>,
     );
+
+    // Safe JSON parsing
+    const payload = yield* Effect.try({
+      try: () => JSON.parse(rawBody),
+      catch: (e) =>
+        new MalformedPayloadError({
+          message: `Malformed JSON in webhook body: ${String(e)}`,
+        }),
+    });
 
     const bookingService = yield* BookingService;
 
@@ -105,15 +160,17 @@ export const handlePolarWebhook = (payload: {
         e,
       ): Effect.Effect<
         { readonly received: boolean },
-        TransientError | WebhookAuthenticationError,
+        TransientError | WebhookAuthenticationError | MalformedPayloadError,
         never
       > => {
-        // If error is authentication error, propagate it
         if (e instanceof WebhookAuthenticationError) {
           return Effect.fail(e);
         }
 
-        // Discriminate between transient/infrastructure errors and business errors
+        if (e instanceof MalformedPayloadError) {
+          return Effect.fail(e);
+        }
+
         if (isTransientError(e)) {
           return Effect.logError(
             `Transient error in webhook processing (retrying): ${String(e)}`,
@@ -128,10 +185,10 @@ export const handlePolarWebhook = (payload: {
           );
         }
 
-        // We return success to Polar for business errors to avoid unnecessary retries
-        return Effect.logError(`Business error in webhook: ${String(e)}`).pipe(
-          Effect.as({ received: true }),
-        );
+        // Return success for business errors to avoid retries
+        return Effect.logError(
+          `Business logic error in webhook: ${String(e)}`,
+        ).pipe(Effect.as({ received: true }));
       },
     ),
   );
@@ -139,6 +196,5 @@ export const handlePolarWebhook = (payload: {
 export const WebhookApiLive = HttpApiBuilder.group(
   Api,
   "webhooks",
-  (handlers) =>
-    handlers.handle("polar", ({ payload }) => handlePolarWebhook(payload)),
+  (handlers) => handlers.handle("polar", () => handlePolarWebhook()),
 );

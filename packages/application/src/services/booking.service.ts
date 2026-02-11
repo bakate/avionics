@@ -76,7 +76,7 @@ export class BookFlightCommand extends Schema.Class<BookFlightCommand>(
     gender: GenderSchema,
     type: PassengerTypeSchema,
   }),
-  seatNumber: Schema.Option(Schema.String).pipe(Schema.optional),
+  seatNumber: Schema.OptionFromNullOr(Schema.String).pipe(Schema.optional),
   successUrl: Schema.String, // URL for payment redirect success
   cancelUrl: Schema.optional(Schema.String), // Optional cancel URL
 }) {}
