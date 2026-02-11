@@ -61,7 +61,7 @@ export const PolarConfig = Config.all({
      * - With optional path: https://sandbox.polar.sh/v1/...
      */
     const PolarSandboxSchema = Schema.String.pipe(
-      Schema.pattern(/^https?:\/\/sandbox(-api)?\.polar\.sh(:\d+)?(\/.*)?$/),
+      Schema.pattern(/^https:\/\/sandbox(-api)?\.polar\.sh(:\d+)?(\/.*)?$/),
     );
 
     const isSandbox = Schema.is(PolarSandboxSchema)(config.baseUrl);
