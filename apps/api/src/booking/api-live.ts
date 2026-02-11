@@ -10,10 +10,11 @@ import {
   PaymentDeclinedError,
   UnsupportedCurrencyError,
 } from "@workspace/application/payment.gateway";
+import { type Booking } from "@workspace/domain/booking";
 import * as Errors from "@workspace/domain/errors";
-// import { BookingId, makePnrCode } from "@workspace/domain/kernel";
 import { Effect } from "effect";
 import { Api } from "../api.js";
+import { BookingResponse } from "./api.js";
 
 // ============================================================================
 // Helpers: Extract services
@@ -86,6 +87,18 @@ const ensureContractErrors =
       }),
     );
 
+// Helper: Map Booking to BookingResponse DTO
+const toBookingResponse = (booking: Booking): BookingResponse =>
+  new BookingResponse({
+    id: booking.id,
+    pnrCode: booking.pnrCode,
+    status: booking.status,
+    passengers: booking.passengers,
+    segments: booking.segments,
+    expiresAt: booking.expiresAt,
+    createdAt: booking.createdAt,
+  });
+
 // ============================================================================
 // API Handlers
 // ============================================================================
@@ -97,6 +110,7 @@ export const BookingApiLive = HttpApiBuilder.group(
     handlers
       .handle("list", () =>
         withBookingService((service) => service.findAll()).pipe(
+          Effect.map((bookings) => bookings.map(toBookingResponse)),
           ensureContractErrors("all"),
         ),
       )
@@ -104,7 +118,7 @@ export const BookingApiLive = HttpApiBuilder.group(
         withBookingService((service) =>
           service.bookFlight(payload).pipe(
             Effect.map((res) => ({
-              booking: res.booking,
+              booking: toBookingResponse(res.booking),
               checkoutUrl: res.checkout?.checkoutUrl,
               checkoutId: res.checkout?.id,
             })),
@@ -125,7 +139,7 @@ export const BookingApiLive = HttpApiBuilder.group(
         withBookingService((service) =>
           service
             .confirmBooking(path.id)
-            .pipe(Effect.map((res) => res.booking)),
+            .pipe(Effect.map((res) => toBookingResponse(res.booking))),
         ).pipe(ensureContractErrors(path.id)),
       )
       .handle("getSummaryByPnr", ({ path }) =>
