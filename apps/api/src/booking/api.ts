@@ -5,13 +5,27 @@ import {
   BookingSummary,
   PassengerBookingHistory,
 } from "@workspace/application/read-models";
-import { Booking } from "@workspace/domain/booking";
+import { BookingStatusSchema } from "@workspace/domain/booking";
 import * as Errors from "@workspace/domain/errors";
 import { BookingId, PnrCodeSchema } from "@workspace/domain/kernel";
+import { Passenger } from "@workspace/domain/passenger";
+import { BookingSegment } from "@workspace/domain/segment";
 import { Schema } from "effect";
 
+export class BookingResponse extends Schema.Class<BookingResponse>(
+  "BookingResponse",
+)({
+  id: BookingId,
+  pnrCode: PnrCodeSchema,
+  status: BookingStatusSchema,
+  passengers: Schema.NonEmptyArray(Passenger),
+  segments: Schema.NonEmptyArray(BookingSegment),
+  expiresAt: Schema.Option(Schema.Date),
+  createdAt: Schema.Date,
+}) {}
+
 export class BookResponse extends Schema.Class<BookResponse>("BookResponse")({
-  booking: Booking,
+  booking: BookingResponse,
   checkoutUrl: Schema.optional(Schema.String),
   checkoutId: Schema.optional(Schema.String),
 }) {}
@@ -21,7 +35,7 @@ const MAX_SEARCH_LIMIT = 100;
 export class BookingGroup extends HttpApiGroup.make("bookings")
   .add(
     HttpApiEndpoint.get("list", "/")
-      .addSuccess(Schema.Array(Booking))
+      .addSuccess(Schema.Array(BookingResponse))
       .addError(Errors.BookingPersistenceError, { status: 500 }),
   )
   .add(
@@ -48,7 +62,7 @@ export class BookingGroup extends HttpApiGroup.make("bookings")
   .add(
     HttpApiEndpoint.post("confirm", "/:id/confirm")
       .setPath(Schema.Struct({ id: BookingId }))
-      .addSuccess(Booking) // Returns confirmed booking
+      .addSuccess(BookingResponse) // Returns confirmed booking
       .addError(Errors.BookingNotFoundError, { status: 404 })
       .addError(Errors.BookingStatusError, { status: 400 })
       .addError(Errors.BookingExpiredError, { status: 410 })
