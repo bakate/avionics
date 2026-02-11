@@ -76,21 +76,25 @@ export const handlePolarWebhook = (payload: {
 
     const bookingService = yield* BookingService;
 
-    if (payload.type === "checkout.succeeded") {
-      const metadata = payload.data.metadata;
-      const bookingId = metadata?.bookingId;
+    // Process only checkout.updated events
+    if (payload.type === "checkout.updated") {
+      const { status, metadata } = payload.data;
 
-      if (bookingId) {
-        yield* Effect.logInfo(
-          `Polar Webhook: Processing payment success for booking ${bookingId}`,
-        );
-        yield* bookingService.confirmBooking(BookingId.make(bookingId));
-      } else {
-        yield* Effect.logError(
-          `Polar Webhook: checkout.succeeded received but missing bookingId in metadata. Payload ID: ${
-            payload.data?.id ?? "unknown"
-          }`,
-        );
+      if (status === "succeeded") {
+        const bookingId = metadata?.bookingId;
+
+        if (bookingId) {
+          yield* Effect.logInfo(
+            `Polar Webhook: Processing payment success for booking ${bookingId}`,
+          );
+          yield* bookingService.confirmBooking(BookingId.make(bookingId));
+        } else {
+          yield* Effect.logError(
+            `Polar Webhook: checkout.updated(succeeded) received but missing bookingId in metadata. Payload ID: ${
+              payload.data?.id ?? "unknown"
+            }`,
+          );
+        }
       }
     }
 
