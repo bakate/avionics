@@ -1,4 +1,4 @@
-import { Config, ConfigError, Either, Redacted } from "effect";
+import { Config, ConfigError, Either, Redacted, Schema } from "effect";
 import { DatabaseConfig as BaseDatabaseConfig, secret } from "../config.js";
 
 /**
@@ -51,11 +51,34 @@ export const PolarConfig = Config.all({
   timeout: Config.number("POLAR_TIMEOUT").pipe(Config.withDefault(30)), // seconds
   maxRetries: Config.number("POLAR_MAX_RETRIES").pipe(Config.withDefault(2)),
 }).pipe(
-  // we add isSandbox flag after loading config
-  Config.map((config) => ({
-    ...config,
-    isSandbox: config.baseUrl.includes("sandbox"),
-  })),
+  // we add isSandbox flag after loading config and validate production settings
+  Config.mapOrFail((config) => {
+    /**
+     * Schema matching Polar sandbox URLs:
+     * - https://sandbox.polar.sh
+     * - https://sandbox-api.polar.sh
+     * - With optional port: https://sandbox.polar.sh:3000
+     * - With optional path: https://sandbox.polar.sh/v1/...
+     */
+    const PolarSandboxSchema = Schema.String.pipe(
+      Schema.pattern(/^https?:\/\/sandbox(-api)?\.polar\.sh(:\d+)?(\/.*)?$/),
+    );
+
+    const isSandbox = Schema.is(PolarSandboxSchema)(config.baseUrl);
+
+    if (process.env.NODE_ENV === "production" && isSandbox) {
+      return Either.left(
+        ConfigError.InvalidData(
+          [],
+          "POLAR_BASE_URL cannot be a sandbox URL in production",
+        ),
+      );
+    }
+    return Either.right({
+      ...config,
+      isSandbox,
+    });
+  }),
 );
 
 export type PolarConfig = Config.Config.Success<typeof PolarConfig>;

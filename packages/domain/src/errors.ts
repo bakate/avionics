@@ -2,6 +2,14 @@ import { Schema } from "effect";
 
 // --- Kernel / Primitives Errors ---
 
+export class ValidationError extends Schema.TaggedError<ValidationError>()(
+  "ValidationError",
+  {
+    reason: Schema.String,
+    field: Schema.optional(Schema.String),
+  },
+) {}
+
 export class CurrencyMismatchError extends Schema.TaggedError<CurrencyMismatchError>()(
   "CurrencyMismatchError",
   {
@@ -27,7 +35,8 @@ export class OptimisticLockingError extends Schema.TaggedError<OptimisticLocking
     entityType: Schema.String,
     id: Schema.String,
     expectedVersion: Schema.Number,
-    actualVersion: Schema.Number,
+    actualVersion: Schema.Union(Schema.Number, Schema.Null),
+    entityMissing: Schema.optional(Schema.Boolean),
   },
 ) {}
 

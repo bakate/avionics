@@ -45,6 +45,16 @@ describe("NotificationGateway Rate Limit Handling", () => {
     name: "John Doe",
   };
 
+  const createGatewayLayer = () =>
+    ResendNotificationGatewayCreateLive(config).pipe(
+      Layer.provide(AuditLoggerTest()),
+    );
+
+  const sendTicketProgram = Effect.gen(function* () {
+    const gateway = yield* NotificationGateway;
+    return yield* gateway.sendTicket(ticket, recipient);
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -57,17 +67,8 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = ResendNotificationGatewayCreateLive(config).pipe(
-      Layer.provide(AuditLoggerTest()),
-    );
-
-    const program = Effect.gen(function* () {
-      const gateway = yield* NotificationGateway;
-      return yield* gateway.sendTicket(ticket, recipient);
-    });
-
     const errorResult = await Effect.runPromise(
-      program.pipe(Effect.provide(gatewayLayer), Effect.flip),
+      sendTicketProgram.pipe(Effect.provide(createGatewayLayer()), Effect.flip),
     );
 
     expect(errorResult).toBeInstanceOf(NotificationRateLimitError);
@@ -85,17 +86,8 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = ResendNotificationGatewayCreateLive(config).pipe(
-      Layer.provide(AuditLoggerTest()),
-    );
-
-    const program = Effect.gen(function* () {
-      const gateway = yield* NotificationGateway;
-      return yield* gateway.sendTicket(ticket, recipient);
-    });
-
     const errorResult = await Effect.runPromise(
-      program.pipe(Effect.provide(gatewayLayer), Effect.flip),
+      sendTicketProgram.pipe(Effect.provide(createGatewayLayer()), Effect.flip),
     );
 
     expect(errorResult).toBeInstanceOf(NotificationRateLimitError);
@@ -114,17 +106,8 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = ResendNotificationGatewayCreateLive(config).pipe(
-      Layer.provide(AuditLoggerTest()),
-    );
-
-    const program = Effect.gen(function* () {
-      const gateway = yield* NotificationGateway;
-      return yield* gateway.sendTicket(ticket, recipient);
-    });
-
     const errorResult = await Effect.runPromise(
-      program.pipe(Effect.provide(gatewayLayer), Effect.flip),
+      sendTicketProgram.pipe(Effect.provide(createGatewayLayer()), Effect.flip),
     );
 
     expect(errorResult).toBeInstanceOf(NotificationRateLimitError);
@@ -141,17 +124,8 @@ describe("NotificationGateway Rate Limit Handling", () => {
 
     mocks.send.mockRejectedValue(error);
 
-    const gatewayLayer = ResendNotificationGatewayCreateLive(config).pipe(
-      Layer.provide(AuditLoggerTest()),
-    );
-
-    const program = Effect.gen(function* () {
-      const gateway = yield* NotificationGateway;
-      return yield* gateway.sendTicket(ticket, recipient);
-    });
-
     const errorResult = await Effect.runPromise(
-      program.pipe(Effect.provide(gatewayLayer), Effect.flip),
+      sendTicketProgram.pipe(Effect.provide(createGatewayLayer()), Effect.flip),
     );
 
     expect(errorResult).toBeInstanceOf(NotificationRateLimitError);
@@ -173,17 +147,8 @@ describe("NotificationGateway Rate Limit Handling", () => {
       error: apiError,
     });
 
-    const gatewayLayer = ResendNotificationGatewayCreateLive(config).pipe(
-      Layer.provide(AuditLoggerTest()),
-    );
-
-    const program = Effect.gen(function* () {
-      const gateway = yield* NotificationGateway;
-      return yield* gateway.sendTicket(ticket, recipient);
-    });
-
     const errorResult = await Effect.runPromise(
-      program.pipe(Effect.provide(gatewayLayer), Effect.flip),
+      sendTicketProgram.pipe(Effect.provide(createGatewayLayer()), Effect.flip),
     );
 
     // It should be mapped to NotificationRateLimitError
