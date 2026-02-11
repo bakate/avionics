@@ -4,6 +4,12 @@ import {
   type BookingServiceImpl,
 } from "@workspace/application/booking.service";
 import { BookingQueries } from "@workspace/application/booking-queries";
+import {
+  CheckoutNotFoundError,
+  PaymentApiUnavailableError,
+  PaymentDeclinedError,
+  UnsupportedCurrencyError,
+} from "@workspace/application/payment.gateway";
 import * as Errors from "@workspace/domain/errors";
 import { BookingId, makePnrCode } from "@workspace/domain/kernel";
 import { Effect } from "effect";
@@ -29,16 +35,22 @@ const withBookingQueries = <A, E, R>(
     return yield* fn(queries);
   });
 
-// ============================================================================
-// Helper: Map unexpected errors to PersistenceError
-// Ensures we only return errors allowed by the HttpApi contract.
-// ============================================================================
+// Helper: Check if error is a payment error
+const isPaymentError = (e: unknown) =>
+  e instanceof PaymentApiUnavailableError ||
+  e instanceof PaymentDeclinedError ||
+  e instanceof CheckoutNotFoundError ||
+  e instanceof UnsupportedCurrencyError;
 
 const ensureContractErrors =
   (bookingId: string) =>
   <A, E, R>(effect: Effect.Effect<A, E, R>) =>
     effect.pipe(
       Effect.catchAll((e: unknown): Effect.Effect<A, any, R> => {
+        if (isPaymentError(e)) {
+          return Effect.fail(e);
+        }
+
         if (e && typeof e === "object" && "_tag" in e) {
           const tag = (e as any)._tag;
           const allowedTags = [

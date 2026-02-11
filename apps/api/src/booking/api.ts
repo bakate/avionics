@@ -1,5 +1,6 @@
 import { HttpApiEndpoint, HttpApiGroup } from "@effect/platform";
 import { BookFlightCommand } from "@workspace/application/booking.service";
+import * as PaymentErrors from "@workspace/application/payment.gateway";
 import {
   BookingSummary,
   PassengerBookingHistory,
@@ -36,7 +37,12 @@ export class BookingGroup extends HttpApiGroup.make("bookings")
       .addError(Errors.BookingStatusError, { status: 400 })
       .addError(Errors.InventoryOvercapacityError, { status: 409 })
       .addError(Errors.InventoryPersistenceError, { status: 500 })
-      .addError(Errors.RequestTimeoutError, { status: 504 }),
+      .addError(Errors.RequestTimeoutError, { status: 504 })
+      // Payment Errors
+      .addError(PaymentErrors.PaymentDeclinedError, { status: 402 })
+      .addError(PaymentErrors.PaymentApiUnavailableError, { status: 503 })
+      .addError(PaymentErrors.CheckoutNotFoundError, { status: 404 })
+      .addError(PaymentErrors.UnsupportedCurrencyError, { status: 400 }),
   )
   .add(
     HttpApiEndpoint.post("confirm", "/:id/confirm")
