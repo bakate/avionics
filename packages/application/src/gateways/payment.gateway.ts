@@ -1,5 +1,5 @@
 import { type Money } from "@workspace/domain/kernel";
-import { Context, Data, type Effect } from "effect";
+import { Context, type Effect, Schema } from "effect";
 
 // ============================================================================
 // Checkout Session Types
@@ -49,43 +49,47 @@ export type CheckoutStatus =
 /**
  * Error when payment API is unavailable
  */
-export class PaymentApiUnavailableError extends Data.TaggedError(
+export class PaymentApiUnavailableError extends Schema.TaggedError<PaymentApiUnavailableError>()(
   "PaymentApiUnavailableError",
-)<{
-  readonly message: string;
-  readonly cause?: unknown;
-}> {}
+  {
+    message: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+  },
+) {}
 
 /**
  * Error when payment is declined
  */
-export class PaymentDeclinedError extends Data.TaggedError(
+export class PaymentDeclinedError extends Schema.TaggedError<PaymentDeclinedError>()(
   "PaymentDeclinedError",
-)<{
-  readonly reason: string;
-  readonly code?: string;
-  readonly cause?: unknown;
-}> {}
+  {
+    reason: Schema.String,
+    code: Schema.optional(Schema.String),
+    cause: Schema.optional(Schema.Unknown),
+  },
+) {}
 
 /**
  * Error when checkout session is not found or expired
  */
-export class CheckoutNotFoundError extends Data.TaggedError(
+export class CheckoutNotFoundError extends Schema.TaggedError<CheckoutNotFoundError>()(
   "CheckoutNotFoundError",
-)<{
-  readonly checkoutId: string;
-  readonly cause?: unknown;
-}> {}
+  {
+    checkoutId: Schema.String,
+    cause: Schema.optional(Schema.Unknown),
+  },
+) {}
 
 /**
  * Error when an unsupported currency is provided
  */
-export class UnsupportedCurrencyError extends Data.TaggedError(
+export class UnsupportedCurrencyError extends Schema.TaggedError<UnsupportedCurrencyError>()(
   "UnsupportedCurrencyError",
-)<{
-  readonly currency: string;
-  readonly supported: ReadonlyArray<string>;
-}> {}
+  {
+    currency: Schema.String,
+    supported: Schema.Array(Schema.String),
+  },
+) {}
 
 /**
  * Union of all payment errors
