@@ -1,6 +1,7 @@
 {
   "name": "@workspace/biome-config",
   "version": "0.1.0",
+  "description": "Shared Biome configuration for the workspace",
   "private": true,
   "type": "module"
 }

@@ -78,3 +78,18 @@ export class CabinAvailability extends Schema.Class<CabinAvailability>(
     Schema.lessThanOrEqualTo(100),
   ),
 }) {}
+
+/**
+ * Global inventory statistics
+ */
+export class InventoryStats extends Schema.Class<InventoryStats>(
+  "InventoryStats",
+)({
+  totalFlights: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+  totalSeatsAvailable: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+  averageUtilization: Schema.Number.pipe(
+    Schema.nonNegative(),
+    Schema.lessThanOrEqualTo(100),
+  ),
+  fullFlights: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+}) {}

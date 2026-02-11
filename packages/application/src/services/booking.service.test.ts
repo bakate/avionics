@@ -337,7 +337,8 @@ describe("BookingService", () => {
           }),
       });
       const notificationGateway = NotificationGateway.of({
-        sendTicket: () => Effect.succeed({ messageId: "test-msg" }),
+        sendTicket: (_ticket, _recipient) =>
+          Effect.succeed({ messageId: "test-msg" }),
       });
       const unitOfWork = UnitOfWork.of({ transaction: (eff) => eff });
 
