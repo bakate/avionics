@@ -1,15 +1,29 @@
 import * as crypto from "node:crypto";
 import { HttpApiBuilder, HttpServerRequest } from "@effect/platform";
 import { BookingService } from "@workspace/application/booking.service";
+import { ApiConfig } from "@workspace/config";
 import { BookingId } from "@workspace/domain/kernel";
-import { Effect, Redacted } from "effect";
+import { Effect, Redacted, Schema } from "effect";
 import { Api } from "../api.js";
-import { ApiConfig } from "../config/api-config.js";
 import {
   MalformedPayloadError,
   TransientError,
   WebhookAuthenticationError,
 } from "./api.js";
+
+// Payload validation schema
+const PolarCheckoutPayload = Schema.Struct({
+  type: Schema.Literal("checkout.updated"),
+  data: Schema.Struct({
+    id: Schema.String,
+    status: Schema.String,
+    metadata: Schema.optional(
+      Schema.Struct({
+        bookingId: Schema.optional(Schema.String),
+      }),
+    ),
+  }),
+});
 
 const isTransientError = (e: unknown): boolean => {
   if (typeof e === "object" && e !== null && "_tag" in e) {
@@ -26,6 +40,31 @@ const isTransientError = (e: unknown): boolean => {
   return false;
 };
 
+const parseSignature = (signatureHeader: string): string | null => {
+  // Split on whitespace to handle multiple signatures (rotation)
+  const tokens = signatureHeader.split(/\s+/).filter(Boolean);
+
+  // Look for v1 signature format first
+  const v1Token = tokens.find((t) => /^v1[=,]/.test(t));
+  if (v1Token) {
+    const match = v1Token.match(/^v1[=,](.+)$/);
+    return match?.[1] ?? null;
+  }
+
+  // Fallback: try to extract signature from first token
+  const firstToken = tokens[0];
+  if (!firstToken) {
+    return null;
+  }
+
+  const match = firstToken.match(/[=,](.+)$/);
+  if (match) {
+    return match[1] ?? null;
+  }
+  // If no delimiter found, assume entire token is signature
+  return firstToken;
+};
+
 const verifySignature = (
   request: HttpServerRequest.HttpServerRequest,
   secret: Redacted.Redacted<string>,
@@ -39,22 +78,12 @@ const verifySignature = (
       return yield* Effect.fail(new WebhookAuthenticationError());
     }
 
-    // Split on whitespace to handle multiple signatures (rotation)
-    const tokens = signatureHeader.split(/\s+/);
-    const v1Token = tokens.find((t) => /^v1[=,]/.test(t));
-
-    let signature = "";
-    if (v1Token) {
-      signature = v1Token.slice(3);
-    } else {
-      // Fallback to first token value if no v1 found
-      const firstToken = tokens[0] ?? "";
-      const parts = firstToken.split(/[,=]/);
-      signature = parts[1] ?? parts[0] ?? "";
-    }
+    const signature = parseSignature(signatureHeader);
 
     if (!signature) {
-      yield* Effect.logWarning("Invalid webhook-signature format");
+      yield* Effect.logWarning("Invalid webhook-signature format", {
+        signatureHeader,
+      });
       return yield* Effect.fail(new WebhookAuthenticationError());
     }
 
@@ -81,6 +110,7 @@ const verifySignature = (
       yield* Effect.logWarning("Webhook timestamp outside tolerance window", {
         now,
         timestampMs,
+        difference: Math.abs(now - timestampMs),
       });
       return yield* Effect.fail(new WebhookAuthenticationError());
     }
@@ -90,13 +120,17 @@ const verifySignature = (
     const hmac = crypto.createHmac("sha256", Redacted.value(secret));
     const digest = hmac.update(signedContent).digest();
 
+    // Auto-detect signature format (hex or base64)
     const signatureBuffer = Buffer.from(
       signature,
       signature.length === 64 ? "hex" : "base64",
     );
 
     if (signatureBuffer.length !== digest.length) {
-      yield* Effect.logWarning("Webhook signature length mismatch");
+      yield* Effect.logWarning("Webhook signature length mismatch", {
+        expected: digest.length,
+        received: signatureBuffer.length,
+      });
       return yield* Effect.fail(new WebhookAuthenticationError());
     }
 
@@ -110,8 +144,52 @@ const verifySignature = (
     return rawBody;
   });
 
-export const handlePolarWebhook = () =>
+export const processWebhookPayload = (payload: unknown) =>
   Effect.gen(function* () {
+    const bookingService = yield* BookingService;
+
+    // Validate payload structure
+    const decoded = yield* Schema.decodeUnknown(PolarCheckoutPayload)(
+      payload,
+    ).pipe(
+      Effect.catchAll(() => {
+        // Not a checkout.updated event or invalid structure - ignore silently
+        return Effect.succeed(null);
+      }),
+    );
+
+    if (!decoded) {
+      // Unknown event type or invalid structure - return success to avoid retries
+      return { received: true };
+    }
+
+    // Process only checkout.updated events with succeeded status
+    if (decoded.data.status === "succeeded") {
+      const bookingId = decoded.data.metadata?.bookingId;
+
+      if (bookingId) {
+        yield* Effect.logInfo(
+          `Polar Webhook: Processing payment success for booking ${bookingId}`,
+        );
+
+        // Note: confirmBooking should be idempotent to handle duplicate webhooks
+        yield* bookingService.confirmBooking(BookingId.make(bookingId));
+      } else {
+        yield* Effect.logError(
+          `Polar Webhook: checkout.updated(succeeded) received but missing bookingId in metadata. Payload ID: ${decoded.data.id}`,
+        );
+      }
+    }
+
+    return { received: true };
+  });
+
+export const handlePolarWebhook = (payload?: unknown) =>
+  Effect.gen(function* () {
+    if (payload) {
+      return yield* processWebhookPayload(payload);
+    }
+
     const config = yield* ApiConfig;
     const request = yield* HttpServerRequest.HttpServerRequest;
 
@@ -121,7 +199,7 @@ export const handlePolarWebhook = () =>
     );
 
     // Safe JSON parsing
-    const payload = yield* Effect.try({
+    const parsedPayload = yield* Effect.try({
       try: () => JSON.parse(rawBody),
       catch: (e) =>
         new MalformedPayloadError({
@@ -129,31 +207,7 @@ export const handlePolarWebhook = () =>
         }),
     });
 
-    const bookingService = yield* BookingService;
-
-    // Process only checkout.updated events
-    if (payload.type === "checkout.updated") {
-      const { status, metadata } = payload.data;
-
-      if (status === "succeeded") {
-        const bookingId = metadata?.bookingId;
-
-        if (bookingId) {
-          yield* Effect.logInfo(
-            `Polar Webhook: Processing payment success for booking ${bookingId}`,
-          );
-          yield* bookingService.confirmBooking(BookingId.make(bookingId));
-        } else {
-          yield* Effect.logError(
-            `Polar Webhook: checkout.updated(succeeded) received but missing bookingId in metadata. Payload ID: ${
-              payload.data?.id ?? "unknown"
-            }`,
-          );
-        }
-      }
-    }
-
-    return { received: true };
+    return yield* processWebhookPayload(parsedPayload);
   }).pipe(
     Effect.catchAll(
       (

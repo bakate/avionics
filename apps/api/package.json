@@ -19,6 +19,7 @@
     "@effect/platform": "catalog:effect3",
     "@effect/platform-node": "catalog:effect3",
     "@workspace/application": "workspace:*",
+    "@workspace/config": "workspace:*",
     "@workspace/domain": "workspace:*",
     "@workspace/infrastructure": "workspace:*",
     "dotenv": "^17.2.3",
@@ -31,6 +32,7 @@
     "@workspace/prettier-config": "workspace:*",
     "@workspace/tsconfig": "workspace:*",
     "@workspace/vitest-config": "workspace:*",
+    "msw": "^2.12.10",
     "tsx": "^4.19.2",
     "typescript": "catalog:",
     "vitest": "catalog:vitest3"

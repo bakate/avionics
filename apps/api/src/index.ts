@@ -8,6 +8,7 @@ import {
 import { BookingService } from "@workspace/application/booking.service";
 import { CancellationService } from "@workspace/application/cancellation.service";
 import { InventoryService } from "@workspace/application/inventory.service";
+import { ApiConfig } from "@workspace/config";
 import {
   BackgroundWorkersLive,
   CoreAdaptersLive,
@@ -15,7 +16,6 @@ import {
 import { ConfigProvider, Effect, Layer } from "effect";
 import { Api } from "./api.js";
 import { BookingApiLive } from "./booking/api-live.js";
-import { ApiConfig } from "./config/api-config.js";
 import { HealthApiLive } from "./health/api-live.js";
 import { InventoryApiLive } from "./inventory/api-live.js";
 import { MetaApiLive } from "./meta/api-live.js";

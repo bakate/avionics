@@ -151,6 +151,20 @@ export interface BookingServiceImpl {
     | BookingExpiredError
     | { readonly _tag: "SqlError" }
   >;
+  /**
+   * Cancels a booking and releases held seats
+   */
+  cancelBooking: (
+    bookingId: BookingId,
+    reason: string,
+  ) => Effect.Effect<
+    Booking,
+    | BookingNotFoundError
+    | BookingPersistenceError
+    | OptimisticLockingError
+    | BookingStatusError
+    | { readonly _tag: "SqlError" }
+  >;
 }
 
 // ---------------------------------------------------------------------------
@@ -165,6 +179,20 @@ export class BookingService extends Context.Tag("BookingService")<
   // Live Layer — Production implementation
   // Resolves dependencies explicitly via Effect.gen + yield*
   // ------------------------------------------------------------------
+  static readonly bookFlight = (command: BookFlightCommand) =>
+    Effect.flatMap(BookingService, (svc) => svc.bookFlight(command));
+
+  static readonly findAll = (options?: PaginationOptions) =>
+    Effect.flatMap(BookingService, (svc) => svc.findAll(options));
+
+  static readonly confirmBooking = (bookingId: BookingId) =>
+    Effect.flatMap(BookingService, (svc) => svc.confirmBooking(bookingId));
+
+  static readonly cancelBooking = (bookingId: BookingId, reason: string) =>
+    Effect.flatMap(BookingService, (svc) =>
+      svc.cancelBooking(bookingId, reason),
+    );
+
   static readonly Live = Layer.effect(
     BookingService,
     Effect.gen(function* () {
@@ -274,6 +302,53 @@ export class BookingService extends Context.Tag("BookingService")<
           return { booking: confirmedBooking, ticket };
         });
 
+      const cancelBooking = (bookingId: BookingId, reason: string) =>
+        Effect.gen(function* () {
+          const booking = yield* bookingRepo.findById(bookingId).pipe(
+            Effect.flatMap(
+              O.match({
+                onNone: () =>
+                  Effect.fail(
+                    new BookingNotFoundError({ searchkey: bookingId }),
+                  ),
+                onSome: (b) => Effect.succeed(b),
+              }),
+            ),
+          );
+
+          const cancelledBooking = yield* unitOfWork.transaction(
+            Effect.gen(function* () {
+              const cancelled = yield* booking.cancel(reason);
+              return yield* bookingRepo.save(cancelled);
+            }),
+          );
+
+          // Best effort Release Seats (async from user perspective, but sync here for simplicity)
+          // Using strict concurrency control (retry)
+          yield* Effect.forEach(
+            booking.segments,
+            (segment) =>
+              inventoryService
+                .releaseSeats({
+                  flightId: segment.flightId,
+                  cabin: segment.cabin,
+                  numberOfSeats: booking.passengers.length,
+                })
+                .pipe(
+                  Effect.retry(retryPolicy),
+                  Effect.catchAllCause((cause) =>
+                    Effect.logWarning(
+                      "Failed to release seats after cancellation",
+                      cause,
+                    ),
+                  ),
+                ),
+            { discard: true },
+          );
+
+          return cancelledBooking;
+        });
+
       return {
         bookFlight: (command: BookFlightCommand) =>
           Effect.gen(function* () {
@@ -348,18 +423,20 @@ export class BookingService extends Context.Tag("BookingService")<
                       error,
                     );
 
-                    // Release seats
-                    yield* inventoryService.releaseSeats({
-                      flightId: makeFlightId(command.flightId),
-                      cabin: command.cabinClass,
-                      numberOfSeats: 1,
-                    });
-
-                    // Cancel booking
+                    // 1. Cancel booking first (to prevent zombie bookings if release fails)
                     const cancelled = yield* savedBooking.cancel(
                       "Payment initialization failed",
                     );
                     yield* unitOfWork.transaction(bookingRepo.save(cancelled));
+
+                    // 2. Release seats (with retry to ensure eventual consistency)
+                    yield* inventoryService
+                      .releaseSeats({
+                        flightId: makeFlightId(command.flightId),
+                        cabin: command.cabinClass,
+                        numberOfSeats: 1,
+                      })
+                      .pipe(Effect.retry(retryPolicy));
                   }).pipe(
                     Effect.catchAll((compensationError) =>
                       Effect.logError("Compensation failed", compensationError),
@@ -376,6 +453,7 @@ export class BookingService extends Context.Tag("BookingService")<
 
         findAll: (options) => bookingRepo.findAll(options),
         confirmBooking,
+        cancelBooking,
       } satisfies BookingServiceImpl;
     }),
   );
