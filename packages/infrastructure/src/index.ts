@@ -10,6 +10,7 @@ import { PostgresBookingQueriesLive } from "./queries/booking-queries.js";
 import { PostgresInventoryQueriesLive } from "./queries/inventory-queries.js";
 import { PostgresBookingRepositoryLive } from "./repositories/postgres-booking.repository.js";
 import { PostgresInventoryRepositoryLive } from "./repositories/postgres-inventory.repository.js";
+import { PostgresOutboxRepositoryLive } from "./repositories/postgres-outbox.repository.js";
 import { PostgresTicketRepositoryLive } from "./repositories/postgres-ticket.repository.js";
 import { PostgresUnitOfWorkLive } from "./repositories/unit-of-work.js";
 import { AuditLoggerLive } from "./services/audit-logger.js";
@@ -36,6 +37,7 @@ export const CoreAdaptersLive = Layer.mergeAll(
   PostgresBookingRepositoryLive,
   PostgresInventoryRepositoryLive,
   PostgresTicketRepositoryLive,
+  PostgresOutboxRepositoryLive,
   PostgresUnitOfWorkLive,
   PostgresBookingQueriesLive,
   PostgresInventoryQueriesLive,

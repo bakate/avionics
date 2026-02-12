@@ -11,12 +11,19 @@ import { NodeContext, NodeHttpServer } from "@effect/platform-node";
 import { faker } from "@faker-js/faker";
 import { BookingRepository } from "@workspace/application/booking.repository";
 import { BookingService } from "@workspace/application/booking.service";
-import { BookingQueries } from "@workspace/application/booking-queries";
+import {
+  BookingQueries,
+  type BookingQueriesPort,
+} from "@workspace/application/booking-queries";
 import { CancellationService } from "@workspace/application/cancellation.service";
 import { InventoryRepository } from "@workspace/application/inventory.repository";
 import { InventoryService } from "@workspace/application/inventory.service";
-import { InventoryQueries } from "@workspace/application/inventory-queries";
+import {
+  InventoryQueries,
+  type InventoryQueriesPort,
+} from "@workspace/application/inventory-queries";
 import { NotificationGateway } from "@workspace/application/notification.gateway";
+import { OutboxRepository } from "@workspace/application/outbox.repository";
 import { TicketRepository } from "@workspace/application/ticket.repository";
 import { UnitOfWork } from "@workspace/application/unit-of-work";
 import { Booking, PnrStatus } from "@workspace/domain/booking";
@@ -34,6 +41,7 @@ import {
 import { Passenger, PassengerId } from "@workspace/domain/passenger";
 import { BookingSegment } from "@workspace/domain/segment";
 import { AuditLoggerTest } from "@workspace/infrastructure/audit-logger";
+import { HealthCheckTest } from "@workspace/infrastructure/health-check";
 import { PolarPaymentGatewayLive } from "@workspace/infrastructure/payment-gateway";
 import {
   ConfigProvider,
@@ -136,6 +144,13 @@ const TicketRepoInMemory = Layer.succeed(
   }),
 );
 
+const OutboxRepoInMemory = Layer.succeed(
+  OutboxRepository,
+  OutboxRepository.of({
+    persist: () => Effect.void,
+  }),
+);
+
 const UnitOfWorkPassthrough = Layer.succeed(
   UnitOfWork,
   UnitOfWork.of({
@@ -153,7 +168,7 @@ const NotificationGatewayMock = Layer.succeed(
 describe("Booking API Integration (Refinement)", () => {
   it("should cancel a booking using real service logic and MSW", async () => {
     const bookingId = BookingId.make(faker.string.uuid());
-    const pnr = "PNR" + faker.string.alphanumeric(3).toUpperCase();
+    const pnr = `PNR${faker.string.alphanumeric(3).toUpperCase()}`;
     const mockReason = faker.lorem.sentence();
 
     const passenger = new Passenger({
@@ -183,7 +198,7 @@ describe("Booking API Integration (Refinement)", () => {
         passengers: [passenger],
         segments: [segment],
         expiresAt: O.none(),
-      });
+      }).clearEvents();
       yield* repo.save(initialBooking);
 
       const server = yield* HttpServer.HttpServer;
@@ -227,9 +242,11 @@ describe("Booking API Integration (Refinement)", () => {
       BookingRepoInMemory,
       InventoryRepoInMemory,
       TicketRepoInMemory,
+      OutboxRepoInMemory,
       UnitOfWorkPassthrough,
       NotificationGatewayMock,
       AuditLoggerTest(),
+      HealthCheckTest(),
     ).pipe(Layer.provide(MockConfigProvider));
 
     const GatewaysLive = Layer.mergeAll(
@@ -258,29 +275,22 @@ describe("Booking API Integration (Refinement)", () => {
       Layer.provide(HandlersLive),
       Layer.provide(AppServicesLive),
       Layer.provideMerge(
-        Layer.succeed(
-          BookingQueries,
-          BookingQueries.of({
-            getSummaryByPnr: () => Effect.fail(new Error("Not implemented")),
-            getPassengerHistory: () =>
-              Effect.fail(new Error("Not implemented")),
-            searchByPassengerName: () =>
-              Effect.fail(new Error("Not implemented")),
-          } as any),
-        ),
+        Layer.succeed(BookingQueries, {
+          getSummaryByPnr: () => Effect.die(new Error("Not implemented")),
+          getPassengerHistory: () => Effect.die(new Error("Not implemented")),
+          searchByPassengerName: () => Effect.die(new Error("Not implemented")),
+          listBookings: () => Effect.die(new Error("Not implemented")),
+          findExpiredBookings: () => Effect.die(new Error("Not implemented")),
+        } satisfies BookingQueriesPort),
       ),
       Layer.provideMerge(
-        Layer.succeed(
-          InventoryQueries,
-          InventoryQueries.of({
-            getAvailability: () => Effect.fail(new Error("Not implemented")),
-            findAvailableFlights: () =>
-              Effect.fail(new Error("Not implemented")),
-            getInventoryStats: () => Effect.fail(new Error("Not implemented")),
-            getLowInventoryAlerts: () =>
-              Effect.fail(new Error("Not implemented")),
-          } as any),
-        ),
+        Layer.succeed(InventoryQueries, {
+          getFlightAvailability: () => Effect.die(new Error("Not implemented")),
+          findAvailableFlights: () => Effect.die(new Error("Not implemented")),
+          getInventoryStats: () => Effect.die(new Error("Not implemented")),
+          getLowInventoryAlerts: () => Effect.die(new Error("Not implemented")),
+          getCabinAvailability: () => Effect.die(new Error("Not implemented")),
+        } satisfies InventoryQueriesPort),
       ),
     );
 
@@ -299,7 +309,7 @@ describe("Booking API Integration (Refinement)", () => {
     );
 
     await Effect.runPromise(
-      program.pipe(Effect.provide(FullLayer as any), Effect.scoped),
+      program.pipe(Effect.provide(FullLayer), Effect.scoped),
     );
   });
 });

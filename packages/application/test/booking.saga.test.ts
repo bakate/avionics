@@ -27,7 +27,11 @@ describe("Booking Saga Integration", () => {
 
   it("should successfully create a booking when all services succeed", async () => {
     // Setup: Default Test Layer (Everything succeeds)
-    const BookingTestLayer = BookingService.Test();
+    const BookingTestLayer = BookingService.Test({
+      outboxRepo: {
+        persist: () => Effect.void,
+      },
+    });
 
     const result = await Effect.runPromise(
       BookingService.bookFlight(command).pipe(Effect.provide(BookingTestLayer)),
@@ -46,6 +50,9 @@ describe("Booking Saga Integration", () => {
     // 2. Define custom mocks
     // Note: We need a mutable reference that persists across effects
     const CustomLayer = BookingService.Test({
+      outboxRepo: {
+        persist: () => Effect.void,
+      },
       bookingRepo: {
         save: (b) =>
           Effect.sync(() => {
