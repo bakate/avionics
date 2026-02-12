@@ -1,7 +1,10 @@
+/** biome-ignore-all lint/style/noRestrictedImports: <explanation> */
+import { HttpServerRequest } from "@effect/platform";
 import {
   type BookingConfirmation,
   BookingService,
 } from "@workspace/application/booking.service";
+import { ApiConfig } from "@workspace/config";
 import { Booking } from "@workspace/domain/booking";
 import {
   BookingNotFoundError,
@@ -9,18 +12,20 @@ import {
 } from "@workspace/domain/errors";
 import {
   BookingId,
-  type Email,
+  CabinClass,
+  EmailSchema,
   Money,
   makeBookingId,
   makeFlightId,
   makePnrCode,
   makeSegmentId,
+  PassengerType,
 } from "@workspace/domain/kernel";
-import { Passenger, type PassengerId } from "@workspace/domain/passenger";
+import { Passenger, PassengerId } from "@workspace/domain/passenger";
 import { BookingSegment } from "@workspace/domain/segment";
-import { Effect, Layer, Option as O } from "effect";
+import { Effect, Layer, Option as O, Schema } from "effect";
 import { describe, expect, it, vi } from "vitest";
-import { handlePolarWebhook } from "./api-live.js";
+import { handlePolarWebhook } from "../../webhook/api-live.js";
 
 const buildBooking = (id: string, pnr: string) =>
   Booking.create({
@@ -28,20 +33,20 @@ const buildBooking = (id: string, pnr: string) =>
     pnrCode: makePnrCode(pnr),
     passengers: [
       new Passenger({
-        id: "550e8400-e29b-41d4-a716-446655440001" as PassengerId,
+        id: PassengerId.make("550e8400-e29b-41d4-a716-446655440001"),
         firstName: "John",
         lastName: "Doe",
-        email: "john@example.com" as Email,
+        email: Schema.decodeSync(EmailSchema)("john@example.com"),
         dateOfBirth: new Date("1990-01-01"),
         gender: "MALE",
-        type: "ADULT",
+        type: PassengerType.ADULT,
       }),
     ],
     segments: [
       new BookingSegment({
         id: makeSegmentId("550e8400-e29b-41d4-a716-446655440002"),
         flightId: makeFlightId("AF123"),
-        cabin: "ECONOMY",
+        cabin: CabinClass.ECONOMY,
         price: Money.of(100, "EUR"),
         seatNumber: O.none(),
       }),
@@ -49,8 +54,15 @@ const buildBooking = (id: string, pnr: string) =>
     expiresAt: O.none(),
   });
 
+// Setup Dummy Dependencies to satisfy requirements
+const MockApiConfig = Layer.succeed(ApiConfig, {} as any);
+const MockHttpServerRequest = Layer.succeed(
+  HttpServerRequest.HttpServerRequest,
+  {} as any,
+);
+
 describe("Webhook API Handler", () => {
-  it("should confirm booking on polar checkout.succeeded event", async () => {
+  it("should confirm booking on polar checkout.updated(succeeded) event", async () => {
     // 1. Setup Mocks
     const bookingId = "550e8400-e29b-41d4-a716-446655440000";
     const mockBooking = buildBooking(bookingId, "ABC123");
@@ -68,13 +80,16 @@ describe("Webhook API Handler", () => {
         confirmBooking: confirmBookingMock,
         bookFlight: () => Effect.die("Not implemented"),
         findAll: () => Effect.die("Not implemented"),
-      }),
+        cancelBooking: () => Effect.die("Not implemented"),
+      } as any),
     );
 
     // 2. Prepare Payload
     const payload = {
-      type: "checkout.succeeded",
+      type: "checkout.updated",
       data: {
+        id: "ch_123",
+        status: "succeeded",
         metadata: {
           bookingId,
         },
@@ -83,7 +98,11 @@ describe("Webhook API Handler", () => {
 
     // 3. Execute Handler
     const result = await Effect.runPromise(
-      handlePolarWebhook(payload).pipe(Effect.provide(MockBookingService)),
+      handlePolarWebhook(payload).pipe(
+        Effect.provide(MockBookingService),
+        Effect.provide(MockApiConfig),
+        Effect.provide(MockHttpServerRequest),
+      ),
     );
 
     // 4. Assertions
@@ -91,7 +110,7 @@ describe("Webhook API Handler", () => {
     expect(confirmBookingMock).toHaveBeenCalledWith(BookingId.make(bookingId));
   });
 
-  it("should ignore events other than checkout.succeeded", async () => {
+  it("should ignore events other than checkout.updated with status succeeded", async () => {
     // 1. Setup Mocks
     const confirmBookingMock = vi.fn(() => Effect.succeed({} as any));
 
@@ -101,7 +120,8 @@ describe("Webhook API Handler", () => {
         confirmBooking: confirmBookingMock,
         bookFlight: () => Effect.die("Not implemented"),
         findAll: () => Effect.die("Not implemented"),
-      }),
+        cancelBooking: () => Effect.die("Not implemented"),
+      } as any),
     );
 
     // 2. Prepare Payload
@@ -112,7 +132,11 @@ describe("Webhook API Handler", () => {
 
     // 3. Execute Handler
     const result = await Effect.runPromise(
-      handlePolarWebhook(payload).pipe(Effect.provide(MockBookingService)),
+      handlePolarWebhook(payload).pipe(
+        Effect.provide(MockBookingService),
+        Effect.provide(MockApiConfig),
+        Effect.provide(MockHttpServerRequest),
+      ),
     );
 
     // 4. Assertions
@@ -134,22 +158,27 @@ describe("Webhook API Handler", () => {
           ),
         bookFlight: () => Effect.die("Not implemented"),
         findAll: () => Effect.die("Not implemented"),
-      }),
+        cancelBooking: () => Effect.die("Not implemented"),
+      } as any),
     );
 
     const payload = {
-      type: "checkout.succeeded",
+      type: "checkout.updated",
       data: {
+        id: "ch_123",
+        status: "succeeded",
         metadata: {
           bookingId: "550e8400-e29b-41d4-a716-446655440000",
         },
       },
     };
 
-    // 3. Execute Handler - should fail as it's a transient error
+    // 3. Execute Handler - should be caught and transformed to TransientError
     const result = await Effect.runPromise(
       handlePolarWebhook(payload).pipe(
         Effect.provide(MockBookingService),
+        Effect.provide(MockApiConfig),
+        Effect.provide(MockHttpServerRequest),
         Effect.either,
       ),
     );
@@ -174,12 +203,14 @@ describe("Webhook API Handler", () => {
           ),
         bookFlight: () => Effect.die("Not implemented"),
         findAll: () => Effect.die("Not implemented"),
-      }),
+        cancelBooking: () => Effect.die("Not implemented"),
+      } as any),
     );
 
     const payload = {
-      type: "checkout.succeeded",
+      type: "checkout.updated",
       data: {
+        status: "succeeded",
         metadata: {
           bookingId: "550e8400-e29b-41d4-a716-446655440000",
         },
@@ -188,7 +219,11 @@ describe("Webhook API Handler", () => {
 
     // 3. Execute Handler - should succeed by swallowing the business error
     const result = await Effect.runPromise(
-      handlePolarWebhook(payload).pipe(Effect.provide(MockBookingService)),
+      handlePolarWebhook(payload).pipe(
+        Effect.provide(MockBookingService),
+        Effect.provide(MockApiConfig),
+        Effect.provide(MockHttpServerRequest),
+      ),
     );
 
     // 4. Assertions
