@@ -39,12 +39,15 @@ export function redactSensitiveConfig(config: unknown): unknown {
     for (const [key, value] of Object.entries(
       config as Record<string, unknown>,
     )) {
-      if (
-        key.toLowerCase().includes("key") ||
-        key.toLowerCase().includes("password") ||
-        key.toLowerCase().includes("secret") ||
-        key.toLowerCase().includes("token")
-      ) {
+      const lowerKey = key.toLowerCase();
+      const sensitivePatterns = [
+        "password",
+        "secret",
+        "token",
+        "apikey",
+        "api_key",
+      ];
+      if (sensitivePatterns.some((p) => lowerKey.includes(p))) {
         result[key] = "<redacted>";
       } else {
         result[key] = redactSensitiveConfig(value);

@@ -66,8 +66,9 @@ export class InventoryService extends Context.Tag("InventoryService")<
       const repo = yield* InventoryRepository;
 
       // Retry policy for optimistic locking: exponential backoff, max 3 attempts
+
       const retryPolicy = Schedule.exponential(Duration.millis(100)).pipe(
-        Schedule.compose(Schedule.recurs(3)),
+        Schedule.intersect(Schedule.recurs(3)),
       );
 
       return {
@@ -94,7 +95,6 @@ export class InventoryService extends Context.Tag("InventoryService")<
             });
           }).pipe(
             Effect.retry({
-              times: 3,
               schedule: retryPolicy,
               while: (error) => error._tag === "OptimisticLockingError",
             }),
@@ -119,7 +119,6 @@ export class InventoryService extends Context.Tag("InventoryService")<
             });
           }).pipe(
             Effect.retry({
-              times: 3,
               schedule: retryPolicy,
               while: (error) => error._tag === "OptimisticLockingError",
             }),

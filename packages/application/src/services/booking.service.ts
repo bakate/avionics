@@ -211,31 +211,34 @@ export class BookingService extends Context.Tag("BookingService")<
 
       const confirmBooking = (bookingId: BookingId) =>
         Effect.gen(function* () {
-          const booking = yield* bookingRepo.findById(bookingId).pipe(
-            Effect.flatMap(
-              O.match({
-                onNone: () =>
-                  Effect.fail(
-                    new BookingNotFoundError({ searchkey: bookingId }),
-                  ),
-                onSome: (b) => Effect.succeed(b),
-              }),
-            ),
-          );
-
-          if (!booking.passengers?.length || !booking.segments?.length) {
-            return yield* Effect.fail(
-              new BookingPersistenceError({
-                bookingId: booking.id,
-                reason:
-                  "Booking must have at least one passenger and one segment",
-              }),
+          const { confirmedBooking, booking } = yield* Effect.gen(function* () {
+            const b = yield* bookingRepo.findById(bookingId).pipe(
+              Effect.flatMap(
+                O.match({
+                  onNone: () =>
+                    Effect.fail(
+                      new BookingNotFoundError({ searchkey: bookingId }),
+                    ),
+                  onSome: (b) => Effect.succeed(b),
+                }),
+              ),
             );
-          }
 
-          const confirmedBooking = yield* Effect.gen(function* () {
-            const confirmed = yield* booking.confirm();
-            return yield* unitOfWork.transaction(bookingRepo.save(confirmed));
+            if (!b.passengers?.length || !b.segments?.length) {
+              return yield* Effect.fail(
+                new BookingPersistenceError({
+                  bookingId: b.id,
+                  reason:
+                    "Booking must have at least one passenger and one segment",
+                }),
+              );
+            }
+
+            const confirmed = yield* b.confirm();
+            const saved = yield* unitOfWork.transaction(
+              bookingRepo.save(confirmed),
+            );
+            return { confirmedBooking: saved, booking: b };
           }).pipe(
             Effect.retry({
               times: 3,
@@ -304,22 +307,28 @@ export class BookingService extends Context.Tag("BookingService")<
 
       const cancelBooking = (bookingId: BookingId, reason: string) =>
         Effect.gen(function* () {
-          const booking = yield* bookingRepo.findById(bookingId).pipe(
-            Effect.flatMap(
-              O.match({
-                onNone: () =>
-                  Effect.fail(
-                    new BookingNotFoundError({ searchkey: bookingId }),
-                  ),
-                onSome: (b) => Effect.succeed(b),
-              }),
-            ),
-          );
+          const { cancelledBooking, booking } = yield* Effect.gen(function* () {
+            const b = yield* bookingRepo.findById(bookingId).pipe(
+              Effect.flatMap(
+                O.match({
+                  onNone: () =>
+                    Effect.fail(
+                      new BookingNotFoundError({ searchkey: bookingId }),
+                    ),
+                  onSome: (b) => Effect.succeed(b),
+                }),
+              ),
+            );
 
-          const cancelledBooking = yield* unitOfWork.transaction(
-            Effect.gen(function* () {
-              const cancelled = yield* booking.cancel(reason);
-              return yield* bookingRepo.save(cancelled);
+            const cancelled = yield* b.cancel(reason);
+            const saved = yield* unitOfWork.transaction(
+              bookingRepo.save(cancelled),
+            );
+            return { cancelledBooking: saved, booking: b };
+          }).pipe(
+            Effect.retry({
+              times: 3,
+              while: (error) => error instanceof OptimisticLockingError,
             }),
           );
 
