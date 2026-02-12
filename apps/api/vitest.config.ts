@@ -7,6 +7,7 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.{test,spec}.ts"],
     exclude: ["node_modules", "dist"],
+    setupFiles: ["./src/test/setup.ts"],
     alias: {
       "@workspace/api": path.resolve(__dirname, "./src"),
     },

@@ -12,7 +12,7 @@ import {
   type FlightId,
   Money,
 } from "@workspace/domain/kernel";
-import { Context, Effect, Layer } from "effect";
+import { Context, Duration, Effect, Layer, Schedule } from "effect";
 import { HoldSeatsResult, ReleaseSeatsResult } from "../models/results.js";
 import { InventoryRepository } from "../repositories/inventory.repository.js";
 
@@ -65,6 +65,11 @@ export class InventoryService extends Context.Tag("InventoryService")<
       // Resolve dependencies from context
       const repo = yield* InventoryRepository;
 
+      // Retry policy for optimistic locking: exponential backoff, max 3 attempts
+      const retryPolicy = Schedule.exponential(Duration.millis(100)).pipe(
+        Schedule.compose(Schedule.recurs(3)),
+      );
+
       return {
         holdSeats: ({ flightId, cabin, numberOfSeats }: HoldSeatsInput) =>
           Effect.gen(function* () {
@@ -87,7 +92,13 @@ export class InventoryService extends Context.Tag("InventoryService")<
               seatsHeld: numberOfSeats,
               holdExpiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 min
             });
-          }),
+          }).pipe(
+            Effect.retry({
+              times: 3,
+              schedule: retryPolicy,
+              while: (error) => error._tag === "OptimisticLockingError",
+            }),
+          ),
 
         releaseSeats: ({ flightId, cabin, numberOfSeats }: HoldSeatsInput) =>
           Effect.gen(function* () {
@@ -106,7 +117,13 @@ export class InventoryService extends Context.Tag("InventoryService")<
               inventory: savedInventory,
               seatsReleased: numberOfSeats,
             });
-          }),
+          }).pipe(
+            Effect.retry({
+              times: 3,
+              schedule: retryPolicy,
+              while: (error) => error._tag === "OptimisticLockingError",
+            }),
+          ),
 
         getAvailability: (flightId: FlightId) => repo.getByFlightId(flightId),
       };

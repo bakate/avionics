@@ -66,10 +66,10 @@ export class CancellationService extends Context.Tag("CancellationService")<
                   `Successfully cancelled expired booking ${booking.pnrCode}`,
                 );
               }).pipe(
-                Effect.catchAll((error) =>
+                Effect.catchAllCause((cause) =>
                   Effect.logError(
                     `Failed to process expiration for booking ${booking.pnrCode}`,
-                    error,
+                    cause,
                   ),
                 ),
               ),

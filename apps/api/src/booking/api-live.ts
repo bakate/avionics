@@ -180,6 +180,13 @@ export const BookingApiLive = HttpApiBuilder.group(
             .pipe(Effect.map((res) => toBookingResponse(res.booking))),
         ).pipe(ensureContractErrors(path.id)),
       )
+      .handle("cancel", ({ path, payload }) =>
+        withBookingService((service) =>
+          service
+            .cancelBooking(path.id, payload.reason)
+            .pipe(Effect.map(toBookingResponse)),
+        ).pipe(ensureContractErrors(path.id)),
+      )
       .handle("getSummaryByPnr", ({ path }) =>
         withBookingQueries((queries) => queries.getSummaryByPnr(path.pnr)).pipe(
           ensureContractErrors(),
