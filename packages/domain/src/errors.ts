@@ -127,3 +127,10 @@ export class RequestTimeoutError extends Schema.TaggedError<RequestTimeoutError>
     path: Schema.String,
   },
 ) {}
+
+export class OutboxPersistenceError extends Schema.TaggedError<OutboxPersistenceError>()(
+  "OutboxPersistenceError",
+  {
+    cause: Schema.String,
+  },
+) {}

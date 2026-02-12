@@ -28,6 +28,7 @@ import {
   type BookingRepositoryPort,
 } from "../repositories/booking.repository.js";
 import { InventoryRepository } from "../repositories/inventory.repository.js";
+import { OutboxRepository } from "../repositories/outbox.repository.js";
 import { TicketRepository } from "../repositories/ticket.repository.js";
 import { BookFlightCommand, BookingService } from "./booking.service.js";
 import { InventoryService } from "./inventory.service.js";
@@ -347,6 +348,10 @@ describe("BookingService", () => {
         findByTicketNumber: () => Effect.succeed(null),
       });
 
+      const outboxRepo = OutboxRepository.of({
+        persist: () => Effect.void,
+      });
+
       const BookingServiceLive = BookingService.Live.pipe(
         Layer.provide(InventoryService.Live),
         Layer.provide(Layer.succeed(InventoryRepository, inventoryRepo)),
@@ -355,6 +360,7 @@ describe("BookingService", () => {
         Layer.provide(Layer.succeed(NotificationGateway, notificationGateway)),
         Layer.provide(Layer.succeed(UnitOfWork, unitOfWork)),
         Layer.provide(Layer.succeed(TicketRepository, ticketRepo)),
+        Layer.provide(Layer.succeed(OutboxRepository, outboxRepo)),
       );
 
       const bookingService = yield* BookingService.pipe(

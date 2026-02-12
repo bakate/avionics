@@ -12,6 +12,7 @@ import {
   type InventoryOvercapacityError,
   type InventoryPersistenceError,
   OptimisticLockingError,
+  type OutboxPersistenceError,
 } from "@workspace/domain/errors";
 import {
   BookingId,
@@ -52,6 +53,7 @@ import {
   type BookingRepositoryPort,
   type PaginationOptions,
 } from "../repositories/booking.repository.js";
+import { OutboxRepository } from "../repositories/outbox.repository.js";
 import { TicketRepository } from "../repositories/ticket.repository.js";
 import {
   InventoryService,
@@ -129,6 +131,7 @@ export interface BookingServiceImpl {
     | InventoryPersistenceError
     | BookingPersistenceError
     | InventoryOvercapacityError
+    | OutboxPersistenceError
     | PaymentError
     | Cause.TimeoutException
     | { readonly _tag: "SqlError" }
@@ -148,6 +151,7 @@ export interface BookingServiceImpl {
     | BookingPersistenceError
     | OptimisticLockingError
     | BookingStatusError
+    | OutboxPersistenceError
     | BookingExpiredError
     | { readonly _tag: "SqlError" }
   >;
@@ -161,6 +165,7 @@ export interface BookingServiceImpl {
     Booking,
     | BookingNotFoundError
     | BookingPersistenceError
+    | OutboxPersistenceError
     | OptimisticLockingError
     | BookingStatusError
     | { readonly _tag: "SqlError" }
@@ -203,6 +208,7 @@ export class BookingService extends Context.Tag("BookingService")<
       const notificationGateway = yield* NotificationGateway;
       const unitOfWork = yield* UnitOfWork;
       const ticketRepo = yield* TicketRepository;
+      const outboxRepo = yield* OutboxRepository;
 
       // Retry policy: exponential backoff, max 3 attempts
       const retryPolicy = Schedule.exponential(Duration.millis(100)).pipe(
@@ -235,10 +241,13 @@ export class BookingService extends Context.Tag("BookingService")<
             }
 
             const confirmed = yield* b.confirm();
-            const saved = yield* unitOfWork.transaction(
-              bookingRepo.save(confirmed),
+            yield* unitOfWork.transaction(
+              Effect.all([
+                bookingRepo.save(confirmed),
+                outboxRepo.persist(confirmed.domainEvents),
+              ]),
             );
-            return { confirmedBooking: saved, booking: b };
+            return { confirmedBooking: confirmed.clearEvents(), booking: b };
           }).pipe(
             Effect.retry({
               times: 3,
@@ -321,10 +330,13 @@ export class BookingService extends Context.Tag("BookingService")<
             );
 
             const cancelled = yield* b.cancel(reason);
-            const saved = yield* unitOfWork.transaction(
-              bookingRepo.save(cancelled),
+            yield* unitOfWork.transaction(
+              Effect.all([
+                bookingRepo.save(cancelled),
+                outboxRepo.persist(cancelled.domainEvents),
+              ]),
             );
-            return { cancelledBooking: saved, booking: b };
+            return { cancelledBooking: cancelled.clearEvents(), booking: b };
           }).pipe(
             Effect.retry({
               times: 3,
@@ -406,7 +418,10 @@ export class BookingService extends Context.Tag("BookingService")<
 
             // 2.6. Save Booking with HELD status (within transaction)
             const savedBooking = yield* unitOfWork.transaction(
-              bookingRepo.save(booking),
+              Effect.all([
+                bookingRepo.save(booking),
+                outboxRepo.persist(booking.domainEvents),
+              ]).pipe(Effect.map(([saved]) => saved)),
             );
 
             // 3. Create Checkout Session for payment
@@ -436,7 +451,12 @@ export class BookingService extends Context.Tag("BookingService")<
                     const cancelled = yield* savedBooking.cancel(
                       "Payment initialization failed",
                     );
-                    yield* unitOfWork.transaction(bookingRepo.save(cancelled));
+                    yield* unitOfWork.transaction(
+                      Effect.all([
+                        bookingRepo.save(cancelled),
+                        outboxRepo.persist(cancelled.domainEvents),
+                      ]),
+                    );
 
                     // 2. Release seats (with retry to ensure eventual consistency)
                     yield* inventoryService
@@ -588,6 +608,14 @@ export class BookingService extends Context.Tag("BookingService")<
       ...overrides.ticketRepo,
     });
 
+    const OutboxRepoTest = Layer.succeed(
+      OutboxRepository,
+      OutboxRepository.of({
+        persist: () => Effect.void,
+        ...overrides.outboxRepo,
+      }),
+    );
+
     // Composition: BookingService.Live on top, mocks below.
     // Live will yield* each dep → it will find them in the layers below.
     return BookingService.Live.pipe(
@@ -598,6 +626,7 @@ export class BookingService extends Context.Tag("BookingService")<
           Layer.merge(NotificationGatewayTest),
           Layer.merge(UnitOfWorkTest),
           Layer.merge(TicketRepoTest),
+          Layer.merge(OutboxRepoTest),
         ),
       ),
     );
@@ -612,6 +641,7 @@ export type TestOverrides = {
   notificationGateway?: Partial<typeof NotificationGateway.Service>;
   unitOfWork?: Partial<typeof UnitOfWork.Service>;
   ticketRepo?: Partial<typeof TicketRepository.Service>;
+  outboxRepo?: Partial<typeof OutboxRepository.Service>;
 };
 
 // ---------------------------------------------------------------------------
