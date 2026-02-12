@@ -1,4 +1,5 @@
 import { SqlClient } from "@effect/sql";
+import { OutboxConfig } from "@workspace/config";
 import {
   Deferred,
   Duration,
@@ -8,7 +9,6 @@ import {
   Ref,
   Schedule,
 } from "effect";
-import { OutboxConfig } from "../config/infrastructure-config.js";
 import { EventBus } from "./event-bus.js";
 
 interface OutboxRow {

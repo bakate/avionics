@@ -1,11 +1,11 @@
 import { fc, test } from "@fast-check/vitest";
-import { ConfigProvider, Effect, Redacted } from "effect";
-import { describe, expect } from "vitest";
 import {
   type InfrastructureConfig,
   InfrastructureConfig as InfrastructureConfigEffect,
   redactSensitiveConfig,
-} from "../../../config/infrastructure-config.js";
+} from "@workspace/config";
+import { ConfigProvider, Effect, Redacted } from "effect";
+import { describe, expect } from "vitest";
 
 // ============================================================================
 // Types

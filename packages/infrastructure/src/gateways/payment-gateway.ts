@@ -45,9 +45,9 @@ import {
   type PaymentGatewayService,
   UnsupportedCurrencyError,
 } from "@workspace/application/payment.gateway";
+import { PolarConfig } from "@workspace/config";
 import { type CurrencyCode, Money } from "@workspace/domain/kernel";
 import { Duration, Effect, Layer, Redacted, Schedule } from "effect";
-import { PolarConfig } from "../config/infrastructure-config.js";
 import { AuditLogger } from "../services/audit-logger.js";
 
 // ============================================================================

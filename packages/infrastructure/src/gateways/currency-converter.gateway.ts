@@ -16,6 +16,7 @@ import {
   type CurrencyConversionError,
   CurrencyConverterGateway,
 } from "@workspace/application/currency-converter.gateway";
+import { CurrencyConfig } from "@workspace/config";
 import { CurrencyMismatchError } from "@workspace/domain/errors";
 import {
   type CurrencyCode,
@@ -32,7 +33,6 @@ import {
   Schedule,
   Schema,
 } from "effect";
-import { CurrencyConfig } from "../config/infrastructure-config.js";
 
 // ============================================================================
 // Types & Schemas

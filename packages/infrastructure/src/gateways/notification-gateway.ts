@@ -8,10 +8,10 @@ import {
   NotificationRateLimitError,
   type NotificationResult,
 } from "@workspace/application/notification.gateway";
+import { ResendConfig } from "@workspace/config";
 import { type Ticket } from "@workspace/domain/ticket";
 import { Effect, Layer, Option, Redacted, Schedule } from "effect";
 import { Resend } from "resend";
-import { ResendConfig } from "../config/infrastructure-config.js";
 import { AuditLogger } from "../services/audit-logger.js";
 
 const escapeHtml = (str: string): string => {
