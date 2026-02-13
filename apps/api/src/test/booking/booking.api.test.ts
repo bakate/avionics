@@ -242,8 +242,6 @@ describe("Booking API Integration (Refinement)", () => {
     );
 
     const BaseDeps = Layer.mergeAll(
-      BookingRepoInMemory,
-      InventoryRepoInMemory,
       TicketRepoInMemory,
       OutboxRepoInMemory,
       UnitOfWorkPassthrough,
@@ -307,8 +305,10 @@ describe("Booking API Integration (Refinement)", () => {
         Layer.provide(ServerLive),
       ),
       ServerLive,
-      BookingRepoInMemory,
       FetchHttpClient.layer,
+    ).pipe(
+      Layer.provideMerge(BookingRepoInMemory),
+      Layer.provideMerge(InventoryRepoInMemory),
     );
 
     await Effect.runPromise(
