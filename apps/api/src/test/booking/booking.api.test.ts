@@ -148,6 +148,9 @@ const OutboxRepoInMemory = Layer.succeed(
   OutboxRepository,
   OutboxRepository.of({
     persist: () => Effect.void,
+    getUnpublishedEvents: () => Effect.succeed([]),
+    markAsPublished: () => Effect.void,
+    markAsFailed: () => Effect.void,
   }),
 );
 

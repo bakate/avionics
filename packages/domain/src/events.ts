@@ -72,6 +72,14 @@ export class BookingCancelled extends BookingEventBase.extend<BookingCancelled>(
   "BookingCancelled",
 )({
   reason: Schema.String,
+  // Self-contained: we need to know WHICH flights to release
+  segments: Schema.Array(
+    Schema.Struct({
+      flightId: FlightId,
+      cabin: CabinClassSchema,
+      quantity: Schema.Number,
+    }),
+  ),
 }) {}
 
 /**
@@ -81,6 +89,14 @@ export class BookingExpired extends BookingEventBase.extend<BookingExpired>(
   "BookingExpired",
 )({
   expiredAt: Schema.Union(Schema.Date, Schema.DateFromString),
+  // Self-contained: we need to know WHICH flights to release
+  segments: Schema.Array(
+    Schema.Struct({
+      flightId: FlightId,
+      cabin: CabinClassSchema,
+      quantity: Schema.Number,
+    }),
+  ),
 }) {}
 
 // ============================================================================

@@ -350,6 +350,9 @@ describe("BookingService", () => {
 
       const outboxRepo = OutboxRepository.of({
         persist: () => Effect.void,
+        getUnpublishedEvents: () => Effect.succeed([]),
+        markAsPublished: () => Effect.void,
+        markAsFailed: () => Effect.void,
       });
 
       const BookingServiceLive = BookingService.Live.pipe(
@@ -363,42 +366,42 @@ describe("BookingService", () => {
         Layer.provide(Layer.succeed(OutboxRepository, outboxRepo)),
       );
 
-      const bookingService = yield* BookingService.pipe(
-        Effect.provide(BookingServiceLive),
-      );
+      return yield* Effect.gen(function* () {
+        const bookingService = yield* BookingService;
 
-      const commands = Array.from({ length: CONCURRENT_USERS }).map(
-        (_, i) =>
-          new BookFlightCommand({
-            flightId,
-            cabinClass: "ECONOMY",
-            passenger: makePassenger(),
-            seatNumber: Option.some(`1${i}A`),
-            successUrl: "https://example.com/success",
-          }),
-      );
-
-      const results = yield* Effect.all(
-        commands.map((cmd) =>
-          bookingService.bookFlight(cmd).pipe(
-            Effect.map(() => "SUCCESS" as const),
-            Effect.catchTags({
-              FlightFullError: () => Effect.succeed("FULL" as const),
-              OptimisticLockingError: () => Effect.succeed("LOCKED" as const),
+        const commands = Array.from({ length: CONCURRENT_USERS }).map(
+          (_, i) =>
+            new BookFlightCommand({
+              flightId,
+              cabinClass: "ECONOMY",
+              passenger: makePassenger(),
+              seatNumber: Option.some(`1${i}A`),
+              successUrl: "https://example.com/success",
             }),
-            Effect.catchAll((e) => Effect.fail(e)),
-          ),
-        ),
-        { concurrency: "unbounded" },
-      );
+        );
 
-      const successes = results.filter((r) => r === "SUCCESS").length;
-      return {
-        successes,
-        finalInventory: yield* inventoryRepo.getByFlightId(
-          makeFlightId(flightId),
-        ),
-      };
+        const results = yield* Effect.all(
+          commands.map((cmd) =>
+            bookingService.bookFlight(cmd).pipe(
+              Effect.map(() => "SUCCESS" as const),
+              Effect.catchTags({
+                FlightFullError: () => Effect.succeed("FULL" as const),
+                OptimisticLockingError: () => Effect.succeed("LOCKED" as const),
+              }),
+              Effect.catchAll((e) => Effect.fail(e)),
+            ),
+          ),
+          { concurrency: "unbounded" },
+        );
+
+        const successes = results.filter((r) => r === "SUCCESS").length;
+        return {
+          successes,
+          finalInventory: yield* inventoryRepo.getByFlightId(
+            makeFlightId(flightId),
+          ),
+        };
+      }).pipe(Effect.provide(BookingServiceLive));
     });
 
     const report = await Effect.runPromise(program);
