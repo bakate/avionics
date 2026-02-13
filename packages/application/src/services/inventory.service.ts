@@ -422,7 +422,16 @@ export class InventoryService extends Context.Tag("InventoryService")<
             });
 
             if (!offered) {
-              return yield* holdSeatsDirect(params, repo, directRetryPolicy);
+              const res = yield* holdSeatsDirect(
+                params,
+                repo,
+                directRetryPolicy,
+              );
+              yield* Metric.update(
+                holdLatencyHistogram,
+                Date.now() - startTime,
+              );
+              return res;
             }
 
             const result = yield* Deferred.await(deferred);

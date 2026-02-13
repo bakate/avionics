@@ -5,6 +5,7 @@ import {
   BookingConfirmed,
   BookingCreated,
   BookingExpired,
+  DomainEventSchema,
   type EventId,
 } from "../events.js";
 import { BookingId, PnrCodeSchema } from "../kernel.js";
@@ -12,6 +13,7 @@ import { BookingId, PnrCodeSchema } from "../kernel.js";
 import { Passenger } from "./passenger.js";
 import { BookingSegment } from "./segment.js";
 
+// --- Booking Aggregate Root ---
 export enum PnrStatus {
   HELD = "Held",
   CONFIRMED = "Confirmed",
@@ -30,7 +32,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
   segments: Schema.NonEmptyArray(BookingSegment),
   expiresAt: Schema.Option(Schema.Date), // Expiration of the HOLD
   createdAt: Schema.Date,
-  domainEvents: Schema.Array(Schema.Unknown).pipe(
+  domainEvents: Schema.Array(DomainEventSchema).pipe(
     Schema.annotations({
       description: "Domain events raised by this aggregate",
     }),

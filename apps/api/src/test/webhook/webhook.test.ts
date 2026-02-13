@@ -173,7 +173,7 @@ describe("Webhook API Handler", () => {
       },
     };
 
-    // 3. Execute Handler - should be caught and transformed to TransientError
+    // 2. Execute Handler - should be caught and transformed to TransientError
     const result = await Effect.runPromise(
       handlePolarWebhook(payload).pipe(
         Effect.provide(MockBookingService),
@@ -210,6 +210,7 @@ describe("Webhook API Handler", () => {
     const payload = {
       type: "checkout.updated",
       data: {
+        id: "ch_123",
         status: "succeeded",
         metadata: {
           bookingId: "550e8400-e29b-41d4-a716-446655440000",
@@ -217,7 +218,7 @@ describe("Webhook API Handler", () => {
       },
     };
 
-    // 3. Execute Handler - should succeed by swallowing the business error
+    // 2. Execute Handler - should succeed by swallowing the business error
     const result = await Effect.runPromise(
       handlePolarWebhook(payload).pipe(
         Effect.provide(MockBookingService),

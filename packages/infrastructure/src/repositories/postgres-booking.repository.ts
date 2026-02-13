@@ -8,7 +8,7 @@ import {
   BookingPersistenceError,
   OptimisticLockingError,
 } from "@workspace/domain/errors";
-import * as Events from "@workspace/domain/events";
+import type * as Events from "@workspace/domain/events";
 import { Effect, Layer, Option } from "effect";
 import {
   type BookingRow,
@@ -18,27 +18,7 @@ import {
   toBookingRow,
 } from "./mappers/booking.mapper.js";
 
-const EVENT_TYPE_REGISTRY = new Map<unknown, string>([
-  [Events.BookingCreated, "BookingCreated"],
-  [Events.BookingConfirmed, "BookingConfirmed"],
-  [Events.BookingCancelled, "BookingCancelled"],
-  [Events.BookingExpired, "BookingExpired"],
-  [Events.SeatsHeld, "SeatsHeld"],
-  [Events.SeatsReleased, "SeatsReleased"],
-]);
-
-const getEventTag = (event: Events.DomainEventType): string => {
-  if ("_tag" in event && typeof event._tag === "string") {
-    return event._tag;
-  }
-  const tag = EVENT_TYPE_REGISTRY.get(event.constructor);
-  if (tag) {
-    return tag;
-  }
-  throw new Error(
-    `Domain event ${event.constructor.name} has no stable _tag or registry entry. Minification will break this.`,
-  );
-};
+const getEventTag = (event: Events.DomainEventType): string => event._tag;
 
 /**
  * PostgreSQL implementation of the BookingRepository.
