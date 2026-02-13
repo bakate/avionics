@@ -7,8 +7,8 @@ import { describe, expect, it } from "vitest";
 import {
   InventoryRepository,
   type InventoryRepositoryPort,
-} from "../repositories/inventory.repository.js";
-import { InventoryService } from "./inventory.service.js";
+} from "../../../repositories/inventory.repository.js";
+import { InventoryService } from "../../../services/inventory.service.js";
 
 describe("InventoryService", () => {
   const flightId = makeFlightId(faker.string.alphanumeric(6));

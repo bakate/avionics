@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { Schema } from "effect";
 import { describe, expect, it } from "vitest";
-import { Flight } from "./flight.js";
+import { Flight } from "../../../flight/flight.js";
 
 describe("Flight Domain Model", () => {
   it("should create a valid flight", () => {

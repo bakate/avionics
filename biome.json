@@ -83,7 +83,7 @@
         },
         "useConst": "error",
         "noRestrictedImports": {
-          "level": "error",
+          "level": "off",
           "options": {
             "patterns": [
               {

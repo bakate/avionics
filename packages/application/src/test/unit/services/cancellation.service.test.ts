@@ -13,11 +13,11 @@ import { Passenger, PassengerId } from "@workspace/domain/passenger";
 import { BookingSegment } from "@workspace/domain/segment";
 import { Effect, Layer, Option as O, Schema } from "effect";
 import { describe, expect, it } from "vitest";
-import { ReleaseSeatsResult } from "../models/results.js";
-import { UnitOfWork } from "../ports/unit-of-work.js";
-import { BookingRepository } from "../repositories/booking.repository.js";
-import { CancellationService } from "./cancellation.service.js";
-import { InventoryService } from "./inventory.service.js";
+import { ReleaseSeatsResult } from "../../../models/results.js";
+import { UnitOfWork } from "../../../ports/unit-of-work.js";
+import { BookingRepository } from "../../../repositories/booking.repository.js";
+import { CancellationService } from "../../../services/cancellation.service.js";
+import { InventoryService } from "../../../services/inventory.service.js";
 
 const makeExpiredBooking = (pnr: string, flightId = "FL-123") => {
   const passenger = new Passenger({

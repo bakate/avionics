@@ -3,8 +3,8 @@ import { type Booking, PnrStatus } from "@workspace/domain/booking";
 import { type BookingId, EmailSchema, Money } from "@workspace/domain/kernel";
 import { Effect, Exit, Option, Schema } from "effect";
 import { describe, expect, it } from "vitest";
-import { PaymentApiUnavailableError } from "../src/gateways/payment.gateway.js";
-import { BookingService } from "../src/services/booking.service.js";
+import { PaymentApiUnavailableError } from "../../../gateways/payment.gateway.js";
+import { BookingService } from "../../../services/booking.service.js";
 
 describe("Booking Saga Integration", () => {
   // Shared test command

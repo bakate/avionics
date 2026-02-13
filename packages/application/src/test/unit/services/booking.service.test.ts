@@ -20,18 +20,21 @@ import { Passenger, PassengerId } from "@workspace/domain/passenger";
 import { BookingSegment } from "@workspace/domain/segment";
 import { Effect, Layer, Option, Ref, Schema } from "effect";
 import { describe, expect, it } from "vitest";
-import { NotificationGateway } from "../gateways/notification.gateway.js";
-import { PaymentGateway } from "../gateways/payment.gateway.js";
-import { UnitOfWork } from "../ports/unit-of-work.js";
+import { NotificationGateway } from "../../../gateways/notification.gateway.js";
+import { PaymentGateway } from "../../../gateways/payment.gateway.js";
+import { UnitOfWork } from "../../../ports/unit-of-work.js";
 import {
   BookingRepository,
   type BookingRepositoryPort,
-} from "../repositories/booking.repository.js";
-import { InventoryRepository } from "../repositories/inventory.repository.js";
-import { OutboxRepository } from "../repositories/outbox.repository.js";
-import { TicketRepository } from "../repositories/ticket.repository.js";
-import { BookFlightCommand, BookingService } from "./booking.service.js";
-import { InventoryService } from "./inventory.service.js";
+} from "../../../repositories/booking.repository.js";
+import { InventoryRepository } from "../../../repositories/inventory.repository.js";
+import { OutboxRepository } from "../../../repositories/outbox.repository.js";
+import { TicketRepository } from "../../../repositories/ticket.repository.js";
+import {
+  BookFlightCommand,
+  BookingService,
+} from "../../../services/booking.service.js";
+import { InventoryService } from "../../../services/inventory.service.js";
 
 // --- Helpers de Test ---
 
