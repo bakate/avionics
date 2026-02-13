@@ -140,7 +140,7 @@ const TicketRepoInMemory = Layer.succeed(
   TicketRepository,
   TicketRepository.of({
     save: (t: any) => Effect.succeed(t),
-    findByTicketNumber: () => Effect.succeed(null),
+    findByTicketNumber: () => Effect.succeed(O.none()),
   }),
 );
 

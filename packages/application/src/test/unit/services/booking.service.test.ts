@@ -348,7 +348,7 @@ describe("BookingService", () => {
 
       const ticketRepo = TicketRepository.of({
         save: (t) => Effect.succeed(t),
-        findByTicketNumber: () => Effect.succeed(null),
+        findByTicketNumber: () => Effect.succeed(Option.none()),
       });
 
       const outboxRepo = OutboxRepository.of({

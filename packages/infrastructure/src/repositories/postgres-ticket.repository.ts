@@ -4,7 +4,7 @@ import {
   type TicketRepositoryPort,
 } from "@workspace/application/ticket.repository";
 import { type Ticket } from "@workspace/domain/ticket";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Option } from "effect";
 import {
   type CouponRow,
   fromTicketRow,
@@ -58,14 +58,14 @@ export const PostgresTicketRepositoryLive = Layer.effect(
 
         const ticketRow = ticketRows[0];
         if (!ticketRow) {
-          return null;
+          return Option.none();
         }
 
         const couponRows = yield* sql<CouponRow>`
           SELECT * FROM coupons WHERE ticket_number = ${ticketNumber} ORDER BY coupon_number ASC
         `;
 
-        return fromTicketRow(ticketRow, couponRows);
+        return Option.some(fromTicketRow(ticketRow, couponRows));
       });
 
     return {
@@ -85,7 +85,7 @@ export const PostgresTicketRepositoryTest = (
     TicketRepository,
     TicketRepository.of({
       save: (ticket) => Effect.succeed(ticket),
-      findByTicketNumber: () => Effect.succeed(null),
+      findByTicketNumber: () => Effect.succeed(Option.none()),
       ...overrides,
     }),
   );
