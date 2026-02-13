@@ -6,6 +6,9 @@
 import { fc } from "@fast-check/vitest";
 import { Effect, Option as O } from "effect";
 import { describe, expect, test } from "vitest";
+import { Booking, PnrStatus } from "../../../booking/booking.js";
+import { Passenger, type PassengerId } from "../../../booking/passenger.js";
+import { BookingSegment } from "../../../booking/segment.js";
 import {
   type BookingId,
   type CabinClass,
@@ -17,10 +20,7 @@ import {
   makeSegmentId,
   type PassengerType,
   type PnrCode,
-} from "../kernel.js";
-import { Booking, PnrStatus } from "./booking.js";
-import { Passenger, type PassengerId } from "./passenger.js";
-import { BookingSegment } from "./segment.js";
+} from "../../../kernel.js";
 
 // -----------------------------------------------------------------------------
 // Arbitraries

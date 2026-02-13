@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { Schema } from "effect";
 import { describe, expect, it } from "vitest";
-import { Ticket, TicketStatus } from "./ticket.js";
+import { Ticket, TicketStatus } from "../../../ticket/ticket.js";
 
 describe("Ticket Domain Model", () => {
   it("should create a valid ticket", () => {

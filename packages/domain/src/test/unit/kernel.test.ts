@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 import { describe, expect, it } from "vitest";
-import { AirportCodeSchema, Money, Route, Schedule } from "./kernel.js";
+import { AirportCodeSchema, Money, Route, Schedule } from "../../kernel.js";
 
 const makeCode = Schema.decodeSync(AirportCodeSchema);
 
