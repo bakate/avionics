@@ -169,7 +169,7 @@ const NotificationGatewayMock = Layer.succeed(
 );
 
 describe("Booking API Integration (Refinement)", () => {
-  it("should cancel a booking using real service logic and MSW", async () => {
+  it("should cancel a booking using real service logic", async () => {
     const bookingId = BookingId.make(faker.string.uuid());
     const pnr = `PNR${faker.string.alphanumeric(3).toUpperCase()}`;
     const mockReason = faker.lorem.sentence();
@@ -257,7 +257,6 @@ describe("Booking API Integration (Refinement)", () => {
 
     const AppServicesLive = Layer.mergeAll(
       BookingService.Live,
-      InventoryService.Live,
       CancellationService.Live,
     ).pipe(
       Layer.provideMerge(InventoryService.Live),
