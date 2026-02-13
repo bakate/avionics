@@ -8,9 +8,8 @@ import { BookingService } from "../src/services/booking.service.js";
 
 describe("Booking Saga Integration", () => {
   // Shared test command
-  // Shared test command
   const command = {
-    flightId: "flight_" + faker.string.alphanumeric(5),
+    flightId: `flight_${faker.string.alphanumeric(5)}`,
     cabinClass: "ECONOMY" as const,
     passenger: {
       id: faker.string.uuid(),

@@ -612,6 +612,9 @@ export class BookingService extends Context.Tag("BookingService")<
       OutboxRepository,
       OutboxRepository.of({
         persist: () => Effect.void,
+        getUnpublishedEvents: () => Effect.succeed([]),
+        markAsPublished: () => Effect.void,
+        markAsFailed: () => Effect.void,
         ...overrides.outboxRepo,
       }),
     );

@@ -96,8 +96,13 @@ const ServerLive = Layer.unwrapEffect(
 // Workers & Execution Entry Point
 // ============================================================================
 
+import { OutboxProcessorLive } from "@workspace/application/jobs/outbox-processor";
+
+// ...
+
 const WorkersLive = Layer.mergeAll(
   BackgroundWorkersLive,
+  OutboxProcessorLive,
   Layer.scopedDiscard(
     Effect.gen(function* () {
       const cancellation = yield* CancellationService;

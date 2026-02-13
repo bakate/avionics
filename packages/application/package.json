@@ -17,7 +17,8 @@
     "./read-models": "./src/models/read-models.ts",
     "./booking-queries": "./src/queries/booking-queries.ts",
     "./inventory-queries": "./src/queries/inventory-queries.ts",
-    "./cancellation.service": "./src/services/cancellation.service.ts"
+    "./cancellation.service": "./src/services/cancellation.service.ts",
+    "./jobs/outbox-processor": "./src/jobs/outbox-processor.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

@@ -151,6 +151,11 @@ export class Booking extends Schema.Class<Booking>("Booking")({
         bookingId: this.id,
         pnrCode: this.pnrCode,
         reason,
+        segments: this.segments.map((s) => ({
+          flightId: s.flightId,
+          cabin: s.cabin,
+          quantity: this.passengers.length,
+        })),
       });
 
       return new Booking({
@@ -178,6 +183,11 @@ export class Booking extends Schema.Class<Booking>("Booking")({
           bookingId: this.id,
           pnrCode: this.pnrCode,
           expiredAt: expiredAt,
+          segments: this.segments.map((s) => ({
+            flightId: s.flightId,
+            cabin: s.cabin,
+            quantity: this.passengers.length,
+          })),
         });
 
         return new Booking({
