@@ -46,6 +46,11 @@ export function redactSensitiveConfig(config: unknown): unknown {
         "token",
         "apikey",
         "api_key",
+        "key",
+        "privatekey",
+        "accesskey",
+        "signingkey",
+        "encryptionkey",
       ];
       if (sensitivePatterns.some((p) => lowerKey.includes(p))) {
         result[key] = "<redacted>";

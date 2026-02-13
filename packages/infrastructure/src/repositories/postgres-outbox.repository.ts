@@ -1,6 +1,7 @@
 import { SqlClient } from "@effect/sql";
 import { OutboxRepository } from "@workspace/application/outbox.repository";
 import { OutboxPersistenceError } from "@workspace/domain/errors";
+import { type DomainEventType } from "@workspace/domain/events";
 import { Effect, Layer } from "effect";
 
 export const PostgresOutboxRepositoryLive = Layer.effect(
@@ -9,12 +10,12 @@ export const PostgresOutboxRepositoryLive = Layer.effect(
     const sql = yield* SqlClient.SqlClient;
 
     return OutboxRepository.of({
-      persist: (events) =>
+      persist: (events: ReadonlyArray<DomainEventType>) =>
         Effect.gen(function* () {
           if (events.length === 0) return;
 
-          const values = events.map((event: any) => ({
-            event_type: event._tag ?? event.constructor.name,
+          const values = events.map((event) => ({
+            event_type: event._tag,
             payload: JSON.stringify(event),
           }));
 

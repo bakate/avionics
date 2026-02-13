@@ -1,4 +1,5 @@
 import { type OutboxPersistenceError } from "@workspace/domain/errors";
+import { type DomainEventType } from "@workspace/domain/events";
 import { Context, type Effect } from "effect";
 
 export interface OutboxRepositoryPort {
@@ -7,7 +8,7 @@ export interface OutboxRepositoryPort {
    * This should typically be called within a transaction.
    */
   persist(
-    events: ReadonlyArray<unknown>,
+    events: ReadonlyArray<DomainEventType>,
   ): Effect.Effect<void, OutboxPersistenceError, never>;
 
   /**

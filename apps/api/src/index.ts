@@ -8,6 +8,7 @@ import {
 import { BookingService } from "@workspace/application/booking.service";
 import { CancellationService } from "@workspace/application/cancellation.service";
 import { InventoryService } from "@workspace/application/inventory.service";
+import { OutboxProcessorLive } from "@workspace/application/jobs/outbox-processor";
 import { ApiConfig } from "@workspace/config";
 import {
   BackgroundWorkersLive,
@@ -95,10 +96,6 @@ const ServerLive = Layer.unwrapEffect(
 // ============================================================================
 // Workers & Execution Entry Point
 // ============================================================================
-
-import { OutboxProcessorLive } from "@workspace/application/jobs/outbox-processor";
-
-// ...
 
 const WorkersLive = Layer.mergeAll(
   BackgroundWorkersLive,

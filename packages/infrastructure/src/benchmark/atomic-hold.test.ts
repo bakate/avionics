@@ -52,7 +52,7 @@ describe("Atomic Hold Benchmark (Optimistic Locking)", () => {
               economyAvailable: TOTAL_SEATS,
             }),
           );
-          Effect.log(
+          yield* Effect.log(
             `[Setup] Created flight ${FLIGHT_ID} with ${TOTAL_SEATS} seats.`,
           );
         }),
@@ -61,8 +61,10 @@ describe("Atomic Hold Benchmark (Optimistic Locking)", () => {
     );
 
     // 2. Execution
-    Effect.log(
-      `[Benchmark] Starting ${CONCURRENT_USERS} concurrent requests...`,
+    await Effect.runPromise(
+      Effect.log(
+        `[Benchmark] Starting ${CONCURRENT_USERS} concurrent requests...`,
+      ),
     );
     const startTime = Date.now();
 
@@ -98,13 +100,15 @@ describe("Atomic Hold Benchmark (Optimistic Locking)", () => {
     const successful = results.filter((r) => r.success).length;
     const failed = results.filter((r) => !r.success);
 
-    Effect.log(`[Results]
+    await Effect.runPromise(
+      Effect.log(`[Results]
     - Total Requests: ${CONCURRENT_USERS}
     - Successful: ${successful}
     - Failed: ${failed.length}
     - Duration: ${duration}ms
     - RPS: ${(CONCURRENT_USERS / (duration / 1000)).toFixed(2)}
-    `);
+    `),
+    );
 
     // 4. Verification
     const finalState = await Effect.runPromise(
@@ -119,11 +123,13 @@ describe("Atomic Hold Benchmark (Optimistic Locking)", () => {
       ),
     );
 
-    Effect.log(`[Verification]
+    await Effect.runPromise(
+      Effect.log(`[Verification]
     - Expected Available: ${TOTAL_SEATS - successful * SEATS_PER_USER}
     - Actual Available: ${finalState.availability.economy.available}
     - Version: ${finalState.version}
-    `);
+    `),
+    );
 
     expect(finalState.availability.economy.available).toBe(
       TOTAL_SEATS - successful * SEATS_PER_USER,

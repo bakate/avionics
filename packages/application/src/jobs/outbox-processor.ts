@@ -59,6 +59,15 @@ export const OutboxProcessorLive = Layer.effectDiscard(
                 bookingId: domainEvent.bookingId,
               });
             }
+          } else {
+            yield* Effect.logWarning(
+              `Skipping unknown event type: ${event.eventType}`,
+              {
+                eventId: event.id,
+                eventType: event.eventType,
+              },
+            );
+            return;
           }
 
           // Mark as processed

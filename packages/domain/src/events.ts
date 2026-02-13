@@ -55,7 +55,9 @@ export class InventoryEventBase extends Schema.Class<InventoryEventBase>(
  */
 export class BookingCreated extends BookingEventBase.extend<BookingCreated>(
   "BookingCreated",
-)({}) {}
+)({
+  _tag: Schema.tag("BookingCreated"),
+}) {}
 
 /**
  * Emitted when a booking is confirmed and payment is processed.
@@ -63,7 +65,9 @@ export class BookingCreated extends BookingEventBase.extend<BookingCreated>(
  */
 export class BookingConfirmed extends BookingEventBase.extend<BookingConfirmed>(
   "BookingConfirmed",
-)({}) {}
+)({
+  _tag: Schema.tag("BookingConfirmed"),
+}) {}
 
 /**
  * Emitted when a booking is cancelled.
@@ -71,6 +75,7 @@ export class BookingConfirmed extends BookingEventBase.extend<BookingConfirmed>(
 export class BookingCancelled extends BookingEventBase.extend<BookingCancelled>(
   "BookingCancelled",
 )({
+  _tag: Schema.tag("BookingCancelled"),
   reason: Schema.String,
   // Self-contained: we need to know WHICH flights to release
   segments: Schema.Array(
@@ -88,6 +93,7 @@ export class BookingCancelled extends BookingEventBase.extend<BookingCancelled>(
 export class BookingExpired extends BookingEventBase.extend<BookingExpired>(
   "BookingExpired",
 )({
+  _tag: Schema.tag("BookingExpired"),
   expiredAt: Schema.Union(Schema.Date, Schema.DateFromString),
   // Self-contained: we need to know WHICH flights to release
   segments: Schema.Array(
@@ -105,11 +111,15 @@ export class BookingExpired extends BookingEventBase.extend<BookingExpired>(
 
 export class SeatsHeld extends InventoryEventBase.extend<SeatsHeld>(
   "SeatsHeld",
-)({}) {}
+)({
+  _tag: Schema.tag("SeatsHeld"),
+}) {}
 
 export class SeatsReleased extends InventoryEventBase.extend<SeatsReleased>(
   "SeatsReleased",
-)({}) {}
+)({
+  _tag: Schema.tag("SeatsReleased"),
+}) {}
 
 // Union of all domain events
 export const DomainEventSchema = Schema.Union(

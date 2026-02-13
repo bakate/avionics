@@ -128,14 +128,11 @@ describe("Money - Property-Based Tests", () => {
 describe("Route - Property-Based Tests", () => {
   test("Property 1: Cannot create route with same origin and destination", () => {
     fc.assert(
-      fc.property(arbAirportCode, arbAirportCode, (code1, code2) => {
-        // Skip if different codes
-        if (code1 !== code2) return;
-
+      fc.property(arbAirportCode, (code) => {
         expect(() =>
           Route.create({
-            origin: code1,
-            destination: code2,
+            origin: code,
+            destination: code,
           }),
         ).toThrow();
       }),
