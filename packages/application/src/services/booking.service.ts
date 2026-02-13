@@ -604,7 +604,7 @@ export class BookingService extends Context.Tag("BookingService")<
 
     const TicketRepoTest = Layer.succeed(TicketRepository, {
       save: (t: Ticket) => Effect.succeed(t),
-      findByTicketNumber: () => Effect.succeed(null),
+      findByTicketNumber: () => Effect.succeed(O.none()),
       ...overrides.ticketRepo,
     });
 
