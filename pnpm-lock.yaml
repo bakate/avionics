@@ -69,7 +69,7 @@ catalogs:
     react-dom:
       specifier: 19.2.0
       version: 19.2.0
-  vitest3:
+  vitest4:
     '@vitest/coverage-v8':
       specifier: 4.0.17
       version: 4.0.17
@@ -173,7 +173,7 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: catalog:vitest3
+        specifier: catalog:vitest4
         version: 4.0.17(@opentelemetry/api@1.9.0)(@types/node@25.0.10)(@vitest/ui@4.0.17)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(msw@2.12.10(@types/node@25.0.10)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
   apps/web:
@@ -273,7 +273,7 @@ importers:
         specifier: 'catalog:'
         version: 7.3.1(@types/node@25.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
       vitest:
-        specifier: catalog:vitest3
+        specifier: catalog:vitest4
         version: 4.0.17(@opentelemetry/api@1.9.0)(@types/node@25.0.10)(@vitest/ui@4.0.17)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(msw@2.12.10(@types/node@25.0.10)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
   packages/application:
@@ -295,7 +295,7 @@ importers:
         specifier: catalog:node25
         version: 25.0.10
       '@vitest/coverage-v8':
-        specifier: catalog:vitest3
+        specifier: catalog:vitest4
         version: 4.0.17(vitest@4.0.17)
       '@workspace/prettier-config':
         specifier: workspace:*
@@ -313,7 +313,7 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: catalog:vitest3
+        specifier: catalog:vitest4
         version: 4.0.17(@opentelemetry/api@1.9.0)(@types/node@25.0.10)(@vitest/ui@4.0.17)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(msw@2.12.10(@types/node@25.0.10)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
   packages/config:
@@ -348,7 +348,7 @@ importers:
         specifier: catalog:node25
         version: 25.0.10
       '@vitest/coverage-v8':
-        specifier: catalog:vitest3
+        specifier: catalog:vitest4
         version: 4.0.17(vitest@4.0.17)
       '@workspace/prettier-config':
         specifier: workspace:*
@@ -366,7 +366,7 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: catalog:vitest3
+        specifier: catalog:vitest4
         version: 4.0.17(@opentelemetry/api@1.9.0)(@types/node@25.0.10)(@vitest/ui@4.0.17)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(msw@2.12.10(@types/node@25.0.10)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
   packages/infrastructure:
@@ -427,7 +427,7 @@ importers:
         specifier: ^8.16.0
         version: 8.16.0
       '@vitest/coverage-v8':
-        specifier: catalog:vitest3
+        specifier: catalog:vitest4
         version: 4.0.17(vitest@4.0.17)
       '@workspace/prettier-config':
         specifier: workspace:*
@@ -457,7 +457,7 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
       vitest:
-        specifier: catalog:vitest3
+        specifier: catalog:vitest4
         version: 4.0.17(@opentelemetry/api@1.9.0)(@types/node@25.0.10)(@vitest/ui@4.0.17)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(msw@2.12.10(@types/node@25.0.10)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
   tooling/biome-config: {}
@@ -494,7 +494,7 @@ importers:
   tooling/vitest-config:
     dependencies:
       vitest:
-        specifier: catalog:vitest3
+        specifier: catalog:vitest4
         version: 4.0.17(@opentelemetry/api@1.9.0)(@types/node@22.19.6)(@vitest/ui@4.0.17)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(msw@2.12.10(@types/node@22.19.6)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
     devDependencies:
       '@biomejs/biome':
@@ -504,10 +504,10 @@ importers:
         specifier: ^22.10.0
         version: 22.19.6
       '@vitest/coverage-v8':
-        specifier: catalog:vitest3
+        specifier: catalog:vitest4
         version: 4.0.17(vitest@4.0.17)
       '@vitest/ui':
-        specifier: catalog:vitest3
+        specifier: catalog:vitest4
         version: 4.0.17(vitest@4.0.17)
       '@workspace/tsconfig':
         specifier: workspace:*
@@ -7714,7 +7714,7 @@ snapshots:
       obug: 2.1.1
       std-env: 3.10.0
       tinyrainbow: 3.0.3
-      vitest: 4.0.17(@opentelemetry/api@1.9.0)(@types/node@22.19.6)(@vitest/ui@4.0.17)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(msw@2.12.10(@types/node@22.19.6)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+      vitest: 4.0.17(@opentelemetry/api@1.9.0)(@types/node@25.0.10)(@vitest/ui@4.0.17)(jiti@2.6.1)(jsdom@27.4.0)(lightningcss@1.30.2)(msw@2.12.10(@types/node@25.0.10)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
   '@vitest/expect@4.0.17':
     dependencies:
