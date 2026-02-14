@@ -1,12 +1,14 @@
 // Step indicator placeholder — full implementation in task 13.
 // Displays the current position in the booking flow.
 
+import { useTranslation as useI18n } from "react-i18next";
+
 const STEPS = [
-  "Recherche",
-  "Sélection",
-  "Passagers",
-  "Paiement",
-  "Confirmation",
+  "steps.search",
+  "steps.select",
+  "steps.passengers",
+  "steps.payment",
+  "steps.confirmation",
 ] as const;
 
 type StepIndicatorProps = {
@@ -14,18 +16,19 @@ type StepIndicatorProps = {
 };
 
 const StepIndicator = ({ currentStep = 0 }: StepIndicatorProps) => {
+  const { t } = useI18n();
   return (
     <nav
-      aria-label="Étapes de réservation"
+      aria-label={t("steps.aria.label")}
       className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3"
     >
       {STEPS.map((label, index) => {
         const state =
           index < currentStep
-            ? "completed"
+            ? t("steps.state.completed")
             : index === currentStep
-              ? "current step"
-              : "not started";
+              ? t("steps.state.current")
+              : t("steps.state.upcoming");
         const isCurrent = index === currentStep;
 
         return (
@@ -50,7 +53,7 @@ const StepIndicator = ({ currentStep = 0 }: StepIndicatorProps) => {
               }`}
             >
               <span className="sr-only">{state}</span>
-              {label}
+              {t(label)}
             </span>
           </div>
         );

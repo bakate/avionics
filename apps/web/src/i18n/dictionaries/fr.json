@@ -1,0 +1,116 @@
+{
+  "header": {
+    "brand": "Avionics"
+  },
+  "steps": {
+    "search": "Recherche",
+    "select": "Sélection",
+    "passengers": "Passagers",
+    "payment": "Paiement",
+    "confirmation": "Confirmation",
+    "aria": { "label": "Étapes de réservation" },
+    "state": {
+      "completed": "terminée",
+      "current": "étape actuelle",
+      "upcoming": "à venir"
+    }
+  },
+  "home": {
+    "title": "Trouvez votre prochain vol",
+    "subtitle": "Recherche de vols — à venir"
+  },
+  "search": {
+    "origin": "Origine",
+    "destination": "Destination",
+    "departureDate": "Date de départ",
+    "returnDate": "Date de retour",
+    "passengers": "Passagers",
+    "cabinClass": "Classe de cabine",
+    "submit": "Rechercher",
+    "swap": "Inverser origine et destination"
+  },
+  "validation": {
+    "required": "Ce champ est requis",
+    "invalidEmail": "Adresse email invalide",
+    "futureDateOfBirth": "La date de naissance ne peut pas être dans le futur",
+    "minPassengers": "Au moins 1 passager requis",
+    "maxPassengers": "Maximum 9 passagers"
+  },
+  "results": {
+    "title": "Résultats de recherche",
+    "subtitle": "Liste des vols — à venir",
+    "empty": "Aucun vol trouvé. Essayez d'autres dates ou destinations.",
+    "loading": "Recherche de vols en cours…",
+    "error": "Une erreur est survenue lors de la recherche.",
+    "retry": "Réessayer",
+    "sortBy": "Trier par",
+    "sortPrice": "Prix",
+    "sortDeparture": "Heure de départ",
+    "sortDuration": "Durée",
+    "filterCabin": "Classe de cabine",
+    "filterStops": "Escales",
+    "filterDepartureRange": "Plage horaire de départ"
+  },
+  "flight": {
+    "duration": "Durée",
+    "perPassenger": "par passager",
+    "select": "Sélectionner"
+  },
+  "select": {
+    "title": "Sélection de cabine",
+    "selectedFlight": "Vol sélectionné",
+    "cabin": "Cabine",
+    "soldOut": "Complet",
+    "seatsLeft_one": "{{count}} place restante",
+    "seatsLeft_other": "{{count}} places restantes",
+    "totalPrice": "Prix total",
+    "continue": "Continuer"
+  },
+  "passengers": {
+    "title": "Informations passagers",
+    "subtitle": "Formulaires passagers — à venir",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "Email",
+    "dateOfBirth": "Date de naissance",
+    "gender": "Genre",
+    "genderMale": "Homme",
+    "genderFemale": "Femme",
+    "passengerN": "Passager {{n}}",
+    "continue": "Continuer"
+  },
+  "payment": {
+    "title": "Paiement",
+    "subtitle": "Récapitulatif et paiement — à venir",
+    "summary": "Récapitulatif de la réservation",
+    "confirm": "Confirmer le paiement",
+    "processing": "Traitement en cours…",
+    "error": "Le paiement a échoué. Veuillez réessayer.",
+    "retry": "Réessayer",
+    "expired": "Votre réservation a expiré. Veuillez recommencer la recherche."
+  },
+  "confirmation": {
+    "title": "Confirmation",
+    "pnr": "Code de réservation (PNR)",
+    "flightDetails": "Détails du vol",
+    "passengerInfo": "Informations passagers",
+    "newBooking": "Nouvelle réservation"
+  },
+  "common": {
+    "back": "Retour",
+    "cancel": "Annuler",
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer"
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Oups ! La page que vous cherchez n'existe pas.",
+    "backHome": "Retour à l'accueil"
+  },
+  "language": {
+    "switch": "Changer de langue",
+    "fr": "Français",
+    "en": "English"
+  }
+}
