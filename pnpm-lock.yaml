@@ -222,6 +222,9 @@ importers:
         specifier: catalog:effect3
         version: 3.19.15
     devDependencies:
+      '@workspace/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
