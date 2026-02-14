@@ -244,6 +244,9 @@ importers:
       '@fast-check/vitest':
         specifier: 'catalog:'
         version: 0.2.4(vitest@4.0.17)
+      '@types/node':
+        specifier: catalog:node25
+        version: 25.0.10
       '@vitest/coverage-v8':
         specifier: catalog:vitest3
         version: 4.0.17(vitest@4.0.17)

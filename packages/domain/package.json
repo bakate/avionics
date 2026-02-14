@@ -31,6 +31,7 @@
     "@biomejs/biome": "catalog:",
     "@faker-js/faker": "catalog:",
     "@fast-check/vitest": "catalog:",
+    "@types/node": "catalog:node25",
     "@vitest/coverage-v8": "catalog:vitest3",
     "@workspace/tsconfig": "workspace:*",
     "@workspace/prettier-config": "workspace:*",
