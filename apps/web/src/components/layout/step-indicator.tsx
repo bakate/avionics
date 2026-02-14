@@ -32,27 +32,28 @@ const StepIndicator = ({ currentStep = 0 }: StepIndicatorProps) => {
         const isCurrent = index === currentStep;
 
         return (
-          <div key={label} className="flex items-center gap-2">
+          <div
+            key={label}
+            aria-current={isCurrent ? "step" : undefined}
+            className="flex items-center gap-2"
+          >
+            <span className="sr-only">{state}</span>
             <span
-              aria-current={isCurrent ? "step" : undefined}
               className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
                 index <= currentStep
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-gray-500"
               }`}
             >
-              <span className="sr-only">{state}</span>
               {index + 1}
             </span>
             <span
-              aria-current={isCurrent ? "step" : undefined}
               className={`hidden text-sm md:inline ${
                 index <= currentStep
                   ? "font-medium text-gray-900"
                   : "text-gray-400"
               }`}
             >
-              <span className="sr-only">{state}</span>
               {t(label)}
             </span>
           </div>
