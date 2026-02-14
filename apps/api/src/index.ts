@@ -107,7 +107,7 @@ const WorkersLive = Layer.mergeAll(
       yield* cancellation.start().pipe(Effect.forkScoped);
     }),
   ),
-).pipe(Layer.provide(AppServicesLive));
+).pipe(Layer.provide(AppServicesLive), Layer.provide(InfraLive));
 
 const MainLive = Layer.mergeAll(ServerLive, WorkersLive).pipe(
   Layer.provide(Layer.setConfigProvider(ConfigProvider.fromEnv())),
