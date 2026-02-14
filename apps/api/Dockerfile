@@ -18,8 +18,11 @@ COPY packages/infrastructure/package.json ./packages/infrastructure/
 COPY packages/config/package.json ./packages/config/
 COPY apps/api/package.json ./apps/api/
 
-# Install dependencies WITHOUT cache mount and ignore scripts
-RUN pnpm install --frozen-lockfile --ignore-scripts
+# Set HUSKY=0 to skip husky install during pnpm install
+ENV HUSKY=0
+
+# Install dependencies WITHOUT cache mount (Alpine needs postinstall for esbuild)
+RUN pnpm install --frozen-lockfile
 
 # Build the application
 FROM base AS builder
