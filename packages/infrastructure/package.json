@@ -61,7 +61,7 @@
     "@fast-check/vitest": "catalog:",
     "@types/node": "catalog:node25",
     "@types/pg": "^8.16.0",
-    "@vitest/coverage-v8": "catalog:vitest3",
+    "@vitest/coverage-v8": "catalog:vitest4",
     "@workspace/prettier-config": "workspace:*",
     "@workspace/tsconfig": "workspace:*",
     "@workspace/vitest-config": "workspace:*",
@@ -71,6 +71,6 @@
     "testcontainers": "^11.11.0",
     "tsx": "^4.21.0",
     "typescript": "catalog:",
-    "vitest": "catalog:vitest3"
+    "vitest": "catalog:vitest4"
   }
 }
