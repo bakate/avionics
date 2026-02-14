@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
+    "@faker-js/faker": "catalog:",
     "@types/node": "catalog:node25",
     "@workspace/biome-config": "workspace:*",
     "@workspace/prettier-config": "workspace:*",
