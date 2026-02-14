@@ -1,92 +1,133 @@
 /**
  * Feature: web-booking-app, Property 16: API Schema round-trip
- * Validates: Requirements 7.3, 7.4
+ * Validates: Requirements 8.4
  *
- * Ensures that our frontend schemas correctly encode and decode
- * data, specifically handling branded types and optional fields.
+ * For any valid SearchParams or PassengerInput, encoding then decoding
+ * via Effect Schema should produce a value equivalent to the original.
  */
 
 import { fc, test } from "@fast-check/vitest";
 import { type AirportCode } from "@workspace/domain/kernel";
-import { Schema } from "effect";
+import { Option, Schema } from "effect";
 import { describe, expect } from "vitest";
-import { PassengerInput } from "../passenger.schema.ts";
-import { SearchParams } from "../search.schema.ts";
+import { PassengerInput } from "../passenger.schema.js";
+import { SearchParams } from "../search.schema.js";
 
-// Arbitraries
-const airportCodeArb = fc.stringMatching(/^[A-Z]{3}$/);
+// ---------------------------------------------------------------------------
+// Generators
+// ---------------------------------------------------------------------------
+
+const airportCodeArb = fc
+  .stringOf(fc.constantFrom(..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"), {
+    minLength: 3,
+    maxLength: 3,
+  })
+  .filter((s) => /^[A-Z]{3}$/.test(s));
+
+const pastDateArb = fc
+  .date({ min: new Date("1920-01-01"), max: new Date() })
+  .map((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()));
+
+const futureDateArb = fc
+  .date({ min: new Date("2026-03-01"), max: new Date("2028-12-31") })
+  .map((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()));
 
 const searchParamsArb = fc.record({
   origin: airportCodeArb,
   destination: airportCodeArb,
-  departureDate: fc.date().map((d: Date) => d.toISOString().substring(0, 10)),
-  returnDate: fc.option(
-    fc.date().map((d: Date) => d.toISOString().substring(0, 10)),
-    { nil: undefined },
-  ),
-  passengers: fc.integer({ min: 1, max: 9 }),
+  departureDate: futureDateArb,
+  returnDate: fc.option(futureDateArb, { nil: undefined }),
+  passengerCount: fc.integer({ min: 1, max: 9 }),
   cabinClass: fc.option(
-    fc.constantFrom(
-      "economy" as const,
-      "premium" as const,
-      "business" as const,
-      "first" as const,
-    ),
+    fc.constantFrom("ECONOMY" as const, "BUSINESS" as const, "FIRST" as const),
     { nil: undefined },
   ),
 });
 
+const emailArb = fc
+  .tuple(
+    fc.stringOf(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz0123456789"), {
+      minLength: 1,
+      maxLength: 8,
+    }),
+    fc.stringOf(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz"), {
+      minLength: 1,
+      maxLength: 6,
+    }),
+    fc.constantFrom("com", "org", "fr", "net"),
+  )
+  .map(([user, domain, tld]) => `${user}@${domain}.${tld}`);
+
 const passengerInputArb = fc.record({
-  firstName: fc.string({ minLength: 1 }),
-  lastName: fc.string({ minLength: 1 }),
-  email: fc.emailAddress(),
-  dateOfBirth: fc.date().map((d: Date) => d.toISOString().substring(0, 10)),
-  gender: fc.constantFrom("male" as const, "female" as const),
+  firstName: fc.stringOf(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz"), {
+    minLength: 1,
+    maxLength: 10,
+  }),
+  lastName: fc.stringOf(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz"), {
+    minLength: 1,
+    maxLength: 10,
+  }),
+  email: emailArb,
+  dateOfBirth: pastDateArb,
+  gender: fc.constantFrom("MALE" as const, "FEMALE" as const),
 });
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe("Property 16: API Schema round-trip", () => {
   test.prop([searchParamsArb], { numRuns: 20 })(
     "SearchParams encode → decode round-trip",
-    (params: {
-      origin: string;
-      destination: string;
-      departureDate: string;
-      returnDate?: string | undefined;
-      passengers: number;
-      cabinClass?: "economy" | "premium" | "business" | "first" | undefined;
-    }) => {
+    (params) => {
       const encoded = Schema.encodeSync(SearchParams)({
-        ...params,
         origin: params.origin as AirportCode,
         destination: params.destination as AirportCode,
+        departureDate: params.departureDate,
+        passengerCount: params.passengerCount,
+        returnDate: Option.fromNullable(params.returnDate),
+        cabinClass: Option.fromNullable(params.cabinClass),
       });
       const decoded = Schema.decodeSync(SearchParams)(encoded);
 
       expect(decoded.origin).toBe(params.origin);
       expect(decoded.destination).toBe(params.destination);
-      expect(decoded.departureDate).toBe(params.departureDate);
-      expect(decoded.returnDate).toBe(params.returnDate);
-      expect(decoded.passengers).toBe(params.passengers);
-      expect(decoded.cabinClass).toBe(params.cabinClass);
+      expect(decoded.departureDate.getTime()).toBe(
+        params.departureDate.getTime(),
+      );
+      expect(decoded.passengerCount).toBe(params.passengerCount);
+
+      // Verify returnDate round-trip
+      if (params.returnDate) {
+        const decodedDate = Option.getOrThrow(decoded.returnDate);
+        expect(decodedDate.getTime()).toBe(params.returnDate.getTime());
+      } else {
+        expect(Option.isNone(decoded.returnDate)).toBe(true);
+      }
+
+      // Verify cabinClass round-trip
+      if (params.cabinClass) {
+        expect(Option.getOrThrow(decoded.cabinClass)).toBe(params.cabinClass);
+      } else {
+        expect(Option.isNone(decoded.cabinClass)).toBe(true);
+      }
     },
   );
 
   test.prop([passengerInputArb], { numRuns: 20 })(
     "PassengerInput encode → decode round-trip",
-    (passenger: {
-      firstName: string;
-      lastName: string;
-      email: string;
-      dateOfBirth: string;
-      gender: "male" | "female";
-    }) => {
-      const encoded = Schema.encodeSync(PassengerInput)(passenger);
+    (passenger) => {
+      const encoded = Schema.encodeSync(PassengerInput)(
+        passenger as PassengerInput,
+      );
       const decoded = Schema.decodeSync(PassengerInput)(encoded);
 
       expect(decoded.firstName).toBe(passenger.firstName);
       expect(decoded.lastName).toBe(passenger.lastName);
       expect(decoded.email).toBe(passenger.email);
-      expect(decoded.dateOfBirth).toBe(passenger.dateOfBirth);
+      expect(decoded.dateOfBirth.getTime()).toBe(
+        passenger.dateOfBirth.getTime(),
+      );
       expect(decoded.gender).toBe(passenger.gender);
     },
   );
