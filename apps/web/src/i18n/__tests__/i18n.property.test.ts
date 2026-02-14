@@ -6,8 +6,7 @@
  * the English locale file should also contain that key, and vice versa.
  */
 
-import { fc, test } from "@fast-check/vitest";
-import { describe, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import en from "../dictionaries/en.json";
 import fr from "../dictionaries/fr.json";
 
@@ -40,21 +39,15 @@ const frKeys = flatten(fr as NestedRecord);
 const enKeys = flatten(en as NestedRecord);
 
 describe("Property 18: Translation key completeness", () => {
-  test.prop([fc.constantFrom(...frKeys)], { numRuns: 100 })(
-    "every French key exists in English",
-    (key: string) => {
-      const value = resolve(en as NestedRecord, key);
-      expect(value).not.toBeUndefined();
-    },
-  );
+  test.each(frKeys)("French key '%s' exists in English", (key) => {
+    const value = resolve(en as NestedRecord, key);
+    expect(value).not.toBeUndefined();
+  });
 
-  test.prop([fc.constantFrom(...enKeys)], { numRuns: 100 })(
-    "every English key exists in French",
-    (key: string) => {
-      const value = resolve(fr as NestedRecord, key);
-      expect(value).not.toBeUndefined();
-    },
-  );
+  test.each(enKeys)("English key '%s' exists in French", (key) => {
+    const value = resolve(fr as NestedRecord, key);
+    expect(value).not.toBeUndefined();
+  });
 
   test("both locale files have the same number of keys", () => {
     expect(frKeys.length).toBe(enKeys.length);
