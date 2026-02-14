@@ -141,6 +141,9 @@ importers:
       '@workspace/vitest-config':
         specifier: workspace:*
         version: link:../../tooling/vitest-config
+      esbuild:
+        specifier: ^0.25.0
+        version: 0.25.12
       msw:
         specifier: ^2.12.10
         version: 2.12.10(@types/node@25.0.10)(typescript@5.9.3)
