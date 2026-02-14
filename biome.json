@@ -164,5 +164,10 @@
   },
   "javascript": {
     "globals": []
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
   }
 }
