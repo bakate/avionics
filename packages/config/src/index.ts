@@ -111,14 +111,16 @@ export const PolarConfig = Config.all({
   productId: Config.string("POLAR_PRODUCT_ID").pipe(
     Config.withDefault("polar_product_test"),
     Config.mapOrFail((id) => {
+      const allowSandbox = process.env.POLAR_ALLOW_SANDBOX === "true";
       if (
         process.env.NODE_ENV === "production" &&
-        id === "polar_product_test"
+        id === "polar_product_test" &&
+        !allowSandbox
       ) {
         return Either.left(
           ConfigError.InvalidData(
             [],
-            "POLAR_PRODUCT_ID cannot be 'polar_product_test' in production",
+            "POLAR_PRODUCT_ID cannot be 'polar_product_test' in production (unless POLAR_ALLOW_SANDBOX=true)",
           ),
         );
       }
@@ -136,12 +138,13 @@ export const PolarConfig = Config.all({
       Schema.pattern(/^https:\/\/sandbox(-api)?\.polar\.sh(:\d+)?(\/.*)?$/),
     );
     const isSandbox = Schema.is(PolarSandboxSchema)(config.baseUrl);
+    const allowSandbox = process.env.POLAR_ALLOW_SANDBOX === "true";
 
-    if (process.env.NODE_ENV === "production" && isSandbox) {
+    if (process.env.NODE_ENV === "production" && isSandbox && !allowSandbox) {
       return Either.left(
         ConfigError.InvalidData(
           [],
-          "POLAR_BASE_URL cannot be a sandbox URL in production",
+          "POLAR_BASE_URL cannot be a sandbox URL in production (unless POLAR_ALLOW_SANDBOX=true)",
         ),
       );
     }
