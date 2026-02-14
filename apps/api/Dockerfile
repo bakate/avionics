@@ -49,8 +49,9 @@ COPY apps/api ./apps/api
 # Copy TypeScript configs from tooling
 COPY tooling/typescript ./tooling/typescript
 
-# Build with turbo
-RUN pnpm exec turbo run build --filter=@workspace/api
+# Build and bundle
+RUN pnpm exec turbo run build --filter=@workspace/api && \
+    pnpm --filter=@workspace/api run bundle
 
 # Prune the workspace for production
 FROM base AS pruner
@@ -77,7 +78,9 @@ COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Copy built application
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
+# Copy bundled application and sourcemap
+COPY --from=builder /app/apps/api/dist/index.js ./apps/api/dist/index.js
+COPY --from=builder /app/apps/api/dist/index.js.map ./apps/api/dist/index.js.map
 
 # Set correct permissions
 RUN chown -R apiuser:nodejs /app

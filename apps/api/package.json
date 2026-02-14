@@ -7,6 +7,7 @@
     "dev": "NODE_ENV=development tsx watch --env-file=.env src/index.ts",
     "typecheck": "tsc --noEmit",
     "build": "pnpm typecheck && tsc",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/index.js --sourcemap --external:pg-native --external:fsevents",
     "start": "node dist/index.js",
     "check": "biome check --write .",
     "format": "biome format --write .",
