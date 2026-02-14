@@ -22,7 +22,7 @@ const Header = () => {
               type="button"
               onClick={() => i18n.changeLanguage(locale)}
               className={`px-2 py-1 text-sm font-medium uppercase transition-colors rounded-md ${
-                i18n.language === locale
+                i18n.resolvedLanguage === locale
                   ? "bg-blue-100 text-blue-600"
                   : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
               }`}
