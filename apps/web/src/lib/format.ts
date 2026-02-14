@@ -43,7 +43,12 @@ export const scheduleDuration = (
 
 /** Compute duration in minutes between two Dates */
 export const durationMinutes = (departure: Date, arrival: Date): number =>
-  Math.round(Duration.toMillis(scheduleDuration(departure, arrival)) / 60_000);
+  Math.max(
+    0,
+    Math.round(
+      Duration.toMillis(scheduleDuration(departure, arrival)) / 60_000,
+    ),
+  );
 
 /** Format a duration in minutes to "Xh YYmin" (e.g. "2h 30min") */
 export const formatDuration = (minutes: number): string => {
