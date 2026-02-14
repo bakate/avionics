@@ -17,13 +17,13 @@
     "view-report": "open coverage/report/index.html"
   },
   "dependencies": {
-    "vitest": "catalog:vitest3"
+    "vitest": "catalog:vitest4"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
     "@types/node": "^22.10.0",
-    "@vitest/coverage-v8": "catalog:vitest3",
-    "@vitest/ui": "catalog:vitest3",
+    "@vitest/coverage-v8": "catalog:vitest4",
+    "@vitest/ui": "catalog:vitest4",
     "@workspace/tsconfig": "workspace:*",
     "glob": "^11.0.0",
     "jsdom": "^27.4.0",

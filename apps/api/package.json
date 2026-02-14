@@ -38,6 +38,6 @@
     "msw": "^2.12.10",
     "tsx": "^4.19.2",
     "typescript": "catalog:",
-    "vitest": "catalog:vitest3"
+    "vitest": "catalog:vitest4"
   }
 }
