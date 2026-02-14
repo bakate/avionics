@@ -18,9 +18,8 @@ COPY packages/infrastructure/package.json ./packages/infrastructure/
 COPY packages/config/package.json ./packages/config/
 COPY apps/api/package.json ./apps/api/
 
-# Install dependencies with cache
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile
+# Install dependencies WITHOUT cache mount and ignore scripts
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Build the application
 FROM base AS builder
@@ -34,8 +33,21 @@ COPY --from=deps /app/packages/infrastructure/node_modules ./packages/infrastruc
 COPY --from=deps /app/packages/config/node_modules ./packages/config/node_modules
 COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 
+# Copy workspace config files
+COPY --from=deps /app/package.json ./package.json
+COPY --from=deps /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=deps /app/turbo.json ./turbo.json
+
 # Copy source code
-COPY . .
+COPY packages/domain ./packages/domain
+COPY packages/application ./packages/application
+COPY packages/infrastructure ./packages/infrastructure
+COPY packages/config ./packages/config
+COPY apps/api ./apps/api
+
+# Copy TypeScript configs from tooling
+COPY tooling/typescript ./tooling/typescript
 
 # Build with turbo
 RUN pnpm exec turbo run build --filter=@workspace/api
@@ -61,9 +73,8 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=pruner /app/out/json/ ./
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Install production dependencies only
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --prod --frozen-lockfile
+# Install production dependencies and ignore scripts
+RUN pnpm install --prod --frozen-lockfile --ignore-scripts
 
 # Copy built application
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
