@@ -23,51 +23,65 @@ export const OutboxProcessorLive = Layer.effectDiscard(
               : event.payload;
 
           // Dispatch logic
-          if (event.eventType === "BookingCancelled") {
-            // Validate payload schema if needed, or cast since we trust the DB
-            // We cast to any first because JSON.parse returns any
-            const domainEvent = payload as any;
-            if (domainEvent.segments) {
-              yield* Effect.forEach(
-                domainEvent.segments,
-                (segment: any) =>
-                  inventoryService.releaseSeats({
-                    flightId: segment.flightId,
-                    cabin: segment.cabin,
-                    numberOfSeats: segment.quantity,
-                  }),
-                { discard: true },
-              );
-              yield* Effect.logInfo(`Released seats for cancelled booking`, {
-                bookingId: domainEvent.bookingId,
-              });
+          switch (event.eventType) {
+            case "BookingCancelled": {
+              const domainEvent = payload as any;
+              if (domainEvent.segments) {
+                yield* Effect.forEach(
+                  domainEvent.segments,
+                  (segment: any) =>
+                    inventoryService.releaseSeats({
+                      flightId: segment.flightId,
+                      cabin: segment.cabin,
+                      numberOfSeats: segment.quantity,
+                    }),
+                  { discard: true },
+                );
+                yield* Effect.logInfo(`Released seats for cancelled booking`, {
+                  bookingId: domainEvent.bookingId,
+                });
+              }
+              break;
             }
-          } else if (event.eventType === "BookingExpired") {
-            const domainEvent = payload as any;
-            if (domainEvent.segments) {
-              yield* Effect.forEach(
-                domainEvent.segments,
-                (segment: any) =>
-                  inventoryService.releaseSeats({
-                    flightId: segment.flightId,
-                    cabin: segment.cabin,
-                    numberOfSeats: segment.quantity,
-                  }),
-                { discard: true },
-              );
-              yield* Effect.logInfo(`Released seats for expired booking`, {
-                bookingId: domainEvent.bookingId,
-              });
+            case "BookingExpired": {
+              const domainEvent = payload as any;
+              if (domainEvent.segments) {
+                yield* Effect.forEach(
+                  domainEvent.segments,
+                  (segment: any) =>
+                    inventoryService.releaseSeats({
+                      flightId: segment.flightId,
+                      cabin: segment.cabin,
+                      numberOfSeats: segment.quantity,
+                    }),
+                  { discard: true },
+                );
+                yield* Effect.logInfo(`Released seats for expired booking`, {
+                  bookingId: domainEvent.bookingId,
+                });
+              }
+              break;
             }
-          } else {
-            yield* Effect.logWarning(
-              `Skipping unknown event type: ${event.eventType}`,
-              {
-                eventId: event.id,
-                eventType: event.eventType,
-              },
-            );
-            return;
+            case "BookingCreated":
+            case "BookingConfirmed":
+            case "SeatsHeld":
+            case "SeatsReleased": {
+              // Known events that don't require external side effects in this worker
+              yield* Effect.logDebug(
+                `Skipped known event without side effects: ${event.eventType}`,
+                { eventId: event.id },
+              );
+              break;
+            }
+            default: {
+              yield* Effect.logWarning(
+                `Skipping unknown event type: ${event.eventType}`,
+                {
+                  eventId: event.id,
+                  eventType: event.eventType,
+                },
+              );
+            }
           }
 
           // Mark as processed
