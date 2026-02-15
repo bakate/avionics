@@ -14,6 +14,9 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "@effect/platform": "catalog:effect3",
+    "@workspace/api": "workspace:*",
+    "@workspace/application": "workspace:*",
     "@workspace/domain": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -32,6 +35,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
+    "@faker-js/faker": "catalog:",
     "@fast-check/vitest": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",

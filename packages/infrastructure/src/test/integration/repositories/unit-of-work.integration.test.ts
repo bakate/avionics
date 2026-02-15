@@ -67,6 +67,7 @@ describe("UnitOfWork Integration", () => {
       first_available: 10,
       first_price_amount: "1000.00",
       first_price_currency: "EUR",
+      last_updated: expect.any(Date),
       version: 1,
     });
   });
