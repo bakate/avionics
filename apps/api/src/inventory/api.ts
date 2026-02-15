@@ -31,7 +31,7 @@ export class InventoryGroup extends HttpApiGroup.make("inventory")
         Schema.Struct({
           cabin: Schema.String,
           minSeats: Schema.optional(Schema.NumberFromString),
-          departureDate: Schema.optional(Schema.DateFromString),
+          departureDate: Schema.optional(Schema.String),
           origin: Schema.optional(Schema.String),
           destination: Schema.optional(Schema.String),
         }),

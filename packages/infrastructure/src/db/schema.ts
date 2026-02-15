@@ -60,6 +60,7 @@ export const flightInventory = pgTable(
 
     // Optimistic Locking
     version: integer("version").notNull().default(1),
+    lastUpdated: timestamp("last_updated").notNull().defaultNow(),
   },
   (table) => [
     // Constraints
