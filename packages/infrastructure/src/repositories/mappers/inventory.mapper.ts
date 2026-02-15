@@ -29,6 +29,7 @@ export interface FlightInventoryRow {
   readonly first_price_currency: string;
 
   readonly version: number;
+  readonly last_updated: Date;
 }
 
 // --- Mappers ---

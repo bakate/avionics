@@ -178,9 +178,18 @@ importers:
 
   apps/web:
     dependencies:
+      '@effect/platform':
+        specifier: catalog:effect3
+        version: 0.94.2(effect@3.19.15)
       '@tailwindcss/vite':
         specifier: ^4.1.18
         version: 4.1.18(vite@7.3.1(@types/node@25.0.10)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
+      '@workspace/api':
+        specifier: workspace:*
+        version: link:../api
+      '@workspace/application':
+        specifier: workspace:*
+        version: link:../../packages/application
       '@workspace/domain':
         specifier: workspace:*
         version: link:../../packages/domain
@@ -230,6 +239,9 @@ importers:
       '@biomejs/biome':
         specifier: 'catalog:'
         version: 2.3.11
+      '@faker-js/faker':
+        specifier: 'catalog:'
+        version: 10.2.0
       '@fast-check/vitest':
         specifier: 'catalog:'
         version: 0.2.4(vitest@4.0.17)

@@ -227,6 +227,14 @@ export const ApiConfig = Config.all({
   ),
   nodeEnv,
   polarWebhookSecret: Config.string("POLAR_WEBHOOK_SECRET").pipe(
+    Config.orElse(() => {
+      const envVal = process.env.POLAR_WEBHOOK_SECRET;
+      return envVal
+        ? Config.succeed(envVal)
+        : Config.fail(
+            "Expected POLAR_WEBHOOK_SECRET to exist in the provided map",
+          );
+    }),
     Config.redacted,
   ),
 });

@@ -80,7 +80,7 @@ export const InventoryApiLive = HttpApiBuilder.group(
               cabin: urlParams.cabin,
               minSeats: urlParams.minSeats ?? 1,
               ...(urlParams.departureDate
-                ? { departureDate: urlParams.departureDate }
+                ? { departureDate: new Date(urlParams.departureDate) }
                 : {}),
               ...(urlParams.origin && urlParams.destination
                 ? {
