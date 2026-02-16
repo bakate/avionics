@@ -9,6 +9,7 @@
  */
 
 import { FetchHttpClient } from "@effect/platform";
+import { type FlightAvailability } from "@workspace/application/read-models";
 import { Effect } from "effect";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { findAvailableFlights } from "../api/inventory.api.ts";
@@ -45,17 +46,13 @@ const initialState: FlightStreamState = {
  * Convert an API FlightAvailability response to the lightweight FlightResult
  * stored in the booking machine context.
  */
-const toFlightResult = (raw: {
-  flightId: string;
-  economyAvailable: number;
-  businessAvailable: number;
-  firstAvailable: number;
-  economyPrice: { amount: number; currency: string };
-  businessPrice: { amount: number; currency: string };
-  firstPrice: { amount: number; currency: string };
-  lastUpdated: Date | string;
-}): FlightResult => ({
+const toFlightResult = (raw: FlightAvailability): FlightResult => ({
   flightId: raw.flightId,
+  flightNumber: raw.flightNumber,
+  departureTime: raw.departureTime.toISOString(),
+  arrivalTime: raw.arrivalTime.toISOString(),
+  durationMinutes: raw.durationMinutes,
+  stops: raw.stops,
   economyAvailable: raw.economyAvailable,
   businessAvailable: raw.businessAvailable,
   firstAvailable: raw.firstAvailable,
@@ -71,10 +68,7 @@ const toFlightResult = (raw: {
     amount: raw.firstPrice.amount,
     currency: raw.firstPrice.currency,
   },
-  lastUpdated:
-    typeof raw.lastUpdated === "string"
-      ? raw.lastUpdated
-      : raw.lastUpdated.toISOString(),
+  lastUpdated: raw.lastUpdated.toISOString(),
 });
 
 // ---------------------------------------------------------------------------

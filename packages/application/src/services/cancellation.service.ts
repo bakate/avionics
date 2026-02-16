@@ -55,7 +55,7 @@ export class CancellationService extends Context.Tag("CancellationService")<
                         inventoryService.releaseSeats({
                           flightId: segment.flightId,
                           cabin: segment.cabin,
-                          numberOfSeats: booking.passengers.length,
+                          numberOfSeats: 1,
                         }),
                       { discard: true },
                     );

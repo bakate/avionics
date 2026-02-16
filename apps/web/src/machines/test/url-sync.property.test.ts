@@ -25,6 +25,11 @@ import {
 
 const makeFlight = (id: string): FlightResult => ({
   flightId: id,
+  flightNumber: `AF${id}`,
+  departureTime: new Date().toISOString(),
+  arrivalTime: new Date().toISOString(),
+  durationMinutes: 120,
+  stops: 0,
   economyAvailable: 100,
   businessAvailable: 20,
   firstAvailable: 5,

@@ -22,6 +22,17 @@ export const useBookingMachine = () => {
 
   // --- routing sync ---
   useEffect(() => {
+    // We only enforce strict route sync for the linear booking flow states.
+    // idle, searching, and error states are allowed to exist on any page
+    // (Home or Results) to support deep linking and "Search Again" functionality.
+    if (
+      snapshotValue === "idle" ||
+      snapshotValue === "searching" ||
+      snapshotValue === "error"
+    ) {
+      return;
+    }
+
     const expectedPath = stateToRoute(snapshotValue, context);
     if (location.pathname !== expectedPath) {
       void navigate(expectedPath, { replace: true });

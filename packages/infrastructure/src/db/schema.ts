@@ -58,6 +58,13 @@ export const flightInventory = pgTable(
       .notNull()
       .default("EUR"),
 
+    // Metadata for Search & Sorting
+    flightNumber: varchar("flight_number", { length: 10 }),
+    departureTime: timestamp("departure_time", { withTimezone: true }),
+    arrivalTime: timestamp("arrival_time", { withTimezone: true }),
+    durationMinutes: integer("duration_minutes"),
+    stops: integer("stops").default(0),
+
     // Optimistic Locking
     version: integer("version").notNull().default(1),
     lastUpdated: timestamp("last_updated").notNull().defaultNow(),

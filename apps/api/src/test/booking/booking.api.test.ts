@@ -1,4 +1,4 @@
-/** biome-ignore-all lint/style/noRestrictedImports: <explanation> */
+/** biome-ignore-all lint/style/noRestrictedImports: <> */
 import { createServer } from "node:http";
 import {
   FetchHttpClient,

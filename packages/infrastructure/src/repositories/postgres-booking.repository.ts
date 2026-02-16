@@ -93,23 +93,20 @@ export const PostgresBookingRepositoryLive = Layer.effect(
               yield* sql`DELETE FROM passengers WHERE booking_id = ${booking.id}::uuid`;
               yield* sql`DELETE FROM segments WHERE booking_id = ${booking.id}::uuid`;
 
-              if (booking.passengers.length > 0) {
-                for (const p of booking.passengers) {
-                  yield* sql`
-                    INSERT INTO passengers (id, booking_id, first_name, last_name, email, date_of_birth, gender, type)
-                    VALUES (
-                      ${p.id}::uuid,
-                      ${booking.id}::uuid,
-                      ${p.firstName},
-                      ${p.lastName},
-                      ${p.email},
-                      ${p.dateOfBirth},
-                      ${p.gender},
-                      ${p.type}
-                    )
-                  `;
-                }
-              }
+              const p = booking.passenger;
+              yield* sql`
+                INSERT INTO passengers (id, booking_id, first_name, last_name, email, date_of_birth, gender, type)
+                VALUES (
+                  ${p.id}::uuid,
+                  ${booking.id}::uuid,
+                  ${p.firstName},
+                  ${p.lastName},
+                  ${p.email},
+                  ${p.dateOfBirth},
+                  ${p.gender},
+                  ${p.type}
+                )
+              `;
 
               if (booking.segments.length > 0) {
                 for (const s of booking.segments) {

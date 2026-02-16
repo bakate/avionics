@@ -1,10 +1,9 @@
-/** biome-ignore-all lint/style/noRestrictedImports: <explanation> */
+/** biome-ignore-all lint/style/noRestrictedImports: Testing environment needs node:http */
 import { HttpServerRequest } from "@effect/platform";
 import {
   type BookingConfirmation,
   BookingService,
 } from "@workspace/application/booking.service";
-import { ApiConfig } from "@workspace/config";
 import { Booking } from "@workspace/domain/booking";
 import {
   BookingNotFoundError,
@@ -31,17 +30,15 @@ const buildBooking = (id: string, pnr: string) =>
   Booking.create({
     id: makeBookingId(id),
     pnrCode: makePnrCode(pnr),
-    passengers: [
-      new Passenger({
-        id: PassengerId.make("550e8400-e29b-41d4-a716-446655440001"),
-        firstName: "John",
-        lastName: "Doe",
-        email: Schema.decodeSync(EmailSchema)("john@example.com"),
-        dateOfBirth: new Date("1990-01-01"),
-        gender: "MALE",
-        type: PassengerType.ADULT,
-      }),
-    ],
+    passenger: new Passenger({
+      id: PassengerId.make("550e8400-e29b-41d4-a716-446655440001"),
+      firstName: "John",
+      lastName: "Doe",
+      email: Schema.decodeSync(EmailSchema)("john@example.com"),
+      dateOfBirth: new Date("1990-01-01"),
+      gender: "MALE",
+      type: PassengerType.ADULT,
+    }),
     segments: [
       new BookingSegment({
         id: makeSegmentId("550e8400-e29b-41d4-a716-446655440002"),
@@ -55,7 +52,6 @@ const buildBooking = (id: string, pnr: string) =>
   });
 
 // Setup Dummy Dependencies to satisfy requirements
-const MockApiConfig = Layer.succeed(ApiConfig, {} as any);
 const MockHttpServerRequest = Layer.succeed(
   HttpServerRequest.HttpServerRequest,
   {} as any,
@@ -100,7 +96,6 @@ describe("Webhook API Handler", () => {
     const result = await Effect.runPromise(
       handlePolarWebhook(payload).pipe(
         Effect.provide(MockBookingService),
-        Effect.provide(MockApiConfig),
         Effect.provide(MockHttpServerRequest),
       ),
     );
@@ -134,7 +129,6 @@ describe("Webhook API Handler", () => {
     const result = await Effect.runPromise(
       handlePolarWebhook(payload).pipe(
         Effect.provide(MockBookingService),
-        Effect.provide(MockApiConfig),
         Effect.provide(MockHttpServerRequest),
       ),
     );
@@ -177,7 +171,6 @@ describe("Webhook API Handler", () => {
     const result = await Effect.runPromise(
       handlePolarWebhook(payload).pipe(
         Effect.provide(MockBookingService),
-        Effect.provide(MockApiConfig),
         Effect.provide(MockHttpServerRequest),
         Effect.either,
       ),
@@ -222,7 +215,6 @@ describe("Webhook API Handler", () => {
     const result = await Effect.runPromise(
       handlePolarWebhook(payload).pipe(
         Effect.provide(MockBookingService),
-        Effect.provide(MockApiConfig),
         Effect.provide(MockHttpServerRequest),
       ),
     );

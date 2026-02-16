@@ -95,7 +95,7 @@ const arbBooking = fc
   .record({
     id: fc.uuid(),
     pnrCode: fc.stringMatching(/^[A-Z0-9]{6}$/),
-    passengers: fc.array(arbPassenger, { minLength: 1, maxLength: 3 }),
+    passenger: arbPassenger,
     segments: fc.array(arbBookingSegment, { minLength: 1, maxLength: 2 }),
     expiresAt: fc.option(
       fc
@@ -108,7 +108,7 @@ const arbBooking = fc
     Booking.create({
       id: props.id as BookingId,
       pnrCode: props.pnrCode as PnrCode,
-      passengers: props.passengers as [Passenger, ...Array<Passenger>],
+      passenger: props.passenger,
       segments: props.segments as [BookingSegment, ...Array<BookingSegment>],
       expiresAt: props.expiresAt ? O.some(props.expiresAt) : O.none(),
     }),

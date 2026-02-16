@@ -436,7 +436,7 @@ describe("BookingService", () => {
       pnrCode: Schema.decodeSync(PnrCodeSchema)("PNR123"),
       status: PnrStatus.HELD,
       version: 1,
-      passengers: [passenger, ...[]],
+      passenger,
       segments: [segment, ...[]],
       createdAt: new Date(),
       domainEvents: [],

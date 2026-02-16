@@ -35,7 +35,26 @@
     "passengers": "Passagers",
     "cabinClass": "Classe de cabine",
     "submit": "Rechercher",
-    "swap": "Inverser origine et destination"
+    "swap": "Inverser origine et destination",
+    "select": "Sélectionner",
+    "sortBy": "Trier par",
+    "sortPrice": "Prix",
+    "sortTime": "Heure de départ",
+    "sortDuration": "Durée",
+    "filters": "Filtres",
+    "clearAll": "Tout effacer",
+    "stops": "Escales",
+    "departureTime": "Heure de départ",
+    "searching": "Recherche de vols en cours...",
+    "noFlights": "Aucun vol trouvé",
+    "tryDifferentDates": "Essayez de changer vos dates ou destinations",
+    "modifySearch": "Modifier la recherche",
+    "loadingMore": "Chargement de plus de vols...",
+    "backToHome": "Retour à l'accueil"
+  },
+  "error": {
+    "invalidParams": "Paramètres de recherche invalides",
+    "searchFailed": "La recherche a échoué"
   },
   "validation": {
     "required": "Ce champ est requis",
@@ -68,6 +87,9 @@
     "title": "Sélection de cabine",
     "selectedFlight": "Vol sélectionné",
     "cabin": "Cabine",
+    "ECONOMY": "Économie",
+    "BUSINESS": "Affaires",
+    "FIRST": "Première",
     "soldOut": "Complet",
     "seatsLeft_one": "{{count}} place restante",
     "seatsLeft_other": "{{count}} places restantes",

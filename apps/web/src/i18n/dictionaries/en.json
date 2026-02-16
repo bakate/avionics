@@ -35,7 +35,26 @@
     "passengers": "Passengers",
     "cabinClass": "Cabin class",
     "submit": "Search",
-    "swap": "Swap origin and destination"
+    "swap": "Swap origin and destination",
+    "select": "Select",
+    "sortBy": "Sort by",
+    "sortPrice": "Price",
+    "sortTime": "Departure time",
+    "sortDuration": "Duration",
+    "filters": "Filters",
+    "clearAll": "Clear all",
+    "stops": "Stops",
+    "departureTime": "Departure time",
+    "searching": "Searching for flights...",
+    "noFlights": "No flights found",
+    "tryDifferentDates": "Try changing your dates or destinations",
+    "modifySearch": "Modify search",
+    "loadingMore": "Loading more flights...",
+    "backToHome": "Back to home"
+  },
+  "error": {
+    "invalidParams": "Invalid search parameters",
+    "searchFailed": "Search failed"
   },
   "validation": {
     "required": "This field is required",
@@ -68,6 +87,9 @@
     "title": "Cabin selection",
     "selectedFlight": "Selected flight",
     "cabin": "Cabin",
+    "ECONOMY": "Economy",
+    "BUSINESS": "Business",
+    "FIRST": "First",
     "soldOut": "Sold out",
     "seatsLeft_one": "{{count}} seat left",
     "seatsLeft_other": "{{count}} seats left",
