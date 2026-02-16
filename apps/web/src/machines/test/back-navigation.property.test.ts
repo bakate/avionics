@@ -170,7 +170,7 @@ describe("Property 13: Back navigation preserves context", () => {
 
         actor.send({ type: "SELECT_FLIGHT", flight });
         actor.send({ type: "SELECT_CABIN", cabin: "BUSINESS" });
-        actor.send({ type: "SET_PASSENGER", passenger });
+        actor.send(type: "SET_PASSENGER", passenger );
 
         // Should be in paying state
         expect(actor.getSnapshot().value).toBe("paying");
