@@ -30,17 +30,15 @@ const buildBooking = (id: string, pnr: string) =>
   Booking.create({
     id: makeBookingId(id),
     pnrCode: makePnrCode(pnr),
-    passengers: [
-      new Passenger({
-        id: PassengerId.make("550e8400-e29b-41d4-a716-446655440001"),
-        firstName: "John",
-        lastName: "Doe",
-        email: Schema.decodeSync(EmailSchema)("john@example.com"),
-        dateOfBirth: new Date("1990-01-01"),
-        gender: "MALE",
-        type: PassengerType.ADULT,
-      }),
-    ],
+    passenger: new Passenger({
+      id: PassengerId.make("550e8400-e29b-41d4-a716-446655440001"),
+      firstName: "John",
+      lastName: "Doe",
+      email: Schema.decodeSync(EmailSchema)("john@example.com"),
+      dateOfBirth: new Date("1990-01-01"),
+      gender: "MALE",
+      type: PassengerType.ADULT,
+    }),
     segments: [
       new BookingSegment({
         id: makeSegmentId("550e8400-e29b-41d4-a716-446655440002"),

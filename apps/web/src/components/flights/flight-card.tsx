@@ -1,6 +1,5 @@
 /**
  * Flight selection card.
- * Requirements: 2.1, 6.2
  */
 
 import { Airplane01Icon, Time01Icon } from "@hugeicons/core-free-icons";

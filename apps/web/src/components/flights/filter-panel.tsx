@@ -1,6 +1,5 @@
 /**
  * Filter panel for flight results.
- * Requirements: 2.3
  */
 
 import { FilterHorizontalIcon } from "@hugeicons/core-free-icons";

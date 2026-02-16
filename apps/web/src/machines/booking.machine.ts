@@ -72,7 +72,7 @@ export type BookingContext = {
   allBookings: ReadonlyArray<BookingSummary>;
   selectedFlight: FlightResult | null;
   selectedCabin: CabinClass | null;
-  passengers: ReadonlyArray<PassengerInput>;
+  passenger: PassengerInput | null;
   bookingResult: BookingResult | null;
   error: string | null;
 };
@@ -86,7 +86,7 @@ export type BookingEvent =
   | { type: "FETCH_BOOKINGS" }
   | { type: "SELECT_FLIGHT"; flight: FlightResult }
   | { type: "SELECT_CABIN"; cabin: CabinClass }
-  | { type: "SET_PASSENGERS"; passengers: ReadonlyArray<PassengerInput> }
+  | { type: "SET_PASSENGER"; passenger: PassengerInput }
   | { type: "ERROR"; message: string }
   | { type: "RETRY" }
   | { type: "BACK" }
@@ -102,7 +102,7 @@ export const initialContext: BookingContext = {
   allBookings: [],
   selectedFlight: null,
   selectedCabin: null,
-  passengers: [],
+  passenger: null,
   bookingResult: null,
   error: null,
 };
@@ -111,8 +111,8 @@ export const initialContext: BookingContext = {
 // Guards
 // ---------------------------------------------------------------------------
 
-const hasPassengers = ({ context }: { context: BookingContext }) =>
-  context.passengers.length > 0;
+const hasPassenger = ({ context }: { context: BookingContext }) =>
+  context.passenger !== null;
 
 const hasSelectedFlight = ({ context }: { context: BookingContext }) =>
   context.selectedFlight !== null;
@@ -162,7 +162,7 @@ export const bookingMachine = setup({
             id: b.id,
             pnrCode: b.pnrCode,
             status: b.status,
-            passengerCount: b.passengers.length,
+            passengerCount: 1,
             totalPrice: b.segments.reduce(
               (sum, seg: any) => {
                 // Ensure we have a Money instance for the accumulator
@@ -195,25 +195,25 @@ export const bookingMachine = setup({
         input: {
           flightId: string;
           cabinClass: CabinClass;
-          passengers: ReadonlyArray<PassengerInput>;
+          passenger: PassengerInput | null;
         };
       }): Promise<BookingResult> => {
-        if (input.passengers.length === 0) {
-          throw new Error("No passengers provided");
+        if (!input.passenger) {
+          throw new Error("No passenger provided");
         }
 
         const command: BookFlightCommand = {
           flightId: input.flightId,
           cabinClass: input.cabinClass,
-          passengers: input.passengers.map((p) => ({
+          passenger: {
             id: uuidv4(),
-            firstName: p.firstName,
-            lastName: p.lastName,
-            email: p.email,
-            dateOfBirth: p.dateOfBirth,
-            gender: p.gender,
-            type: derivePassengerType(p.dateOfBirth),
-          })) as [Passenger, ...Array<Passenger>], // NonEmptyArray cast
+            firstName: input.passenger.firstName,
+            lastName: input.passenger.lastName,
+            email: input.passenger.email,
+            dateOfBirth: input.passenger.dateOfBirth,
+            gender: input.passenger.gender,
+            type: derivePassengerType(input.passenger.dateOfBirth),
+          },
           successUrl: `${window.location.origin}/success`,
           cancelUrl: `${window.location.origin}/cancel`,
         };
@@ -241,7 +241,7 @@ export const bookingMachine = setup({
     ),
   },
   guards: {
-    hasPassengers,
+    hasPassenger,
     hasSelectedFlight,
     hasSelectedCabin,
   },
@@ -260,7 +260,7 @@ export const bookingMachine = setup({
             flights: () => [],
             selectedFlight: () => null,
             selectedCabin: () => null,
-            passengers: () => [],
+            passenger: () => null,
             bookingResult: () => null,
             error: () => null,
           }),
@@ -336,7 +336,7 @@ export const bookingMachine = setup({
             flights: () => [],
             selectedFlight: () => null,
             selectedCabin: () => null,
-            passengers: () => [],
+            passenger: () => null,
             bookingResult: () => null,
             error: () => null,
           }),
@@ -360,7 +360,7 @@ export const bookingMachine = setup({
         },
         BACK: {
           target: "selectingFlight",
-          actions: assign({ selectedCabin: () => null }),
+          actions: assign({ passenger: () => null }),
         },
         ERROR: {
           target: "error",
@@ -372,16 +372,16 @@ export const bookingMachine = setup({
 
     enteringPassengers: {
       on: {
-        SET_PASSENGERS: {
+        SET_PASSENGER: {
           target: "paying",
           guard: "hasSelectedCabin",
           actions: assign({
-            passengers: ({ event }) => event.passengers,
+            passenger: ({ event }) => event.passenger,
           }),
         },
         BACK: {
           target: "selectingCabin",
-          actions: assign({ passengers: () => [] }),
+          actions: assign({ passenger: () => null }),
         },
         ERROR: {
           target: "error",
@@ -398,7 +398,7 @@ export const bookingMachine = setup({
         input: ({ context }) => ({
           flightId: context.selectedFlight?.flightId ?? "",
           cabinClass: context.selectedCabin ?? "ECONOMY",
-          passengers: context.passengers,
+          passenger: context.passenger,
         }),
         onDone: {
           target: "confirmed",

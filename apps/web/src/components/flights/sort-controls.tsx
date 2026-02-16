@@ -1,6 +1,5 @@
 /**
  * Sort controls for flight results.
- * Requirements: 2.2
  */
 import { ArrowDown01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
