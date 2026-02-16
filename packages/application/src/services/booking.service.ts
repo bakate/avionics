@@ -16,16 +16,13 @@ import {
 } from "@workspace/domain/errors";
 import {
   BookingId,
-  CabinClassSchema,
-  EmailSchema,
-  GenderSchema,
   Money,
   makeFlightId,
   makeSegmentId,
-  PassengerTypeSchema,
   type PnrCode,
   PnrCodeSchema,
 } from "@workspace/domain/kernel";
+
 import { Passenger, PassengerId } from "@workspace/domain/passenger";
 import { BookingSegment } from "@workspace/domain/segment";
 import { Ticket, TicketNumber, TicketStatus } from "@workspace/domain/ticket";
@@ -40,6 +37,7 @@ import {
   Schedule,
   Schema,
 } from "effect";
+import { BookFlightCommand } from "../commands/booking.commands.js";
 import { NotificationGateway } from "../gateways/notification.gateway.js";
 import {
   type CheckoutSession,
@@ -60,28 +58,7 @@ import {
   type InventoryServiceSignature,
 } from "./inventory.service.js";
 
-// ---------------------------------------------------------------------------
-// Command Schema
-// ---------------------------------------------------------------------------
-
-export class BookFlightCommand extends Schema.Class<BookFlightCommand>(
-  "BookFlightCommand",
-)({
-  flightId: Schema.String,
-  cabinClass: CabinClassSchema,
-  passenger: Schema.Struct({
-    id: Schema.String,
-    firstName: Schema.String,
-    lastName: Schema.String,
-    email: EmailSchema,
-    dateOfBirth: Schema.Date,
-    gender: GenderSchema,
-    type: PassengerTypeSchema,
-  }),
-  seatNumber: Schema.OptionFromNullOr(Schema.String).pipe(Schema.optional),
-  successUrl: Schema.String, // URL for payment redirect success
-  cancelUrl: Schema.optional(Schema.String), // Optional cancel URL
-}) {}
+export { BookFlightCommand };
 
 // ---------------------------------------------------------------------------
 // Service Interface
