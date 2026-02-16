@@ -104,9 +104,15 @@ describe("BookingRepository Integration Tests", () => {
       );
 
       expect(result).toBeDefined();
+<<<<<<< HEAD
       expect(result.passengers[0]).toBeDefined();
       expect(result.segments).toHaveLength(2);
       expect(result.passengers[0]?.firstName).toBe("John");
+=======
+      expect(result.passenger).toBeDefined();
+      expect(result.segments).toHaveLength(2);
+      expect(result.passenger.firstName).toBe("John");
+>>>>>>> 029821b (feat(booking): rollback to single-passenger model and complete task 8)
       expect(result.segments[0]?.flightId.valueOf()).toBe("FL000");
     });
   });

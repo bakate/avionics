@@ -28,7 +28,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
   id: BookingId,
   pnrCode: PnrCodeSchema,
   status: BookingStatusSchema,
-  passengers: Schema.NonEmptyArray(Passenger),
+  passenger: Passenger,
   segments: Schema.NonEmptyArray(BookingSegment),
   expiresAt: Schema.Option(Schema.Date), // Expiration of the HOLD
   createdAt: Schema.Date,
@@ -56,7 +56,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
   static create(props: {
     id: BookingId;
     pnrCode: typeof PnrCodeSchema.Type;
-    passengers: [Passenger, ...Array<Passenger>];
+    passenger: Passenger;
     segments: [BookingSegment, ...Array<BookingSegment>];
     expiresAt: O.Option<Date>;
   }): Booking {

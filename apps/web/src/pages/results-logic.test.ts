@@ -130,13 +130,6 @@ describe("results-logic", () => {
             if (!a || !b) continue;
             if (a.economyPrice.amount < b.economyPrice.amount) return false;
           }
-          return true;
-        }),
-      );
-    });
-
-    it("should sort by departure time", () => {
-      fc.assert(
         fc.property(fc.array(flightArbitrary, { minLength: 1 }), (flights) => {
           const sorted = sortFlights(flights, "departure", "asc", "ECONOMY");
           for (let i = 0; i < sorted.length - 1; i++) {

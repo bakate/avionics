@@ -1,6 +1,5 @@
 /**
  * Feature: web-booking-app, Property 13: Back navigation preserves context
- * Validates: Requirements 7.2
  *
  * For any Booking_Machine state beyond "idle", sending a BACK event should
  * transition to the previous state while preserving all previously entered
