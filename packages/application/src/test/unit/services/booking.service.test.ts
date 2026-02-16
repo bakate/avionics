@@ -38,15 +38,18 @@ import { InventoryService } from "../../../services/inventory.service.js";
 
 // --- Helpers de Test ---
 
-const makePassenger = () => ({
-  id: faker.string.uuid(),
-  firstName: faker.person.firstName(),
-  lastName: faker.person.lastName(),
-  email: faker.internet.email() as Email,
-  dateOfBirth: faker.date.birthdate(),
-  gender: "MALE" as const,
-  type: "ADULT" as PassengerType,
-});
+const makePassengerList = () =>
+  [
+    {
+      id: faker.string.uuid(),
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
+      email: faker.internet.email() as Email,
+      dateOfBirth: faker.date.birthdate(),
+      gender: "MALE" as const,
+      type: "ADULT" as PassengerType,
+    },
+  ] as const;
 
 // --- Fake In-Memory Stateful Repositories (for concurrency tests) ---
 
@@ -191,7 +194,7 @@ describe("BookingService", () => {
     const command = new BookFlightCommand({
       flightId,
       cabinClass: "ECONOMY",
-      passenger: makePassenger(),
+      passengers: makePassengerList(),
       successUrl: "https://example.com/success",
     });
 
@@ -238,7 +241,7 @@ describe("BookingService", () => {
     const command = new BookFlightCommand({
       flightId,
       cabinClass: "ECONOMY",
-      passenger: makePassenger(),
+      passengers: makePassengerList(),
       successUrl: "https://example.com/success",
     });
 
@@ -275,7 +278,7 @@ describe("BookingService", () => {
     const command = new BookFlightCommand({
       flightId,
       cabinClass: "ECONOMY",
-      passenger: makePassenger(),
+      passengers: makePassengerList(),
       successUrl: "https://example.com/success",
     });
 
@@ -377,7 +380,7 @@ describe("BookingService", () => {
             new BookFlightCommand({
               flightId,
               cabinClass: "ECONOMY",
-              passenger: makePassenger(),
+              passengers: makePassengerList(),
               seatNumber: Option.some(`1${i}A`),
               successUrl: "https://example.com/success",
             }),
@@ -417,7 +420,7 @@ describe("BookingService", () => {
     overrides: Partial<ConstructorParameters<typeof Booking>[0]> = {},
   ): Booking => {
     const passenger = new Passenger({
-      ...makePassenger(),
+      ...makePassengerList()[0],
       id: PassengerId.make(faker.string.uuid()),
     });
 
@@ -493,7 +496,7 @@ describe("BookingService", () => {
       const command = new BookFlightCommand({
         flightId: "flight-1",
         cabinClass: "ECONOMY",
-        passenger: makePassenger(),
+        passengers: makePassengerList(),
         successUrl: "https://example.com/success",
       });
 

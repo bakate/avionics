@@ -82,7 +82,8 @@ const ServerLive = Layer.unwrapEffect(
     const config = yield* ApiConfig;
     return HttpApiBuilder.serve(
       HttpMiddleware.cors({
-        allowedOrigins: config.corsOrigins,
+        allowedOrigins:
+          config.corsOrigins.length > 0 ? config.corsOrigins : true,
         allowedMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
         allowedHeaders: ["Content-Type", "Authorization", "B3", "traceparent"],
       }),
