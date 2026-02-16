@@ -1,4 +1,4 @@
-import { type BookFlightCommand } from "@workspace/application/booking.service";
+import { type BookFlightCommand } from "@workspace/application/booking.commands";
 import { BookingId, PnrCodeSchema } from "@workspace/domain/kernel";
 import { Effect } from "effect";
 import { makeClient } from "./client";

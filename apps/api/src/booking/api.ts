@@ -1,5 +1,5 @@
 import { HttpApiEndpoint, HttpApiGroup } from "@effect/platform";
-import { BookFlightCommand } from "@workspace/application/booking.service";
+import { BookFlightCommand } from "@workspace/application/booking.commands";
 import * as PaymentErrors from "@workspace/application/payment.gateway";
 import {
   BookingSummary,
