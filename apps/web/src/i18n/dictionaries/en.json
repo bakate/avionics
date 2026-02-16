@@ -17,7 +17,15 @@
   },
   "home": {
     "title": "Find your next flight",
-    "subtitle": "Flight search — coming soon"
+    "subtitle": "Flight search - coming soon",
+    "badge": "New routes available",
+    "recentBookings": "Recent Bookings",
+    "recentBookingsSub": "Manage your existing reservations",
+    "noBookings": "No bookings yet",
+    "noBookingsSub": "Your future journeys will appear here"
+  },
+  "booking": {
+    "expiresAt": "Expires at"
   },
   "search": {
     "origin": "Origin",
@@ -38,7 +46,7 @@
   },
   "results": {
     "title": "Search results",
-    "subtitle": "Flight list — coming soon",
+    "subtitle": "Flight list - coming soon",
     "empty": "No flights found. Try different dates or destinations.",
     "loading": "Searching for flights…",
     "error": "An error occurred while searching.",
@@ -101,7 +109,9 @@
     "cancel": "Cancel",
     "loading": "Loading…",
     "error": "An error occurred",
-    "retry": "Retry"
+    "retry": "Retry",
+    "passenger": "Passenger",
+    "passengers": "Passengers"
   },
   "notFound": {
     "title": "404",

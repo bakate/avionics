@@ -1,137 +1,135 @@
-import { FetchHttpClient } from "@effect/platform";
-import { type BookingResponse } from "@workspace/api/booking-api";
-import { Effect } from "effect";
-import { useEffect, useState } from "react";
-import { getBookings } from "@/api/booking.api";
+import { History, Loader2, Plane } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { BookingSummaryCard } from "../components/booking/booking-summary-card";
+import { SearchForm } from "../components/search/search-form";
+import { useBookingMachine } from "../hooks/use-booking-machine";
 
 const HomePage = () => {
-  const [bookings, setBookings] = useState<ReadonlyArray<BookingResponse>>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const program = getBookings().pipe(
-      Effect.tap((res) => Effect.sync(() => setBookings(res))),
-      Effect.tap(() => Effect.sync(() => setLoading(false))),
-      Effect.catchAll(() => Effect.sync(() => setLoading(false))),
-      Effect.provide(FetchHttpClient.layer),
-    );
-
-    void Effect.runPromise(program);
-  }, []);
+  const { t } = useTranslation();
+  const { state, send, context, isLoading } = useBookingMachine();
 
   return (
-    <div className="flex flex-col items-center gap-8 px-4 py-12">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold md:text-5xl">
-          Trouvez votre prochain vol
-        </h1>
-        <p className="mt-2 text-gray-500">
-          Gérez vos réservations en toute simplicité
-        </p>
-      </div>
-
-      <div className="w-full max-w-4xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Réservations récentes</h2>
-          <span className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
-            {bookings.length} vols
-          </span>
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero Section */}
+      <section className="relative flex min-h-[60vh] flex-col items-center justify-center px-4 pt-20 pb-32">
+        <div
+          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url("/hero-bg.png")' }}
+        >
+          <div className="absolute inset-0 bg-linear-to-b from-slate-900/60 via-slate-900/40 to-slate-50" />
         </div>
 
-        {loading ? (
-          <div className="grid gap-4">
+        <div className="relative z-10 w-full max-w-5xl text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-blue-500/20 px-4 py-1.5 text-sm font-semibold text-blue-100 backdrop-blur-md ring-1 ring-blue-500/30">
+            <Plane className="h-4 w-4" />
+            <span>{t("home.badge") || "New routes available to Paris"}</span>
+          </div>
+
+          <h1 className="mb-6 text-4xl font-extrabold tracking-tight text-white md:text-6xl lg:text-7xl">
+            {t("home.title") || "Where excellence meets the horizon"}
+          </h1>
+          <p className="mx-auto mb-12 max-w-2xl text-lg text-slate-200 md:text-xl">
+            {t("home.subtitle") ||
+              "Experience high-assurance travel with Avionics. Seamless booking for the demanding traveler."}
+          </p>
+
+          <div className="mx-auto w-full max-w-4xl transform transition-all hover:scale-[1.01]">
+            <SearchForm
+              onSearch={(params) => send({ type: "SEARCH", params })}
+              isLoading={isLoading && state === "searching"}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Bookings Section */}
+      <section className="mx-auto max-w-6xl px-4 py-16">
+        <div className="mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200 text-blue-600">
+              <History className="size-5" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900">
+                {t("home.recentBookings" as any) || "Recent Bookings"}
+              </h2>
+              <p className="text-sm text-slate-500">
+                {t("home.recentBookingsSub" as any) ||
+                  "Manage your existing reservations"}
+              </p>
+            </div>
+          </div>
+
+          {isLoading && state === "fetchingBookings" && (
+            <div className="flex items-center gap-2 text-sm font-medium text-slate-400">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>{t("common.loading") || "Refresing..."}</span>
+            </div>
+          )}
+        </div>
+
+        {context.error && state === "error" ? (
+          <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-red-200 bg-red-50/50 py-12 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-500">
+              <Plane className="h-8 w-8 -rotate-45" />
+            </div>
+            <h3 className="text-lg font-semibold text-red-900">
+              {t("common.error") || "An error occurred"}
+            </h3>
+            <p className="mt-2 max-w-md text-red-500">{context.error}</p>
+            <button
+              type="button"
+              onClick={() => send({ type: "FETCH_BOOKINGS" })}
+              className="mt-6 rounded-xl bg-red-600 px-6 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:bg-red-700 active:scale-95"
+            >
+              {t("common.retry") || "Retry"}
+            </button>
+            <p className="mt-4 text-[10px] text-slate-300 opacity-50">
+              API: http://127.0.0.1:3000/api
+            </p>
+          </div>
+        ) : context.allBookings.length > 0 ? (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {context.allBookings.map((booking, index) => (
+              <div
+                key={booking.id}
+                className="animate-in fade-in slide-in-from-bottom-4 transition-all"
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                  animationFillMode: "both",
+                }}
+              >
+                <BookingSummaryCard booking={booking} />
+              </div>
+            ))}
+          </div>
+        ) : !isLoading ? (
+          <div className="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-white/50 py-20 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+              <Plane className="h-8 w-8 -rotate-45" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              {t("home.noBookings" as any) || "No bookings yet"}
+            </h3>
+            <p className="mt-2 text-slate-500">
+              {t("home.noBookingsSub" as any) ||
+                "Your future journeys will appear here."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-32 w-full animate-pulse rounded-2xl bg-gray-100"
+                className="h-48 animate-pulse rounded-2xl bg-white shadow-sm ring-1 ring-slate-200"
               />
             ))}
           </div>
-        ) : (
-          <div className="grid gap-4">
-            {bookings.length === 0 ? (
-              <div className="flex h-48 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-100 bg-gray-50 p-8 text-center text-gray-400">
-                <p>Aucune réservation trouvée</p>
-              </div>
-            ) : (
-              bookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all hover:border-blue-200 hover:shadow-md md:flex-row md:items-center"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <title>Flight Icon</title>
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-gray-900">
-                          {booking.pnrCode}
-                        </span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                            booking.status === "Confirmed"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {booking.status}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        {booking.passengers.length} passager(s) •{" "}
-                        {booking.segments.length} segment(s)
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between border-t border-gray-50 pt-4 md:mt-0 md:border-none md:pt-0">
-                    <div className="text-right">
-                      <p className="text-xs text-gray-400">Créé le</p>
-                      <p className="text-sm font-medium">
-                        {new Date(booking.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="ml-6 flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-400 transition-colors group-hover:bg-blue-600 group-hover:text-white"
-                      aria-label="Voir les détails"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <title>Details Icon</title>
-                        <path
-                          fillRule="evenodd"
-                          d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
         )}
-      </div>
+      </section>
+
+      {/* Footer-like Gradient */}
+      <div className="pointer-events-none fixed bottom-0 left-0 right-0 h-32 bg-linear-to-t from-slate-50 to-transparent" />
     </div>
   );
 };

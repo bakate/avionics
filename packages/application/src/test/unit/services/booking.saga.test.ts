@@ -11,15 +11,17 @@ describe("Booking Saga Integration", () => {
   const command = {
     flightId: `flight_${faker.string.alphanumeric(5)}`,
     cabinClass: "ECONOMY" as const,
-    passenger: {
-      id: faker.string.uuid(),
-      firstName: faker.person.firstName(),
-      lastName: faker.person.lastName(),
-      email: Schema.decodeSync(EmailSchema)(faker.internet.email()),
-      dateOfBirth: faker.date.birthdate(),
-      gender: "MALE" as const,
-      type: "ADULT" as const,
-    },
+    passengers: [
+      {
+        id: faker.string.uuid(),
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        email: Schema.decodeSync(EmailSchema)(faker.internet.email()),
+        dateOfBirth: faker.date.birthdate(),
+        gender: "MALE" as const,
+        type: "ADULT" as const,
+      },
+    ] as const,
     successUrl: faker.internet.url(),
     cancelUrl: faker.internet.url(),
   };

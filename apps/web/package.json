@@ -10,14 +10,17 @@
     "dev": "vite",
     "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\" --cache --cache-location .cache/.prettiercache",
     "lint": "biome lint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.1.18",
     "@effect/platform": "catalog:effect3",
+    "@tailwindcss/vite": "^4.1.18",
     "@workspace/api": "workspace:*",
     "@workspace/application": "workspace:*",
     "@workspace/domain": "workspace:*",
+    "@xstate/react": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "effect": "catalog:effect3",
@@ -31,7 +34,9 @@
     "react-i18next": "^16.5.4",
     "react-router": "^7.13.0",
     "tailwind-merge": "^3.4.0",
-    "tailwindcss": "catalog:"
+    "tailwindcss": "catalog:",
+    "uuid": "^13.0.0",
+    "xstate": "^5.28.0"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
@@ -39,6 +44,7 @@
     "@fast-check/vitest": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
+    "@types/uuid": "^11.0.0",
     "@vitejs/plugin-react": "^5.1.4",
     "@workspace/biome-config": "workspace:*",
     "@workspace/prettier-config": "workspace:*",

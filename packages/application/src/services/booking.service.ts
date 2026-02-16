@@ -350,24 +350,35 @@ export class BookingService extends Context.Tag("BookingService")<
       return {
         bookFlight: (command: BookFlightCommand) =>
           Effect.gen(function* () {
+            const numberOfSeats = command.passengers.length;
+
             // 1. Hold seats and get price
             const holdResult = yield* inventoryService.holdSeats({
               flightId: makeFlightId(command.flightId),
               cabin: command.cabinClass,
-              numberOfSeats: 1,
+              numberOfSeats,
             });
 
             // 2. Prepare Booking (State HELD)
-            // 2.1. Create Passenger
-            const passenger = new Passenger({
-              id: PassengerId.make(command.passenger.id),
-              firstName: command.passenger.firstName,
-              lastName: command.passenger.lastName,
-              email: command.passenger.email,
-              dateOfBirth: command.passenger.dateOfBirth,
-              gender: command.passenger.gender,
-              type: command.passenger.type,
-            });
+            // 2.1. Create Passengers
+            const passengers = command.passengers.map(
+              (p) =>
+                new Passenger({
+                  id: PassengerId.make(p.id),
+                  firstName: p.firstName,
+                  lastName: p.lastName,
+                  email: p.email,
+                  dateOfBirth: p.dateOfBirth,
+                  gender: p.gender,
+                  type: p.type,
+                }),
+            );
+
+            // Safety check (schema ensures fallback, but good to be explicit)
+            const primaryPassenger = passengers[0];
+            if (!primaryPassenger) {
+              return yield* Effect.die(new Error("No passengers provided"));
+            }
 
             // 2.2. Generate PNR
             const pnr = yield* generateUniquePnr(bookingRepo);
@@ -385,10 +396,15 @@ export class BookingService extends Context.Tag("BookingService")<
             });
 
             // 2.5. Create Booking using factory method (emits BookingCreated event)
+            const passengersNonEmpty = passengers as [
+              Passenger,
+              ...Array<Passenger>,
+            ];
+
             const booking = Booking.create({
               id: bookingId,
               pnrCode: pnr,
-              passengers: [passenger],
+              passengers: passengersNonEmpty,
               segments: [segment],
               expiresAt: O.some(new Date(Date.now() + 30 * 60 * 1000)), // 30 min to pay
             });
@@ -406,8 +422,8 @@ export class BookingService extends Context.Tag("BookingService")<
               .createCheckout({
                 amount: holdResult.totalPrice,
                 customer: {
-                  email: command.passenger.email,
-                  externalId: command.passenger.id, // Future: userId when auth is implemented
+                  email: primaryPassenger.email,
+                  externalId: primaryPassenger.id, // Future: userId when auth is implemented
                 },
                 bookingReference: pnr,
                 bookingId: savedBooking.id,
@@ -440,7 +456,7 @@ export class BookingService extends Context.Tag("BookingService")<
                       .releaseSeats({
                         flightId: makeFlightId(command.flightId),
                         cabin: command.cabinClass,
-                        numberOfSeats: 1,
+                        numberOfSeats,
                       })
                       .pipe(Effect.retry(retryPolicy));
                   }).pipe(
