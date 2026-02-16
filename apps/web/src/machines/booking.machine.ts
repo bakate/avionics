@@ -72,7 +72,7 @@ export type BookingContext = {
   allBookings: ReadonlyArray<BookingSummary>;
   selectedFlight: FlightResult | null;
   selectedCabin: CabinClass | null;
-  passenger: PassengerInput | null;
+  passengers: ReadonlyArray<PassengerInput>;
   bookingResult: BookingResult | null;
   error: string | null;
 };
@@ -86,7 +86,7 @@ export type BookingEvent =
   | { type: "FETCH_BOOKINGS" }
   | { type: "SELECT_FLIGHT"; flight: FlightResult }
   | { type: "SELECT_CABIN"; cabin: CabinClass }
-  | { type: "SET_PASSENGER"; passenger: PassengerInput }
+  | { type: "SET_PASSENGERS"; passengers: ReadonlyArray<PassengerInput> }
   | { type: "ERROR"; message: string }
   | { type: "RETRY" }
   | { type: "BACK" }
@@ -102,7 +102,7 @@ export const initialContext: BookingContext = {
   allBookings: [],
   selectedFlight: null,
   selectedCabin: null,
-  passenger: null,
+  passengers: [],
   bookingResult: null,
   error: null,
 };
@@ -111,8 +111,8 @@ export const initialContext: BookingContext = {
 // Guards
 // ---------------------------------------------------------------------------
 
-const hasPassenger = ({ context }: { context: BookingContext }) =>
-  context.passenger !== null;
+const hasPassengers = ({ context }: { context: BookingContext }) =>
+  context.passengers.length > 0;
 
 const hasSelectedFlight = ({ context }: { context: BookingContext }) =>
   context.selectedFlight !== null;
@@ -141,7 +141,7 @@ export const bookingMachine = setup({
           origin: input.origin,
           destination: input.destination,
           departureDate: input.departureDate,
-        }).pipe(Effect.delay("7 seconds"));
+        });
         const flights = await runPromise(effect);
         // Map the API response (FlightAvailability) to the machine's FlightResult
         return flights.map((f) => ({
@@ -155,14 +155,14 @@ export const bookingMachine = setup({
     fetchBookings: fromPromise(
       async (): Promise<ReadonlyArray<BookingSummary>> => {
         try {
-          const effect = getBookings().pipe(Effect.delay("5 seconds"));
+          const effect = getBookings();
           const bookings = await runPromise(effect);
           console.log("Fetched bookings:", bookings);
           return bookings.map((b) => ({
             id: b.id,
             pnrCode: b.pnrCode,
             status: b.status,
-            passengerCount: 1,
+            passengerCount: b.passengers.length,
             totalPrice: b.segments.reduce(
               (sum, seg: any) => {
                 // Ensure we have a Money instance for the accumulator
@@ -195,27 +195,25 @@ export const bookingMachine = setup({
         input: {
           flightId: string;
           cabinClass: CabinClass;
-          passenger: PassengerInput | null;
+          passengers: ReadonlyArray<PassengerInput>;
         };
       }): Promise<BookingResult> => {
-        if (!input.passenger) {
-          throw new Error("No passenger provided");
+        if (input.passengers.length === 0) {
+          throw new Error("No passengers provided");
         }
 
         const command: BookFlightCommand = {
           flightId: input.flightId,
           cabinClass: input.cabinClass,
-          passengers: [
-            {
-              id: uuidv4(),
-              firstName: input.passenger.firstName,
-              lastName: input.passenger.lastName,
-              email: input.passenger.email,
-              dateOfBirth: input.passenger.dateOfBirth,
-              gender: input.passenger.gender,
-              type: derivePassengerType(input.passenger.dateOfBirth),
-            },
-          ],
+          passengers: input.passengers.map((p) => ({
+            id: uuidv4(),
+            firstName: p.firstName,
+            lastName: p.lastName,
+            email: p.email,
+            dateOfBirth: p.dateOfBirth,
+            gender: p.gender,
+            type: derivePassengerType(p.dateOfBirth),
+          })) as [Passenger, ...Array<Passenger>], // NonEmptyArray cast
           successUrl: `${window.location.origin}/success`,
           cancelUrl: `${window.location.origin}/cancel`,
         };
@@ -243,7 +241,7 @@ export const bookingMachine = setup({
     ),
   },
   guards: {
-    hasPassenger,
+    hasPassengers,
     hasSelectedFlight,
     hasSelectedCabin,
   },
@@ -262,7 +260,7 @@ export const bookingMachine = setup({
             flights: () => [],
             selectedFlight: () => null,
             selectedCabin: () => null,
-            passenger: () => null,
+            passengers: () => [],
             bookingResult: () => null,
             error: () => null,
           }),
@@ -338,7 +336,7 @@ export const bookingMachine = setup({
             flights: () => [],
             selectedFlight: () => null,
             selectedCabin: () => null,
-            passenger: () => null,
+            passengers: () => [],
             bookingResult: () => null,
             error: () => null,
           }),
@@ -362,7 +360,7 @@ export const bookingMachine = setup({
         },
         BACK: {
           target: "selectingFlight",
-          actions: assign({ passenger: () => null }),
+          actions: assign({ selectedCabin: () => null }),
         },
         ERROR: {
           target: "error",
@@ -374,16 +372,16 @@ export const bookingMachine = setup({
 
     enteringPassengers: {
       on: {
-        SET_PASSENGER: {
+        SET_PASSENGERS: {
           target: "paying",
           guard: "hasSelectedCabin",
           actions: assign({
-            passenger: ({ event }) => event.passenger,
+            passengers: ({ event }) => event.passengers,
           }),
         },
         BACK: {
           target: "selectingCabin",
-          actions: assign({ passenger: () => null }),
+          actions: assign({ passengers: () => [] }),
         },
         ERROR: {
           target: "error",
@@ -400,7 +398,7 @@ export const bookingMachine = setup({
         input: ({ context }) => ({
           flightId: context.selectedFlight?.flightId ?? "",
           cabinClass: context.selectedCabin ?? "ECONOMY",
-          passenger: context.passenger,
+          passengers: context.passengers,
         }),
         onDone: {
           target: "confirmed",
