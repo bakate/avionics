@@ -54,6 +54,11 @@ export class FlightAvailability extends Schema.Class<FlightAvailability>(
   "FlightAvailability",
 )({
   flightId: FlightId,
+  flightNumber: Schema.String,
+  departureTime: Schema.Date,
+  arrivalTime: Schema.Date,
+  durationMinutes: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
+  stops: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
   economyAvailable: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
   businessAvailable: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
   firstAvailable: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),

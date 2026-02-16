@@ -25,7 +25,6 @@ describe("BookingRepository Integration Tests", () => {
     it("should create a new booking with passengers and segments", async () => {
       const booking = createTestBooking({
         pnrCode: "TEST01",
-        passengerCount: 2,
         segmentCount: 1,
       });
 
@@ -42,7 +41,7 @@ describe("BookingRepository Integration Tests", () => {
 
       expect(result).toBeDefined();
       expect(result.pnrCode.valueOf()).toBe("TEST01");
-      expect(result.passengers).toHaveLength(2);
+      expect(result.passenger).toBeDefined();
       expect(result.segments).toHaveLength(1);
       expect(result?.version).toBe(1);
     });
@@ -91,7 +90,6 @@ describe("BookingRepository Integration Tests", () => {
     it("should load booking with all relationships", async () => {
       const booking = createTestBooking({
         pnrCode: "TEST03",
-        passengerCount: 3,
         segmentCount: 2,
       });
 
@@ -106,9 +104,9 @@ describe("BookingRepository Integration Tests", () => {
       );
 
       expect(result).toBeDefined();
-      expect(result.passengers).toHaveLength(3);
+      expect(result.passenger).toBeDefined();
       expect(result.segments).toHaveLength(2);
-      expect(result.passengers[0]?.firstName).toBe("John0");
+      expect(result.passenger.firstName).toBe("John");
       expect(result.segments[0]?.flightId.valueOf()).toBe("FL000");
     });
   });

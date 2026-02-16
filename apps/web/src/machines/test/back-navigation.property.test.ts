@@ -22,6 +22,11 @@ import {
 
 const makeFlight = (id: string): FlightResult => ({
   flightId: id,
+  flightNumber: `AF${id}`,
+  departureTime: new Date().toISOString(),
+  arrivalTime: new Date().toISOString(),
+  durationMinutes: 120,
+  stops: 0,
   economyAvailable: 100,
   businessAvailable: 20,
   firstAvailable: 5,
@@ -140,15 +145,13 @@ describe("Property 13: Back navigation preserves context", () => {
     await fc.assert(
       fc.asyncProperty(flightIdArb, async (flightId) => {
         const flight = makeFlight(flightId);
-        const passengers: Array<PassengerInput> = [
-          {
-            firstName: "Jean",
-            lastName: "Dupont",
-            email: "jean@example.com" as any,
-            dateOfBirth: new Date("1990-01-01"),
-            gender: "MALE" as const,
-          },
-        ];
+        const passenger: PassengerInput = {
+          firstName: "Jean",
+          lastName: "Dupont",
+          email: "jean@example.com" as any,
+          dateOfBirth: new Date("1990-01-01"),
+          gender: "MALE" as const,
+        };
 
         const machine = bookingMachine.provide({
           actors: {
@@ -167,7 +170,7 @@ describe("Property 13: Back navigation preserves context", () => {
 
         actor.send({ type: "SELECT_FLIGHT", flight });
         actor.send({ type: "SELECT_CABIN", cabin: "BUSINESS" });
-        actor.send({ type: "SET_PASSENGERS", passengers });
+        actor.send({ type: "SET_PASSENGER", passenger });
 
         // Should be in paying state
         expect(actor.getSnapshot().value).toBe("paying");
@@ -178,7 +181,7 @@ describe("Property 13: Back navigation preserves context", () => {
         expect(snap.context.searchParams).toEqual(searchParams);
         expect(snap.context.selectedFlight).toEqual(flight);
         expect(snap.context.selectedCabin).toBe("BUSINESS");
-        expect(snap.context.passengers).toEqual(passengers);
+        expect(snap.context.passenger).toEqual(passenger);
         actor.stop();
       }),
       { numRuns: 100 },

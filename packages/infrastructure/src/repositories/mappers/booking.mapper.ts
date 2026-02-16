@@ -94,7 +94,7 @@ export const fromBookingRow = (
       dateOfBirth: p.date_of_birth,
       gender: Schema.decodeUnknownSync(GenderSchema)(p.gender),
     });
-  }) as [Passenger, ...Array<Passenger>];
+  });
 
   const domainSegments = segments.map(
     (s) =>
@@ -114,7 +114,7 @@ export const fromBookingRow = (
     id: Schema.decodeUnknownSync(BookingId)(row.id),
     pnrCode: Schema.decodeUnknownSync(PnrCodeSchema)(row.pnr_code),
     status: Schema.decodeUnknownSync(BookingStatusSchema)(row.status),
-    passengers: domainPassengers,
+    passenger: domainPassengers[0] as Passenger,
     segments: domainSegments,
     version: row.version,
     createdAt: row.created_at,

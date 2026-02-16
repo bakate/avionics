@@ -26,26 +26,21 @@ export interface CreateTestBookingOptions {
  */
 export const createTestBooking = ({
   pnrCode = "ABC123",
-  passengerCount = 1,
   segmentCount = 1,
   expiresAt,
 }: CreateTestBookingOptions = {}): Booking => {
-  // Create passengers
-  const passengers = Array.from(
-    { length: passengerCount },
-    (_, index) =>
-      new Passenger({
-        id: Schema.decodeSync(Schema.String.pipe(Schema.brand("PassengerId")))(
-          crypto.randomUUID(),
-        ),
-        firstName: `John${index}`,
-        lastName: `Doe${index}`,
-        email: Schema.decodeSync(EmailSchema)(`john${index}@example.com`),
-        dateOfBirth: new Date("1990-01-01"),
-        gender: Gender.MALE,
-        type: PassengerType.ADULT,
-      }),
-  ) as [Passenger, ...Array<Passenger>];
+  // Create passenger
+  const passenger = new Passenger({
+    id: Schema.decodeSync(Schema.String.pipe(Schema.brand("PassengerId")))(
+      crypto.randomUUID(),
+    ),
+    firstName: "John",
+    lastName: "Doe",
+    email: Schema.decodeSync(EmailSchema)("john@example.com"),
+    dateOfBirth: new Date("1990-01-01"),
+    gender: Gender.MALE,
+    type: PassengerType.ADULT,
+  });
 
   // Create segments
   const segments = Array.from(
@@ -66,7 +61,7 @@ export const createTestBooking = ({
   return Booking.create({
     id: Schema.decodeSync(BookingId)(crypto.randomUUID()),
     pnrCode: Schema.decodeSync(PnrCodeSchema)(pnrCode),
-    passengers,
+    passenger,
     segments,
     expiresAt: expiresAt ? O.some(expiresAt) : O.none(),
   });

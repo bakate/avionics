@@ -56,6 +56,11 @@ const safeMoney = ({
 // Database row types for queries
 interface FlightAvailabilityRow {
   flight_id: string;
+  flight_number: string | null;
+  departure_time: Date | null;
+  arrival_time: Date | null;
+  duration_minutes: number | null;
+  stops: number | null;
   economy_available: number;
   business_available: number;
   first_available: number;
@@ -119,6 +124,11 @@ export const PostgresInventoryQueriesLive = Layer.effect(
           const rows = yield* sql<FlightAvailabilityRow>`
             SELECT
               flight_id,
+              flight_number,
+              departure_time,
+              arrival_time,
+              duration_minutes,
+              stops,
               economy_available,
               business_available,
               first_available,
@@ -140,6 +150,11 @@ export const PostgresInventoryQueriesLive = Layer.effect(
 
           return new FlightAvailability({
             flightId: row.flight_id as FlightId,
+            flightNumber: row.flight_number ?? (row.flight_id as string),
+            departureTime: row.departure_time ?? new Date(),
+            arrivalTime: row.arrival_time ?? new Date(),
+            durationMinutes: row.duration_minutes ?? 0,
+            stops: row.stops ?? 0,
             economyAvailable: row.economy_available,
             businessAvailable: row.business_available,
             firstAvailable: row.first_available,
@@ -226,6 +241,11 @@ export const PostgresInventoryQueriesLive = Layer.effect(
           const rows = yield* sql<FlightAvailabilityRow>`
             SELECT
               flight_id,
+              flight_number,
+              departure_time,
+              arrival_time,
+              duration_minutes,
+              stops,
               economy_available,
               business_available,
               first_available,
@@ -246,6 +266,11 @@ export const PostgresInventoryQueriesLive = Layer.effect(
               Effect.gen(function* () {
                 return new FlightAvailability({
                   flightId: row.flight_id as FlightId,
+                  flightNumber: row.flight_number ?? (row.flight_id as string),
+                  departureTime: row.departure_time ?? new Date(),
+                  arrivalTime: row.arrival_time ?? new Date(),
+                  durationMinutes: row.duration_minutes ?? 0,
+                  stops: row.stops ?? 0,
                   economyAvailable: row.economy_available,
                   businessAvailable: row.business_available,
                   firstAvailable: row.first_available,
@@ -280,6 +305,11 @@ export const PostgresInventoryQueriesLive = Layer.effect(
           const rows = yield* sql<FlightAvailabilityRow>`
             SELECT
               flight_id,
+              flight_number,
+              departure_time,
+              arrival_time,
+              duration_minutes,
+              stops,
               economy_available,
               business_available,
               first_available,
@@ -303,6 +333,11 @@ export const PostgresInventoryQueriesLive = Layer.effect(
               Effect.gen(function* () {
                 return new FlightAvailability({
                   flightId: row.flight_id as FlightId,
+                  flightNumber: row.flight_number ?? (row.flight_id as string),
+                  departureTime: row.departure_time ?? new Date(),
+                  arrivalTime: row.arrival_time ?? new Date(),
+                  durationMinutes: row.duration_minutes ?? 0,
+                  stops: row.stops ?? 0,
                   economyAvailable: row.economy_available,
                   businessAvailable: row.business_available,
                   firstAvailable: row.first_available,
