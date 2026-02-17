@@ -32,6 +32,8 @@
     "destination": "Destination",
     "departureDate": "Date de départ",
     "returnDate": "Date de retour",
+    "dates": "Dates",
+    "selectDates": "Sélectionner des dates",
     "passengers": "Passagers",
     "cabinClass": "Classe de cabine",
     "submit": "Rechercher",

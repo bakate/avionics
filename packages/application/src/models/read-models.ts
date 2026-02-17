@@ -6,6 +6,7 @@
 
 import { BookingStatusSchema } from "@workspace/domain/booking";
 import {
+  AirportCodeSchema,
   BookingId,
   CabinClassSchema,
   FlightId,
@@ -55,6 +56,8 @@ export class FlightAvailability extends Schema.Class<FlightAvailability>(
 )({
   flightId: FlightId,
   flightNumber: Schema.String,
+  origin: AirportCodeSchema,
+  destination: AirportCodeSchema,
   departureTime: Schema.Date,
   arrivalTime: Schema.Date,
   durationMinutes: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),

@@ -1,6 +1,11 @@
 import { effectTsResolver } from "@hookform/resolvers/effect-ts";
+import {
+  Calendar03Icon,
+  Mail01Icon,
+  UserCircleIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useSelector } from "@xstate/react";
-import { Calendar, Mail, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { bookingActor } from "../machines/booking.actor";
@@ -30,7 +35,7 @@ const FieldWrapper = ({
 }) => (
   <div className="space-y-2">
     <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-      <Icon size={14} className="text-slate-400" />
+      <HugeiconsIcon icon={Icon} size={14} className="text-slate-400" />
       {label}
     </p>
     {children}
@@ -108,7 +113,7 @@ const PassengersPage = () => {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FieldWrapper
             label="Prénom"
-            icon={User}
+            icon={UserCircleIcon}
             error={errors.firstName?.message}
           >
             <input
@@ -120,7 +125,7 @@ const PassengersPage = () => {
 
           <FieldWrapper
             label="Nom"
-            icon={User}
+            icon={UserCircleIcon}
             error={errors.lastName?.message}
           >
             <input
@@ -131,7 +136,11 @@ const PassengersPage = () => {
           </FieldWrapper>
         </div>
 
-        <FieldWrapper label="Email" icon={Mail} error={errors.email?.message}>
+        <FieldWrapper
+          label="Email"
+          icon={Mail01Icon}
+          error={errors.email?.message}
+        >
           <input
             {...register("email")}
             type="email"
@@ -143,7 +152,7 @@ const PassengersPage = () => {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FieldWrapper
             label="Date de naissance"
-            icon={Calendar}
+            icon={Calendar03Icon}
             error={errors.dateOfBirth?.message}
           >
             <input
@@ -155,7 +164,7 @@ const PassengersPage = () => {
 
           <FieldWrapper
             label="Genre"
-            icon={User}
+            icon={UserCircleIcon}
             error={errors.gender?.message}
           >
             <select

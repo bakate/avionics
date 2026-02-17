@@ -19,7 +19,8 @@ export const flightInventory = pgTable(
   "flight_inventory",
   {
     flightId: varchar("flight_id", { length: 50 }).primaryKey(),
-
+    origin: varchar("origin", { length: 3 }).notNull(),
+    destination: varchar("destination", { length: 3 }).notNull(),
     // Capacity & Availability
     economyTotal: integer("economy_total").notNull(),
     economyAvailable: integer("economy_available").notNull(),

@@ -42,6 +42,12 @@ const initialState: FlightStreamState = {
 // Adapter: API response → FlightResult
 // ---------------------------------------------------------------------------
 
+const ensureISO = (d: Date | string | undefined | null): string => {
+  if (!d) return "";
+  if (d instanceof Date) return d.toISOString();
+  return new Date(d).toISOString();
+};
+
 /**
  * Convert an API FlightAvailability response to the lightweight FlightResult
  * stored in the booking machine context.
@@ -49,8 +55,8 @@ const initialState: FlightStreamState = {
 const toFlightResult = (raw: FlightAvailability): FlightResult => ({
   flightId: raw.flightId,
   flightNumber: raw.flightNumber,
-  departureTime: raw.departureTime.toISOString(),
-  arrivalTime: raw.arrivalTime.toISOString(),
+  departureTime: ensureISO(raw.departureTime),
+  arrivalTime: ensureISO(raw.arrivalTime),
   durationMinutes: raw.durationMinutes,
   stops: raw.stops,
   economyAvailable: raw.economyAvailable,
@@ -68,7 +74,7 @@ const toFlightResult = (raw: FlightAvailability): FlightResult => ({
     amount: raw.firstPrice.amount,
     currency: raw.firstPrice.currency,
   },
-  lastUpdated: raw.lastUpdated.toISOString(),
+  lastUpdated: ensureISO(raw.lastUpdated),
 });
 
 // ---------------------------------------------------------------------------
@@ -112,8 +118,8 @@ export const useFlightStream = () => {
           ...prev,
           isLoading: false,
           error:
-            err instanceof Error
-              ? err.message
+            err && typeof err === "object" && "message" in err
+              ? String(err.message)
               : "An error occurred while searching.",
           isComplete: true,
         }));

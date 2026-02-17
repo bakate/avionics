@@ -1,17 +1,31 @@
-/** biome-ignore-all lint/style/noRestrictedImports: <explanation> */
 /**
  * Results page — Displays flight search results with filtering and sorting.
  * Requirements: 1.2, 1.3, 1.5, 1.6, 2.1, 2.2, 2.3, 2.4
  */
 
-import { type CabinClass } from "@workspace/domain/kernel";
-import { Option } from "effect";
 import {
-  AlertCircle,
-  ArrowLeft,
-  RefreshCw,
-  SlidersHorizontal,
-} from "lucide-react";
+  AlertCircleIcon,
+  ArrowLeft01Icon,
+  FilterHorizontalIcon,
+  ReloadIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { type CabinClass } from "@workspace/domain/kernel";
+import { Button } from "@workspace/ui/components/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyMedia,
+  EmptyTitle,
+} from "@workspace/ui/components/empty";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@workspace/ui/components/sheet";
+import { Spinner } from "@workspace/ui/components/spinner";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
@@ -28,55 +42,30 @@ import {
 import { useBookingMachine } from "../hooks/use-booking-machine";
 import { useFlightStream } from "../hooks/use-flight-stream";
 import { buildRoute } from "../routes";
-import { type SearchParams } from "../schemas/search.schema";
+import {
+  decodeSearchParams,
+  type SearchParams,
+} from "../schemas/search.schema";
 import { filterFlights, sortFlights } from "./results-logic";
 
 const ResultsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [urlParams] = useSearchParams();
-  const { send } = useBookingMachine();
+  const { send, context } = useBookingMachine();
   const { flights, isLoading, error, search, isComplete } = useFlightStream();
 
   // --- Search Params Decoding ---
   const searchParams = useMemo((): SearchParams | null => {
+    const raw = Object.fromEntries(urlParams.entries());
     try {
-      const raw: Record<string, unknown> = {
-        origin: urlParams.get("origin"),
-        destination: urlParams.get("destination"),
-        departureDate: urlParams.get("departureDate")
-          ? new Date(urlParams.get("departureDate") ?? "")
-          : undefined,
-        passengerCount: Number.parseInt(
-          urlParams.get("passengerCount") || "1",
-          10,
-        ),
-      };
-
-      const retDate = urlParams.get("returnDate");
-      if (retDate) raw.returnDate = new Date(retDate);
-
-      const cabin = urlParams.get("cabinClass");
-      if (cabin) raw.cabinClass = cabin;
-
-      // We use a lenient decode here or manual check because URL params are strings
-      // For brevity in prototype, we'll assume they are mostly correct if they come from SearchForm
-      return {
-        origin: raw.origin as string as any,
-        destination: raw.destination as string as any,
-        departureDate: raw.departureDate as Date,
-        returnDate: raw.returnDate
-          ? Option.some(raw.returnDate as Date)
-          : Option.none(),
-        passengerCount: raw.passengerCount as number,
-        cabinClass: raw.cabinClass
-          ? Option.some(raw.cabinClass as CabinClass)
-          : Option.none(),
-      };
-    } catch (_e) {
-      return null;
+      if (urlParams.size === 0) return context.searchParams;
+      return decodeSearchParams(raw);
+    } catch (e) {
+      console.error("Search params validation failed:", e);
+      return context.searchParams;
     }
-  }, [urlParams]);
+  }, [urlParams, context.searchParams]);
 
   // Trigger search on mount or params change
   useEffect(() => {
@@ -93,7 +82,6 @@ const ResultsPage = () => {
     maxStops: 1,
     timeRange: null,
   });
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // --- Logic: Filter & Sort ---
   const filteredAndSortedFlights = useMemo(() => {
@@ -124,17 +112,20 @@ const ResultsPage = () => {
   if (!searchParams) {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center p-4">
-        <AlertCircle className="mb-4 h-12 w-12 text-red-500" />
+        <HugeiconsIcon
+          icon={AlertCircleIcon}
+          size={48}
+          className="mb-4 text-red-500"
+        />
         <h2 className="text-xl font-bold text-white">
           {t("error.invalidParams")}
         </h2>
-        <button
-          type="button"
+        <Button
           onClick={() => navigate(buildRoute.home())}
           className="mt-4 rounded-xl bg-blue-600 px-6 py-2 text-sm font-bold text-white"
         >
           {t("search.backToHome")}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -145,13 +136,14 @@ const ResultsPage = () => {
       <div className="sticky top-0 z-30 border-b border-white/5 bg-slate-950/80 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-4 py-4 md:px-8">
           <div className="flex items-center gap-4">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => navigate(buildRoute.home())}
               className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all"
             >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
+              <HugeiconsIcon icon={ArrowLeft01Icon} size={20} />
+            </Button>
             <div className="flex-1">
               <h1 className="flex items-center gap-2 text-lg font-bold text-white md:text-xl">
                 {searchParams.origin}
@@ -196,37 +188,43 @@ const ResultsPage = () => {
                   setSortOrder(o);
                 }}
               />
-              <button
-                type="button"
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="flex items-center justify-center gap-2 rounded-lg bg-white/5 px-4 py-2 text-xs font-bold text-slate-400 hover:bg-white/10 hover:text-white lg:hidden"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                {t("search.filters").toUpperCase()}
-              </button>
-            </div>
-
-            {/* Mobile Filter Panel (Collapsible) */}
-            {isFilterOpen && (
-              <div className="lg:hidden">
-                <FilterPanel
-                  filters={filters}
-                  onFiltersChange={setFilters}
-                  onClear={() =>
-                    setFilters({
-                      cabinClass: "ECONOMY",
-                      maxStops: 1,
-                      timeRange: null,
-                    })
+              <Sheet>
+                <SheetTrigger
+                  render={
+                    <Button
+                      variant="outline"
+                      className="flex items-center justify-center gap-2 lg:hidden"
+                    >
+                      <HugeiconsIcon icon={FilterHorizontalIcon} size={16} />
+                      {t("search.filters").toUpperCase()}
+                    </Button>
                   }
                 />
-              </div>
-            )}
+                <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                  <SheetHeader>
+                    <SheetTitle>{t("search.filters")}</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6">
+                    <FilterPanel
+                      filters={filters}
+                      onFiltersChange={setFilters}
+                      onClear={() =>
+                        setFilters({
+                          cabinClass: "ECONOMY",
+                          maxStops: 1,
+                          timeRange: null,
+                        })
+                      }
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
 
             {/* Loading State */}
             {isLoading && flights.length === 0 && (
               <div className="flex h-64 flex-col items-center justify-center gap-4">
-                <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+                <Spinner className="size-8 text-blue-500" />
                 <p className="text-sm font-medium text-slate-500">
                   {t("search.searching")}
                 </p>
@@ -236,41 +234,45 @@ const ResultsPage = () => {
             {/* Error State */}
             {error && flights.length === 0 && (
               <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-8 text-center">
-                <AlertCircle className="mx-auto mb-4 h-10 w-10 text-red-500" />
+                <HugeiconsIcon
+                  icon={AlertCircleIcon}
+                  size={40}
+                  className="mx-auto mb-4 text-red-500"
+                />
                 <h3 className="mb-2 text-lg font-bold text-white">
                   {t("error.searchFailed")}
                 </h3>
                 <p className="mb-6 text-sm text-slate-400">{error}</p>
-                <button
-                  type="button"
+                <Button
                   onClick={() => search(searchParams)}
                   className="rounded-xl bg-red-600 px-6 py-2 text-sm font-bold text-white transition-all hover:bg-red-500"
                 >
                   {t("common.retry")}
-                </button>
+                </Button>
               </div>
             )}
 
             {/* Empty State */}
             {isComplete && flights.length === 0 && !error && (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-sm">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5">
-                  <RefreshCw className="h-8 w-8 text-slate-600" />
-                </div>
-                <h3 className="mb-2 text-lg font-bold text-white">
+              <Empty className="rounded-2xl border border-white/10 bg-white/5 p-12 backdrop-blur-sm">
+                <EmptyMedia>
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100/10 text-slate-600">
+                    <HugeiconsIcon icon={ReloadIcon} size={32} />
+                  </div>
+                </EmptyMedia>
+                <EmptyTitle className="text-lg font-bold text-white">
                   {t("search.noFlights")}
-                </h3>
-                <p className="mb-8 text-sm text-slate-500">
+                </EmptyTitle>
+                <EmptyDescription className="text-slate-500">
                   {t("search.tryDifferentDates")}
-                </p>
-                <button
-                  type="button"
+                </EmptyDescription>
+                <Button
                   onClick={() => navigate(buildRoute.home())}
-                  className="rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-blue-500"
+                  className="mt-6 rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-blue-500"
                 >
                   {t("search.modifySearch")}
-                </button>
-              </div>
+                </Button>
+              </Empty>
             )}
 
             {/* Flight List */}
@@ -290,7 +292,7 @@ const ResultsPage = () => {
             {/* Streaming Indicator */}
             {isLoading && flights.length > 0 && (
               <div className="flex items-center justify-center gap-3 py-4">
-                <RefreshCw className="h-4 w-4 animate-spin text-blue-500" />
+                <Spinner className="size-4 text-blue-500" />
                 <span className="text-xs font-medium text-slate-500">
                   {t("search.loadingMore")}
                 </span>

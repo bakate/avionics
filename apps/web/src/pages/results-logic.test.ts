@@ -110,11 +110,10 @@ describe("results-logic", () => {
         fc.property(fc.array(flightArbitrary, { minLength: 1 }), (flights) => {
           const sorted = sortFlights(flights, "price", "asc", "ECONOMY");
           for (let i = 0; i < sorted.length - 1; i++) {
-            if (
-              sorted[i]?.economyPrice.amount >
-              sorted[i + 1]?.economyPrice.amount
-            )
-              return false;
+            const a = sorted[i];
+            const b = sorted[i + 1];
+            if (!a || !b) continue;
+            if (a.economyPrice.amount > b.economyPrice.amount) return false;
           }
           return true;
         }),
@@ -126,11 +125,10 @@ describe("results-logic", () => {
         fc.property(fc.array(flightArbitrary, { minLength: 1 }), (flights) => {
           const sorted = sortFlights(flights, "price", "desc", "ECONOMY");
           for (let i = 0; i < sorted.length - 1; i++) {
-            if (
-              sorted[i]?.economyPrice.amount <
-              sorted[i + 1]?.economyPrice.amount
-            )
-              return false;
+            const a = sorted[i];
+            const b = sorted[i + 1];
+            if (!a || !b) continue;
+            if (a.economyPrice.amount < b.economyPrice.amount) return false;
           }
           return true;
         }),
@@ -142,9 +140,12 @@ describe("results-logic", () => {
         fc.property(fc.array(flightArbitrary, { minLength: 1 }), (flights) => {
           const sorted = sortFlights(flights, "departure", "asc", "ECONOMY");
           for (let i = 0; i < sorted.length - 1; i++) {
+            const a = sorted[i];
+            const b = sorted[i + 1];
+            if (!a || !b) continue;
             if (
-              new Date(sorted[i]?.departureTime).getTime() >
-              new Date(sorted[i + 1]?.departureTime).getTime()
+              new Date(a.departureTime).getTime() >
+              new Date(b.departureTime).getTime()
             )
               return false;
           }
@@ -158,8 +159,10 @@ describe("results-logic", () => {
         fc.property(fc.array(flightArbitrary, { minLength: 1 }), (flights) => {
           const sorted = sortFlights(flights, "duration", "asc", "ECONOMY");
           for (let i = 0; i < sorted.length - 1; i++) {
-            if (sorted[i]?.durationMinutes > sorted[i + 1]?.durationMinutes)
-              return false;
+            const a = sorted[i];
+            const b = sorted[i + 1];
+            if (!a || !b) continue;
+            if (a.durationMinutes > b.durationMinutes) return false;
           }
           return true;
         }),

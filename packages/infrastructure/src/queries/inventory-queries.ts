@@ -18,6 +18,7 @@ import {
   InvalidAmountError,
 } from "@workspace/domain/errors";
 import {
+  type AirportCode,
   type CabinClass,
   type CurrencyCode,
   type FlightId,
@@ -57,6 +58,8 @@ const safeMoney = ({
 interface FlightAvailabilityRow {
   flight_id: string;
   flight_number: string | null;
+  origin: string;
+  destination: string;
   departure_time: Date | null;
   arrival_time: Date | null;
   duration_minutes: number | null;
@@ -125,6 +128,8 @@ export const PostgresInventoryQueriesLive = Layer.effect(
             SELECT
               flight_id,
               flight_number,
+              origin,
+              destination,
               departure_time,
               arrival_time,
               duration_minutes,
@@ -151,6 +156,8 @@ export const PostgresInventoryQueriesLive = Layer.effect(
           return new FlightAvailability({
             flightId: row.flight_id as FlightId,
             flightNumber: row.flight_number ?? (row.flight_id as string),
+            origin: row.origin as AirportCode,
+            destination: row.destination as AirportCode,
             departureTime: row.departure_time ?? new Date(),
             arrivalTime: row.arrival_time ?? new Date(),
             durationMinutes: row.duration_minutes ?? 0,
@@ -228,8 +235,9 @@ export const PostgresInventoryQueriesLive = Layer.effect(
 
       findAvailableFlights: (params) =>
         Effect.gen(function* () {
-          const { cabin, minSeats } = params;
-          const cabinLower = cabin.toLowerCase();
+          const minSeats = params.minSeats ?? 1;
+
+          const cabinLower = params.cabin.toLowerCase();
           const columns =
             CABIN_COLUMNS[cabinLower as keyof typeof CABIN_COLUMNS];
 
@@ -237,11 +245,12 @@ export const PostgresInventoryQueriesLive = Layer.effect(
             return [];
           }
 
-          // Determine which column to check based on cabin
           const rows = yield* sql<FlightAvailabilityRow>`
             SELECT
               flight_id,
               flight_number,
+              origin,
+              destination,
               departure_time,
               arrival_time,
               duration_minutes,
@@ -258,6 +267,9 @@ export const PostgresInventoryQueriesLive = Layer.effect(
               last_updated
             FROM flight_inventory
             WHERE ${sql(columns.available)} >= ${minSeats}
+              AND (${params.route === undefined || params.route === null} OR origin = ${params.route?.origin})
+              AND (${params.route === undefined || params.route === null} OR destination = ${params.route?.destination})
+              AND (${params.departureDate === undefined || params.departureDate === null} OR DATE(departure_time) = DATE(${params.departureDate}))
             ORDER BY flight_id
           `;
 
@@ -267,6 +279,8 @@ export const PostgresInventoryQueriesLive = Layer.effect(
                 return new FlightAvailability({
                   flightId: row.flight_id as FlightId,
                   flightNumber: row.flight_number ?? (row.flight_id as string),
+                  origin: row.origin as AirportCode,
+                  destination: row.destination as AirportCode,
                   departureTime: row.departure_time ?? new Date(),
                   arrivalTime: row.arrival_time ?? new Date(),
                   durationMinutes: row.duration_minutes ?? 0,
@@ -306,6 +320,8 @@ export const PostgresInventoryQueriesLive = Layer.effect(
             SELECT
               flight_id,
               flight_number,
+              origin,
+              destination,
               departure_time,
               arrival_time,
               duration_minutes,
@@ -334,6 +350,8 @@ export const PostgresInventoryQueriesLive = Layer.effect(
                 return new FlightAvailability({
                   flightId: row.flight_id as FlightId,
                   flightNumber: row.flight_number ?? (row.flight_id as string),
+                  origin: row.origin as AirportCode,
+                  destination: row.destination as AirportCode,
                   departureTime: row.departure_time ?? new Date(),
                   arrivalTime: row.arrival_time ?? new Date(),
                   durationMinutes: row.duration_minutes ?? 0,

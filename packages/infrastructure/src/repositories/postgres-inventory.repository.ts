@@ -11,7 +11,7 @@ import {
 import type * as Events from "@workspace/domain/events";
 import { type DomainEventType } from "@workspace/domain/events";
 import { FlightInventory } from "@workspace/domain/inventory";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Option } from "effect";
 import {
   type FlightInventoryRow,
   toDomain,
@@ -67,18 +67,30 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
             const result = yield* sql`
           INSERT INTO flight_inventory (
             flight_id,
+            origin,
+            destination,
             economy_total, economy_available, economy_price_amount, economy_price_currency,
             business_total, business_available, business_price_amount, business_price_currency,
             first_total, first_available, first_price_amount, first_price_currency,
+            flight_number, departure_time, arrival_time, duration_minutes, stops,
             version
           ) VALUES (
             ${inventory.flightId},
+            ${inventory.origin},
+            ${inventory.destination},
             ${inventory.availability.economy.capacity}, ${inventory.availability.economy.available}, ${inventory.availability.economy.price.amount}, ${inventory.availability.economy.price.currency},
             ${inventory.availability.business.capacity}, ${inventory.availability.business.available}, ${inventory.availability.business.price.amount}, ${inventory.availability.business.price.currency},
             ${inventory.availability.first.capacity}, ${inventory.availability.first.available}, ${inventory.availability.first.price.amount}, ${inventory.availability.first.price.currency},
+            ${Option.getOrNull(inventory.flightNumber)},
+            ${Option.getOrNull(inventory.departureTime)},
+            ${Option.getOrNull(inventory.arrivalTime)},
+            ${Option.getOrNull(inventory.durationMinutes)},
+            ${Option.getOrNull(inventory.stops)},
             ${inventory.version + 1}
           )
           ON CONFLICT (flight_id) DO UPDATE SET
+            origin = EXCLUDED.origin,
+            destination = EXCLUDED.destination,
             economy_available = EXCLUDED.economy_available,
             economy_price_amount = EXCLUDED.economy_price_amount,
             economy_price_currency = EXCLUDED.economy_price_currency,
@@ -88,6 +100,11 @@ export const PostgresInventoryRepositoryLive = Layer.effect(
             first_available = EXCLUDED.first_available,
             first_price_amount = EXCLUDED.first_price_amount,
             first_price_currency = EXCLUDED.first_price_currency,
+            flight_number = EXCLUDED.flight_number,
+            departure_time = EXCLUDED.departure_time,
+            arrival_time = EXCLUDED.arrival_time,
+            duration_minutes = EXCLUDED.duration_minutes,
+            stops = EXCLUDED.stops,
             version = flight_inventory.version + 1
           WHERE flight_inventory.version = ${inventory.version}
           RETURNING version
