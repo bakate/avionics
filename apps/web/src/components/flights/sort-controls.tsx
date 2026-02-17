@@ -2,7 +2,8 @@
  * Sort controls for flight results.
  * Requirements: 2.2
  */
-import { ArrowDownAZ, ArrowUpAZ } from "lucide-react";
+import { ArrowDown01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -15,6 +16,9 @@ export type SortControlsProps = {
   readonly onSortChange: (field: SortField, order: SortOrder) => void;
 };
 
+import { Button } from "@workspace/ui/components/button";
+import { cn } from "@workspace/ui/lib/utils";
+
 const SortButton = ({
   active,
   onClick,
@@ -26,23 +30,25 @@ const SortButton = ({
   children: ReactNode;
   order: SortOrder;
 }) => (
-  <button
-    type="button"
+  <Button
+    variant="ghost"
+    size="sm"
     onClick={onClick}
-    className={`flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all ${
+    className={cn(
+      "gap-2 font-bold transition-all",
       active
-        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-        : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
-    }`}
+        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-500 hover:text-white"
+        : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white",
+    )}
   >
     {children}
     {active &&
       (order === "asc" ? (
-        <ArrowUpAZ className="h-3 w-3" />
+        <HugeiconsIcon icon={ArrowUp01Icon} size={12} />
       ) : (
-        <ArrowDownAZ className="h-3 w-3" />
+        <HugeiconsIcon icon={ArrowDown01Icon} size={12} />
       ))}
-  </button>
+  </Button>
 );
 
 export const SortControls = ({

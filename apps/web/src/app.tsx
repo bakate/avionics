@@ -1,3 +1,4 @@
+import { ThemeProvider } from "@workspace/ui/components/theme-provider";
 import { I18nextProvider as I18nProvider } from "react-i18next";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import BaseLayout from "./components/layout/base-layout.tsx";
@@ -39,9 +40,11 @@ const router = createBrowserRouter([
 
 const App = () => {
   return (
-    <I18nProvider i18n={i18n}>
-      <RouterProvider router={router} />
-    </I18nProvider>
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+      <I18nProvider i18n={i18n}>
+        <RouterProvider router={router} />
+      </I18nProvider>
+    </ThemeProvider>
   );
 };
 

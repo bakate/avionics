@@ -1,259 +1,249 @@
-/**
- * Search form component for flight search.
- * Requirements: 1.1, 1.4, 6.1
- */
-import { ArrowRightLeft, Search } from "lucide-react";
+import { effectTsResolver } from "@hookform/resolvers/effect-ts";
 import {
-  type FormEvent,
-  type ReactNode,
-  useCallback,
-  useId,
-  useState,
-} from "react";
+  Calendar01Icon,
+  Exchange01Icon,
+  Search01Icon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@workspace/ui/components/button";
+import { Calendar } from "@workspace/ui/components/calendar";
+import { Field, FieldError, FieldLabel } from "@workspace/ui/components/field";
+import { Input } from "@workspace/ui/components/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@workspace/ui/components/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import { cn } from "@workspace/ui/lib/utils";
+import { format } from "date-fns";
+import { useTransition } from "react";
+import { type DateRange } from "react-day-picker";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import {
   cabinOptions,
-  type FormErrors,
-  type FormState,
   initialFormState,
+  type SearchFormInput,
   type SearchFormProps,
-  validateForm,
+  type SearchFormValues,
+  searchFormSchema,
 } from "./types";
-
-const inputClass = (hasError: boolean) =>
-  `h-12 w-full rounded-xl border px-4 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
-    hasError
-      ? "border-red-400/50 bg-red-50/50 text-red-900 placeholder:text-red-300"
-      : "border-white/20 bg-white/10 text-white placeholder:text-slate-400 focus:bg-white/20"
-  } backdrop-blur-sm`;
-
-const FieldWrapper = ({
-  children,
-  error,
-  label,
-  htmlFor,
-  className = "",
-}: {
-  children: ReactNode;
-  label: string;
-  htmlFor: string;
-  error?: string | undefined;
-  className?: string | undefined;
-}) => (
-  <div className={className}>
-    <label
-      htmlFor={htmlFor}
-      className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300"
-    >
-      {label}
-    </label>
-    {children}
-    {error && (
-      <p
-        className="mt-1.5 text-xs font-medium text-red-300 drop-shadow-sm"
-        role="alert"
-      >
-        {error}
-      </p>
-    )}
-  </div>
-);
 
 export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
   const { t } = useTranslation();
-  const [form, setForm] = useState<FormState>(initialFormState);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [isPending, startTransition] = useTransition();
 
-  const originId = useId();
-  const destId = useId();
-  const depId = useId();
-  const retId = useId();
-  const passId = useId();
-  const cabinId = useId();
+  const form = useForm<SearchFormInput, any, SearchFormValues>({
+    resolver: effectTsResolver(searchFormSchema),
+    defaultValues: initialFormState,
+  });
 
-  const updateField = useCallback(
-    <K extends keyof FormState>(field: K, value: FormState[K]) => {
-      setForm((prev) => ({ ...prev, [field]: value }));
-      setErrors((prev) => {
-        if (!prev[field]) return prev;
-        const next = { ...prev };
-        delete next[field];
-        return next;
-      });
-    },
-    [],
-  );
+  const onSubmit = (values: SearchFormValues) => {
+    startTransition(() => {
+      onSearch(values);
+    });
+  };
 
-  const handleSwap = useCallback(() => {
-    setForm((prev) => ({
-      ...prev,
-      origin: prev.destination,
-      destination: prev.origin,
-    }));
-    setErrors({});
-  }, []);
-
-  const handleSubmit = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault();
-      const result = validateForm(form, t as (key: string) => string);
-      if (result.ok) {
-        setErrors({});
-        onSearch(result.params);
-      } else {
-        setErrors(result.errors);
-      }
-    },
-    [form, onSearch, t],
-  );
+  const handleSwap = () => {
+    const origin = form.getValues("origin");
+    const destination = form.getValues("destination");
+    form.setValue("origin", destination);
+    form.setValue("destination", origin);
+  };
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={form.handleSubmit(onSubmit)}
       className="group relative w-full overflow-hidden rounded-3xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-xl md:p-8"
-      noValidate
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-start">
-        <FieldWrapper
-          label={t("search.origin")}
-          error={errors.origin}
-          className="flex-1"
-          htmlFor={originId}
-        >
-          <input
-            id={originId}
-            type="text"
-            placeholder="CDG"
-            maxLength={3}
-            value={form.origin}
-            onChange={(e) =>
-              updateField("origin", e.target.value.toUpperCase())
-            }
-            className={inputClass(Boolean(errors.origin))}
-            aria-invalid={Boolean(errors.origin)}
-          />
-        </FieldWrapper>
-        <div className="flex items-center justify-center md:pt-6">
-          <button
+        <Controller
+          control={form.control}
+          name="origin"
+          render={({ field, fieldState }) => (
+            <Field className="flex-1" data-invalid={fieldState.invalid}>
+              <FieldLabel>{t("search.origin").toUpperCase()}</FieldLabel>
+              <Input
+                {...field}
+                className="bg-white/5 border-white/10 font-semibold text-white placeholder:text-white/40 h-12"
+                placeholder="CDG"
+                maxLength={3}
+                disabled={isLoading || isPending}
+              />
+              <FieldError errors={[fieldState.error]} />
+            </Field>
+          )}
+        />
+
+        <div className="flex items-center justify-center md:pt-8">
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={handleSwap}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/5 text-white shadow-lg transition-all hover:bg-white/10 hover:rotate-180 md:h-12 md:w-12"
+            disabled={isLoading || isPending}
             aria-label={t("search.swap")}
+            className="flex size-12 text-white/70 hover:bg-white/10 hover:text-white"
           >
-            <ArrowRightLeft className="h-5 w-5" />
-          </button>
+            <HugeiconsIcon icon={Exchange01Icon} size={20} />
+          </Button>
         </div>
-        <FieldWrapper
-          label={t("search.destination")}
-          error={errors.destination}
-          className="flex-1"
-          htmlFor={destId}
-        >
-          <input
-            id={destId}
-            type="text"
-            placeholder="JFK"
-            maxLength={3}
-            value={form.destination}
-            onChange={(e) =>
-              updateField("destination", e.target.value.toUpperCase())
-            }
-            className={inputClass(Boolean(errors.destination))}
-            aria-invalid={Boolean(errors.destination)}
-          />
-        </FieldWrapper>
+
+        <Controller
+          control={form.control}
+          name="destination"
+          render={({ field, fieldState }) => (
+            <Field className="flex-1" data-invalid={fieldState.invalid}>
+              <FieldLabel>{t("search.destination").toUpperCase()}</FieldLabel>
+              <Input
+                {...field}
+                className="bg-white/5 border-white/10 font-semibold text-white placeholder:text-white/40 h-12"
+                placeholder="LHR"
+                maxLength={3}
+                disabled={isLoading || isPending}
+              />
+              <FieldError errors={[fieldState.error]} />
+            </Field>
+          )}
+        />
       </div>
+
       <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-start">
-        <FieldWrapper
-          label={t("search.departureDate")}
-          error={errors.departureDate}
-          className="flex-1"
-          htmlFor={depId}
-        >
-          <input
-            id={depId}
-            type="date"
-            value={form.departureDate}
-            onChange={(e) => updateField("departureDate", e.target.value)}
-            className={inputClass(Boolean(errors.departureDate))}
-            aria-invalid={Boolean(errors.departureDate)}
+        <Field className="flex-1">
+          <FieldLabel>
+            {(t("search.dates") || "Dates").toUpperCase()}
+          </FieldLabel>
+          <Controller
+            control={form.control}
+            name="departureDate"
+            render={({ field: departureField }) => (
+              <Controller
+                control={form.control}
+                name="returnDate"
+                render={({ field: returnField }) => {
+                  const dateRange: DateRange = {
+                    from: departureField.value
+                      ? new Date(departureField.value)
+                      : undefined,
+                    to: returnField.value
+                      ? new Date(returnField.value)
+                      : undefined,
+                  };
+
+                  return (
+                    <Popover>
+                      <PopoverTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            className={cn(
+                              "h-12 w-full justify-start border-white/10 bg-white/5 px-4 text-left font-semibold text-white hover:bg-white/10",
+                              !dateRange.from && "text-white/40",
+                            )}
+                            disabled={isLoading || isPending}
+                          >
+                            <HugeiconsIcon
+                              icon={Calendar01Icon}
+                              size={20}
+                              className="mr-2 opacity-50"
+                            />
+                            {dateRange.from ? (
+                              dateRange.to ? (
+                                <>
+                                  {format(dateRange.from, "LLL dd, y")} -{" "}
+                                  {format(dateRange.to, "LLL dd, y")}
+                                </>
+                              ) : (
+                                format(dateRange.from, "LLL dd, y")
+                              )
+                            ) : (
+                              <span>
+                                {t("search.selectDates") || "Select dates"}
+                              </span>
+                            )}
+                          </Button>
+                        }
+                      />
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          initialFocus
+                          mode="range"
+                          defaultMonth={dateRange.from ?? new Date()}
+                          selected={dateRange}
+                          onSelect={(range) => {
+                            departureField.onChange(
+                              range?.from?.toISOString().split("T")[0] ?? "",
+                            );
+                            returnField.onChange(
+                              range?.to?.toISOString().split("T")[0] ?? "",
+                            );
+                          }}
+                          numberOfMonths={2}
+                        />
+                        <FieldError
+                          errors={[
+                            form.formState.errors.departureDate,
+                            form.formState.errors.returnDate,
+                          ]}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  );
+                }}
+              />
+            )}
           />
-        </FieldWrapper>
-        <FieldWrapper
-          label={t("search.returnDate")}
-          error={errors.returnDate}
-          className="flex-1"
-          htmlFor={retId}
-        >
-          <input
-            id={retId}
-            type="date"
-            value={form.returnDate}
-            onChange={(e) => updateField("returnDate", e.target.value)}
-            className={inputClass(Boolean(errors.returnDate))}
-            aria-invalid={Boolean(errors.returnDate)}
-          />
-        </FieldWrapper>
-        <FieldWrapper
-          label={t("search.passengers")}
-          error={errors.passengerCount}
-          className="w-full md:w-32"
-          htmlFor={passId}
-        >
-          <input
-            id={passId}
-            type="number"
-            min={1}
-            max={9}
-            value={form.passengerCount}
-            onChange={(e) =>
-              updateField(
-                "passengerCount",
-                Number.parseInt(e.target.value, 10) || 1,
-              )
-            }
-            className={inputClass(Boolean(errors.passengerCount))}
-            aria-invalid={Boolean(errors.passengerCount)}
-          />
-        </FieldWrapper>
-        <FieldWrapper
-          label={t("search.cabinClass")}
-          error={errors.cabinClass}
-          className="w-full md:w-44"
-          htmlFor={cabinId}
-        >
-          <select
-            id={cabinId}
-            value={form.cabinClass}
-            onChange={(e) => updateField("cabinClass", e.target.value)}
-            className={inputClass(Boolean(errors.cabinClass))}
-            aria-invalid={Boolean(errors.cabinClass)}
-          >
-            {cabinOptions.map((opt) => (
-              <option
-                key={opt.value}
-                value={opt.value}
-                className="bg-slate-900 text-white"
+        </Field>
+
+        <Controller
+          control={form.control}
+          name="cabinClass"
+          render={({ field, fieldState }) => (
+            <Field className="flex-1" data-invalid={fieldState.invalid}>
+              <FieldLabel>{t("search.cabinClass").toUpperCase()}</FieldLabel>
+              <Select
+                onValueChange={field.onChange}
+                value={field.value ?? "ALL"}
+                disabled={isLoading || isPending}
               >
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </FieldWrapper>
+                <SelectTrigger className="!h-12 border-white/10 bg-white/5 font-semibold text-white hover:bg-white/10 w-full">
+                  <SelectValue placeholder="—" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cabinOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FieldError errors={[fieldState.error]} />
+            </Field>
+          )}
+        />
       </div>
+
       <div className="mt-8 flex justify-end">
-        <button
+        <Button
           type="submit"
-          disabled={isLoading}
-          className="flex h-12 min-w-[160px] items-center justify-center gap-3 rounded-xl bg-blue-600 px-8 text-sm font-bold tracking-wide text-white shadow-xl shadow-blue-500/20 transition-all hover:bg-blue-500 hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+          size={"huge"}
+          disabled={isLoading || isPending}
+          className="rounded-2xl bg-blue-600 px-8 font-bold text-white shadow-xl transition-all hover:bg-blue-500 hover:shadow-blue-500/25 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isLoading ? (
-            <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          {isLoading || isPending ? (
+            <span className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
           ) : (
-            <Search className="h-5 w-5" />
+            <HugeiconsIcon icon={Search01Icon} size={20} />
           )}
           {t("search.submit").toUpperCase()}
-        </button>
+        </Button>
       </div>
     </form>
   );

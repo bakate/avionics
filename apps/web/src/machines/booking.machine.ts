@@ -141,7 +141,7 @@ export const bookingMachine = setup({
           origin: input.origin,
           destination: input.destination,
           departureDate: input.departureDate,
-        });
+        }).pipe(Effect.delay("7 seconds"));
         const flights = await runPromise(effect);
         // Map the API response (FlightAvailability) to the machine's FlightResult
         return flights.map((f) => ({
@@ -155,7 +155,7 @@ export const bookingMachine = setup({
     fetchBookings: fromPromise(
       async (): Promise<ReadonlyArray<BookingSummary>> => {
         try {
-          const effect = getBookings();
+          const effect = getBookings().pipe(Effect.delay("5 seconds"));
           const bookings = await runPromise(effect);
           console.log("Fetched bookings:", bookings);
           return bookings.map((b) => ({

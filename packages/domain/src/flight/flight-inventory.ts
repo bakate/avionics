@@ -10,7 +10,12 @@ import {
   SeatsHeld,
   SeatsReleased,
 } from "../events.js";
-import { type CabinClass, FlightId, Money } from "../kernel.js";
+import {
+  AirportCodeSchema,
+  type CabinClass,
+  FlightId,
+  Money,
+} from "../kernel.js";
 
 export class SeatBucket extends Schema.Class<SeatBucket>("SeatBucket")({
   available: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
@@ -22,10 +27,22 @@ export class FlightInventory extends Schema.Class<FlightInventory>(
   "FlightInventory",
 )({
   flightId: FlightId, // Link to Flight
+  origin: AirportCodeSchema,
+  destination: AirportCodeSchema,
   availability: Schema.Struct({
     economy: SeatBucket,
     business: SeatBucket,
     first: SeatBucket,
+  }),
+  // Metadata for Search & Display
+  flightNumber: Schema.optionalWith(Schema.String, { as: "Option" }),
+  departureTime: Schema.optionalWith(Schema.Date, { as: "Option" }),
+  arrivalTime: Schema.optionalWith(Schema.Date, { as: "Option" }),
+  durationMinutes: Schema.optionalWith(Schema.Number.pipe(Schema.int()), {
+    as: "Option",
+  }),
+  stops: Schema.optionalWith(Schema.Number.pipe(Schema.int()), {
+    as: "Option",
   }),
   version: Schema.Number.pipe(Schema.int(), Schema.nonNegative()), // Optimistic Concurrency
   domainEvents: Schema.Array(DomainEventSchema).pipe(

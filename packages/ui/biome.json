@@ -1,0 +1,21 @@
+{
+  "root": false,
+  "extends": ["../../biome.json"],
+  "linter": {
+    "rules": {
+      "suspicious": {
+        "noConsole": "off"
+      },
+      "a11y": {
+        "useSemanticElements": "off",
+        "useKeyWithClickEvents": "off"
+      },
+      "complexity": {
+        "noImplicitCoercions": "off"
+      },
+      "style": {
+        "useComponentExportOnlyModules": "off"
+      }
+    }
+  }
+}
