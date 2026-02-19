@@ -16,7 +16,6 @@ import {
 } from "@workspace/domain/errors";
 import {
   BookingId,
-  CabinClassSchema,
   Money,
   makeFlightId,
   makeSegmentId,
@@ -42,6 +41,7 @@ import {
   Schedule,
   Schema,
 } from "effect";
+// Re-export for backward compatibility (canonical definition in commands/booking.commands.ts)
 import { BookFlightCommand } from "../commands/booking.commands.js";
 import { NotificationGateway } from "../gateways/notification.gateway.js";
 import {
@@ -62,26 +62,7 @@ import {
   InventoryService,
   type InventoryServiceSignature,
 } from "./inventory.service.js";
-
-// ---------------------------------------------------------------------------
-// Command Schema
-// ---------------------------------------------------------------------------
-
-const passengerStruct = Schema.Struct({
-  ...Passenger.fields,
-  id: Schema.String,
-});
-
-export class BookFlightCommand extends Schema.Class<BookFlightCommand>(
-  "BookFlightCommand",
-)({
-  flightId: Schema.String,
-  cabinClass: CabinClassSchema,
-  passengers: Schema.NonEmptyArray(passengerStruct),
-  seatNumber: Schema.OptionFromNullOr(Schema.String).pipe(Schema.optional),
-  successUrl: Schema.String, // URL for payment redirect success
-  cancelUrl: Schema.optional(Schema.String), // Optional cancel URL
-}) {}
+export { BookFlightCommand };
 
 // ---------------------------------------------------------------------------
 // Service Interface
