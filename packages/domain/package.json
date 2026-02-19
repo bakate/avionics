@@ -12,7 +12,8 @@
     "./passenger": "./src/booking/passenger.ts",
     "./segment": "./src/booking/segment.ts",
     "./coupon": "./src/ticket/coupon.ts",
-    "./ticket": "./src/ticket/ticket.ts"
+    "./ticket": "./src/ticket/ticket.ts",
+    "./pricing": "./src/pricing/pricing-engine.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
