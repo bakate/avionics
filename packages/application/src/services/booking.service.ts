@@ -16,6 +16,7 @@ import {
 } from "@workspace/domain/errors";
 import {
   BookingId,
+  CabinClassSchema,
   Money,
   makeFlightId,
   makeSegmentId,
@@ -24,6 +25,10 @@ import {
 } from "@workspace/domain/kernel";
 
 import { Passenger, PassengerId } from "@workspace/domain/passenger";
+import {
+  computePricingBreakdown,
+  countSeatsNeeded,
+} from "@workspace/domain/pricing";
 import { BookingSegment } from "@workspace/domain/segment";
 import { Ticket, TicketNumber, TicketStatus } from "@workspace/domain/ticket";
 import {
@@ -58,7 +63,25 @@ import {
   type InventoryServiceSignature,
 } from "./inventory.service.js";
 
-export { BookFlightCommand };
+// ---------------------------------------------------------------------------
+// Command Schema
+// ---------------------------------------------------------------------------
+
+const passengerStruct = Schema.Struct({
+  ...Passenger.fields,
+  id: Schema.String,
+});
+
+export class BookFlightCommand extends Schema.Class<BookFlightCommand>(
+  "BookFlightCommand",
+)({
+  flightId: Schema.String,
+  cabinClass: CabinClassSchema,
+  passengers: Schema.NonEmptyArray(passengerStruct),
+  seatNumber: Schema.OptionFromNullOr(Schema.String).pipe(Schema.optional),
+  successUrl: Schema.String, // URL for payment redirect success
+  cancelUrl: Schema.optional(Schema.String), // Optional cancel URL
+}) {}
 
 // ---------------------------------------------------------------------------
 // Service Interface
@@ -232,63 +255,71 @@ export class BookingService extends Context.Tag("BookingService")<
             }),
           );
 
-          const passenger = booking.passengers[0];
           const segment = booking.segments[0];
 
-          const coupon = new Coupon({
-            couponNumber: 1,
-            flightId: segment.flightId,
-            seatNumber: segment.seatNumber ?? O.none(),
-            status: "OPEN",
-          });
+          // Issue one ticket per passenger
+          let lastTicket: Ticket | undefined;
+          for (const passenger of booking.passengers) {
+            const coupon = new Coupon({
+              couponNumber: 1,
+              flightId: segment.flightId,
+              seatNumber: segment.seatNumber ?? O.none(),
+              status: "OPEN",
+            });
 
-          const ticketNumber = yield* generateTicketNumber();
+            const ticketNumber = yield* generateTicketNumber();
 
-          const ticket = new Ticket({
-            ticketNumber,
-            pnrCode: booking.pnrCode,
-            status: TicketStatus.ISSUED,
-            passengerId: passenger.id,
-            passengerName: `${passenger.firstName} ${passenger.lastName}`,
-            coupons: [coupon],
-            issuedAt: new Date(),
-          });
+            const ticket = new Ticket({
+              ticketNumber,
+              pnrCode: booking.pnrCode,
+              status: TicketStatus.ISSUED,
+              passengerId: passenger.id,
+              passengerName: `${passenger.firstName} ${passenger.lastName}`,
+              coupons: [coupon],
+              issuedAt: new Date(),
+            });
 
-          yield* ticketRepo.save(ticket).pipe(
-            Effect.mapError(
-              (error) =>
-                new BookingPersistenceError({
-                  bookingId: booking.id,
-                  reason: `Failed to save ticket: ${String(error)}`,
-                }),
-            ),
-          );
-
-          yield* notificationGateway
-            .sendTicket(ticket, {
-              email: passenger.email,
-              name: `${passenger.firstName} ${passenger.lastName}`,
-            })
-            .pipe(
-              Effect.retry(retryPolicy),
-              Effect.timeout(Duration.seconds(10)),
-              Effect.catchAll((err) =>
-                Effect.gen(function* () {
-                  yield* Effect.logError(
-                    "Failed to send email notification",
-                    err,
-                  );
-                  const failedTicket = new Ticket({
-                    ...ticket,
-                    status: TicketStatus.NOTIFICATION_FAILED,
-                  });
-                  // We ignore the error of saving the failed status as it is a compensation
-                  yield* ticketRepo.save(failedTicket).pipe(Effect.ignore);
-                }),
+            yield* ticketRepo.save(ticket).pipe(
+              Effect.mapError(
+                (error) =>
+                  new BookingPersistenceError({
+                    bookingId: booking.id,
+                    reason: `Failed to save ticket: ${String(error)}`,
+                  }),
               ),
             );
 
-          return { booking: confirmedBooking, ticket };
+            // Send notification per passenger
+            yield* notificationGateway
+              .sendTicket(ticket, {
+                email: passenger.email,
+                name: `${passenger.firstName} ${passenger.lastName}`,
+              })
+              .pipe(
+                Effect.retry(retryPolicy),
+                Effect.timeout(Duration.seconds(10)),
+                Effect.catchAll((err) =>
+                  Effect.gen(function* () {
+                    yield* Effect.logError(
+                      "Failed to send email notification",
+                      err,
+                    );
+                    const failedTicket = new Ticket({
+                      ...ticket,
+                      status: TicketStatus.NOTIFICATION_FAILED,
+                    });
+                    yield* ticketRepo.save(failedTicket).pipe(Effect.ignore);
+                  }),
+                ),
+              );
+
+            lastTicket = ticket;
+          }
+
+          return {
+            booking: confirmedBooking,
+            ticket: lastTicket as Ticket,
+          };
         });
 
       const cancelBooking = (bookingId: BookingId, reason: string) =>
@@ -323,6 +354,7 @@ export class BookingService extends Context.Tag("BookingService")<
 
           // Best effort Release Seats (async from user perspective, but sync here for simplicity)
           // Using strict concurrency control (retry)
+          const seatsToRelease = countSeatsNeeded(booking.passengers);
           yield* Effect.forEach(
             booking.segments,
             (segment) =>
@@ -330,7 +362,7 @@ export class BookingService extends Context.Tag("BookingService")<
                 .releaseSeats({
                   flightId: segment.flightId,
                   cabin: segment.cabin,
-                  numberOfSeats: booking.passengers.length,
+                  numberOfSeats: seatsToRelease,
                 })
                 .pipe(
                   Effect.retry(retryPolicy),
@@ -350,17 +382,23 @@ export class BookingService extends Context.Tag("BookingService")<
       return {
         bookFlight: (command: BookFlightCommand) =>
           Effect.gen(function* () {
-            const numberOfSeats = command.passengers.length;
+            // 1. Count seats needed (non-INFANT passengers)
+            const numberOfSeats = countSeatsNeeded(command.passengers);
 
-            // 1. Hold seats and get price
+            // 2. Hold seats and get unit price
             const holdResult = yield* inventoryService.holdSeats({
               flightId: makeFlightId(command.flightId),
               cabin: command.cabinClass,
               numberOfSeats,
             });
 
-            // 2. Prepare Booking (State HELD)
-            // 2.1. Create Passengers
+            // 3. Compute pricing breakdown for all passengers
+            const pricingBreakdown = computePricingBreakdown(
+              command.passengers,
+              holdResult.unitPrice,
+            );
+
+            // 4. Create Passenger entities from command
             const passengers = command.passengers.map(
               (p) =>
                 new Passenger({
@@ -372,44 +410,33 @@ export class BookingService extends Context.Tag("BookingService")<
                   gender: p.gender,
                   type: p.type,
                 }),
-            );
+            ) as [Passenger, ...Array<Passenger>];
 
-            // Safety check (schema ensures fallback, but good to be explicit)
-            const primaryPassenger = passengers[0];
-            if (!primaryPassenger) {
-              return yield* Effect.die(new Error("No passengers provided"));
-            }
-
-            // 2.2. Generate PNR
+            // 5. Generate PNR
             const pnr = yield* generateUniquePnr(bookingRepo);
 
-            // 2.3. Generate Booking ID (Manually brand)
+            // 6. Generate Booking ID
             const bookingId = BookingId.make(Crypto.randomUUID());
 
-            // 2.4. Create Booking Segment
+            // 7. Create Booking Segment with total price from breakdown
             const segment = new BookingSegment({
               id: makeSegmentId(Crypto.randomUUID()),
               flightId: makeFlightId(command.flightId),
               cabin: command.cabinClass,
-              price: holdResult.totalPrice,
+              price: pricingBreakdown.totalPrice,
               seatNumber: command.seatNumber ?? O.none(),
             });
 
-            // 2.5. Create Booking using factory method (emits BookingCreated event)
-            const passengersNonEmpty = passengers as [
-              Passenger,
-              ...Array<Passenger>,
-            ];
-
+            // 8. Create Booking using factory method (emits BookingCreated event)
             const booking = Booking.create({
               id: bookingId,
               pnrCode: pnr,
-              passengers: passengersNonEmpty,
+              passengers,
               segments: [segment],
               expiresAt: O.some(new Date(Date.now() + 30 * 60 * 1000)), // 30 min to pay
             });
 
-            // 2.6. Save Booking with HELD status (within transaction)
+            // 9. Save Booking with HELD status (within transaction)
             const savedBooking = yield* unitOfWork.transaction(
               Effect.all([
                 bookingRepo.save(booking),
@@ -417,13 +444,14 @@ export class BookingService extends Context.Tag("BookingService")<
               ]).pipe(Effect.map(([saved]) => saved)),
             );
 
-            // 3. Create Checkout Session for payment
+            // 10. Create Checkout Session for payment (use first passenger as contact)
+            const primaryPassenger = command.passengers[0];
             const checkoutSession = yield* paymentGateway
               .createCheckout({
-                amount: holdResult.totalPrice,
+                amount: pricingBreakdown.totalPrice,
                 customer: {
                   email: primaryPassenger.email,
-                  externalId: primaryPassenger.id, // Future: userId when auth is implemented
+                  externalId: primaryPassenger.id,
                 },
                 bookingReference: pnr,
                 bookingId: savedBooking.id,
