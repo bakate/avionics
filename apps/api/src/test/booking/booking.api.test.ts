@@ -1,5 +1,4 @@
 /** biome-ignore-all lint/style/noRestrictedImports: <explanation> */
-
 import { createServer } from "node:http";
 import {
   FetchHttpClient,
@@ -52,7 +51,6 @@ import {
   Schema,
 } from "effect";
 import { describe, expect, it } from "vitest";
-
 import { Api } from "../../api.js";
 import { BookingApiLive } from "../../booking/api-live.js";
 import { HealthApiLive } from "../../health/api-live.js";
@@ -60,10 +58,18 @@ import { InventoryApiLive } from "../../inventory/api-live.js";
 import { MetaApiLive } from "../../meta/api-live.js";
 import { WebhookApiLive } from "../../webhook/api-live.js";
 
-// Import for config provider
 const POLAR_BASE_URL = "https://sandbox-api.polar.sh";
 
-// --- In-memory Infrastructure ---
+const makePassengerEntity = (type: PassengerType = PassengerType.ADULT) =>
+  new Passenger({
+    id: PassengerId.make(faker.string.uuid()),
+    firstName: faker.person.firstName(),
+    lastName: faker.person.lastName(),
+    email: Schema.decodeSync(EmailSchema)(faker.internet.email()),
+    dateOfBirth: faker.date.birthdate(),
+    gender: "MALE" as const,
+    type,
+  });
 
 const BookingRepoInMemory = Layer.effect(
   BookingRepository,
@@ -104,7 +110,6 @@ const InventoryRepoInMemory = Layer.effect(
           Effect.flatMap((map) => {
             const inv = map.get(id);
             if (inv) return Effect.succeed(inv);
-            // Default inventory for tests if not found
             return Effect.succeed(
               new FlightInventory({
                 flightId: id as any,
@@ -168,150 +173,189 @@ const NotificationGatewayMock = Layer.succeed(
   }),
 );
 
-describe("Booking API Integration (Refinement)", () => {
-  it("should cancel a booking using real service logic", async () => {
+const MockConfigProvider = Layer.setConfigProvider(
+  ConfigProvider.fromMap(
+    new Map([
+      ["NODE_ENV", "development"],
+      ["PORT", "0"],
+      ["POLAR_API_KEY", "test_key"],
+      ["POLAR_PRODUCT_ID", "test_product"],
+      ["POLAR_BASE_URL", POLAR_BASE_URL],
+      ["POLAR_TIMEOUT", "30"],
+      ["POLAR_MAX_RETRIES", "2"],
+    ]),
+  ),
+);
+
+const BookingQueriesMock = Layer.succeed(BookingQueries, {
+  getSummaryByPnr: () => Effect.die(new Error("Not implemented")),
+  getPassengerHistory: () => Effect.die(new Error("Not implemented")),
+  searchByPassengerName: () => Effect.die(new Error("Not implemented")),
+  listBookings: () => Effect.die(new Error("Not implemented")),
+  findExpiredBookings: () => Effect.die(new Error("Not implemented")),
+} satisfies BookingQueriesPort);
+
+const InventoryQueriesMock = Layer.succeed(InventoryQueries, {
+  getFlightAvailability: () => Effect.die(new Error("Not implemented")),
+  findAvailableFlights: () => Effect.die(new Error("Not implemented")),
+  getInventoryStats: () => Effect.die(new Error("Not implemented")),
+  getLowInventoryAlerts: () => Effect.die(new Error("Not implemented")),
+  getCabinAvailability: () => Effect.die(new Error("Not implemented")),
+} satisfies InventoryQueriesPort);
+
+const makeTestLayer = () => {
+  const BaseDeps = Layer.mergeAll(
+    TicketRepoInMemory,
+    OutboxRepoInMemory,
+    UnitOfWorkPassthrough,
+    NotificationGatewayMock,
+    AuditLoggerTest(),
+    HealthCheckTest(),
+  ).pipe(Layer.provide(MockConfigProvider));
+
+  const GatewaysLive = Layer.mergeAll(
+    PolarPaymentGatewayLive,
+    NotificationGatewayMock,
+  ).pipe(Layer.provideMerge(BaseDeps));
+
+  const AppServicesLive = Layer.mergeAll(
+    BookingService.Live,
+    CancellationService.Live,
+  ).pipe(
+    Layer.provideMerge(InventoryService.Live),
+    Layer.provideMerge(GatewaysLive),
+  );
+
+  const HandlersLive = Layer.mergeAll(
+    BookingApiLive,
+    InventoryApiLive,
+    HealthApiLive,
+    MetaApiLive,
+    WebhookApiLive,
+  );
+
+  const ApiImplementation = HttpApiBuilder.api(Api).pipe(
+    Layer.provide(HandlersLive),
+    Layer.provide(AppServicesLive),
+    Layer.provideMerge(BookingQueriesMock),
+    Layer.provideMerge(InventoryQueriesMock),
+  );
+
+  const ServerLive = NodeHttpServer.layer(createServer, { port: 0 }).pipe(
+    Layer.provide(Layer.mergeAll(MockConfigProvider, NodeContext.layer)),
+  );
+
+  return Layer.mergeAll(
+    HttpApiBuilder.serve().pipe(
+      Layer.provide(ApiImplementation),
+      Layer.provide(ServerLive),
+    ),
+    ServerLive,
+    FetchHttpClient.layer,
+  ).pipe(
+    Layer.provideMerge(BookingRepoInMemory),
+    Layer.provideMerge(InventoryRepoInMemory),
+  );
+};
+
+describe("Booking API Integration (Multi-Passenger)", () => {
+  it("should cancel a multi-passenger booking", async () => {
     const bookingId = BookingId.make(faker.string.uuid());
     const pnr = `PNR${faker.string.alphanumeric(3).toUpperCase()}`;
-    const mockReason = faker.lorem.sentence();
-
-    const passenger = new Passenger({
-      id: PassengerId.make(faker.string.uuid()),
-      firstName: faker.person.firstName(),
-      lastName: faker.person.lastName(),
-      email: Schema.decodeSync(EmailSchema)(faker.internet.email()),
-      dateOfBirth: faker.date.birthdate(),
-      gender: "MALE",
-      type: PassengerType.ADULT,
-    });
 
     const segment = new BookingSegment({
       id: makeSegmentId(faker.string.uuid()),
       flightId: makeFlightId("FL-123"),
       cabin: CabinClass.ECONOMY,
-      price: Money.of(100, "EUR"),
+      price: Money.of(175, "EUR"),
       seatNumber: O.none(),
     });
 
-    // 1. Prepare Initial Data in Repository
     const program = Effect.gen(function* () {
       const repo = yield* BookingRepository;
       const initialBooking = Booking.create({
         id: bookingId,
         pnrCode: PnrCodeSchema.make(pnr),
-        passengers: [passenger],
+        passengers: [
+          makePassengerEntity(PassengerType.ADULT),
+          makePassengerEntity(PassengerType.CHILD),
+          makePassengerEntity(PassengerType.INFANT),
+        ],
         segments: [segment],
         expiresAt: O.none(),
       }).clearEvents();
       yield* repo.save(initialBooking);
 
       const server = yield* HttpServer.HttpServer;
-      const address = server.address;
-      const port = address._tag === "TcpAddress" ? address.port : 0;
-
+      const port =
+        server.address._tag === "TcpAddress" ? server.address.port : 0;
       const client = yield* HttpApiClient.make(Api, {
         baseUrl: `http://localhost:${port}`,
       });
 
-      // Call API
       const response = yield* client.bookings.cancel({
         path: { id: bookingId },
-        payload: { reason: mockReason },
+        payload: { reason: faker.lorem.sentence() },
       });
 
       expect(response.status).toBe("Cancelled");
       expect(response.id).toBe(bookingId);
+      expect(response.passengers).toHaveLength(3);
 
-      // Verify in Repo that it was actually updated by real logic
       const updated = yield* repo.findById(bookingId);
       expect(O.getOrThrow(updated).status).toBe(PnrStatus.CANCELLED);
     });
 
-    // 2. Configure Real Implementation Layers
-    const MockConfigProvider = Layer.setConfigProvider(
-      ConfigProvider.fromMap(
-        new Map([
-          ["NODE_ENV", "development"],
-          ["PORT", "0"],
-          ["POLAR_API_KEY", "test_key"],
-          ["POLAR_PRODUCT_ID", "test_product"],
-          ["POLAR_BASE_URL", POLAR_BASE_URL],
-          ["POLAR_TIMEOUT", "30"],
-          ["POLAR_MAX_RETRIES", "2"],
-        ]),
-      ),
+    await Effect.runPromise(
+      program.pipe(Effect.provide(makeTestLayer()), Effect.scoped),
     );
+  });
 
-    const BaseDeps = Layer.mergeAll(
-      TicketRepoInMemory,
-      OutboxRepoInMemory,
-      UnitOfWorkPassthrough,
-      NotificationGatewayMock,
-      AuditLoggerTest(),
-      HealthCheckTest(),
-    ).pipe(Layer.provide(MockConfigProvider));
+  it("should list multi-passenger bookings with correct passenger data", async () => {
+    const bookingId = BookingId.make(faker.string.uuid());
+    const pnr = `LST${faker.string.alphanumeric(3).toUpperCase()}`;
 
-    const GatewaysLive = Layer.mergeAll(
-      PolarPaymentGatewayLive,
-      NotificationGatewayMock,
-    ).pipe(Layer.provideMerge(BaseDeps));
+    const segment = new BookingSegment({
+      id: makeSegmentId(faker.string.uuid()),
+      flightId: makeFlightId("FL-456"),
+      cabin: CabinClass.BUSINESS,
+      price: Money.of(950, "EUR"),
+      seatNumber: O.none(),
+    });
 
-    const AppServicesLive = Layer.mergeAll(
-      BookingService.Live,
-      CancellationService.Live,
-    ).pipe(
-      Layer.provideMerge(InventoryService.Live),
-      Layer.provideMerge(GatewaysLive),
-    );
+    const program = Effect.gen(function* () {
+      const repo = yield* BookingRepository;
+      const booking = Booking.create({
+        id: bookingId,
+        pnrCode: PnrCodeSchema.make(pnr),
+        passengers: [
+          makePassengerEntity(PassengerType.ADULT),
+          makePassengerEntity(PassengerType.SENIOR),
+        ],
+        segments: [segment],
+        expiresAt: O.none(),
+      }).clearEvents();
+      yield* repo.save(booking);
 
-    const HandlersLive = Layer.mergeAll(
-      BookingApiLive,
-      InventoryApiLive,
-      HealthApiLive,
-      MetaApiLive,
-      WebhookApiLive,
-    );
+      const server = yield* HttpServer.HttpServer;
+      const port =
+        server.address._tag === "TcpAddress" ? server.address.port : 0;
+      const client = yield* HttpApiClient.make(Api, {
+        baseUrl: `http://localhost:${port}`,
+      });
 
-    const ApiImplementation = HttpApiBuilder.api(Api).pipe(
-      Layer.provide(HandlersLive),
-      Layer.provide(AppServicesLive),
-      Layer.provideMerge(
-        Layer.succeed(BookingQueries, {
-          getSummaryByPnr: () => Effect.die(new Error("Not implemented")),
-          getPassengerHistory: () => Effect.die(new Error("Not implemented")),
-          searchByPassengerName: () => Effect.die(new Error("Not implemented")),
-          listBookings: () => Effect.die(new Error("Not implemented")),
-          findExpiredBookings: () => Effect.die(new Error("Not implemented")),
-        } satisfies BookingQueriesPort),
-      ),
-      Layer.provideMerge(
-        Layer.succeed(InventoryQueries, {
-          getFlightAvailability: () => Effect.die(new Error("Not implemented")),
-          findAvailableFlights: () => Effect.die(new Error("Not implemented")),
-          getInventoryStats: () => Effect.die(new Error("Not implemented")),
-          getLowInventoryAlerts: () => Effect.die(new Error("Not implemented")),
-          getCabinAvailability: () => Effect.die(new Error("Not implemented")),
-        } satisfies InventoryQueriesPort),
-      ),
-    );
+      const bookings = yield* client.bookings.list();
 
-    const ServerLive = NodeHttpServer.layer(createServer, { port: 0 }).pipe(
-      Layer.provide(Layer.mergeAll(MockConfigProvider, NodeContext.layer)),
-    );
-
-    const FullLayer = Layer.mergeAll(
-      HttpApiBuilder.serve().pipe(
-        Layer.provide(ApiImplementation),
-        Layer.provide(ServerLive),
-      ),
-      ServerLive,
-      FetchHttpClient.layer,
-    ).pipe(
-      Layer.provideMerge(BookingRepoInMemory),
-      Layer.provideMerge(InventoryRepoInMemory),
-    );
+      expect(bookings.length).toBeGreaterThanOrEqual(1);
+      const found = bookings.find((b) => b.id === bookingId);
+      expect(found).toBeDefined();
+      expect(found!.passengers).toHaveLength(2);
+      expect(found!.passengers[0].type).toBe(PassengerType.ADULT);
+      expect(found!.passengers[1].type).toBe(PassengerType.SENIOR);
+    });
 
     await Effect.runPromise(
-      program.pipe(Effect.provide(FullLayer), Effect.scoped),
+      program.pipe(Effect.provide(makeTestLayer()), Effect.scoped),
     );
   });
 });
