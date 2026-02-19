@@ -205,15 +205,17 @@ export const bookingMachine = setup({
         const command: BookFlightCommand = {
           flightId: input.flightId,
           cabinClass: input.cabinClass,
-          passenger: {
-            id: uuidv4(),
-            firstName: input.passenger.firstName,
-            lastName: input.passenger.lastName,
-            email: input.passenger.email,
-            dateOfBirth: input.passenger.dateOfBirth,
-            gender: input.passenger.gender,
-            type: derivePassengerType(input.passenger.dateOfBirth),
-          },
+          passengers: [
+            {
+              id: uuidv4(),
+              firstName: input.passenger.firstName,
+              lastName: input.passenger.lastName,
+              email: input.passenger.email,
+              dateOfBirth: input.passenger.dateOfBirth,
+              gender: input.passenger.gender,
+              type: derivePassengerType(input.passenger.dateOfBirth),
+            },
+          ],
           successUrl: `${window.location.origin}/success`,
           cancelUrl: `${window.location.origin}/cancel`,
         };

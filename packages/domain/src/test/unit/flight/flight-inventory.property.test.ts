@@ -4,13 +4,18 @@
  */
 
 import { fc } from "@fast-check/vitest";
-import { Effect } from "effect";
+import { Effect, Option, Schema } from "effect";
 import { describe, expect, test } from "vitest";
 import {
   FlightInventory,
   SeatBucket,
 } from "../../../flight/flight-inventory.js";
-import { type CurrencyCode, Money, makeFlightId } from "../../../kernel.js";
+import {
+  AirportCodeSchema,
+  type CurrencyCode,
+  Money,
+  makeFlightId,
+} from "../../../kernel.js";
 
 // Arbitraries (generators for random test data)
 const arbMoney = fc
@@ -47,7 +52,14 @@ const arbFlightInventory = fc
     ({ flightId, economy, business, first, version }) =>
       new FlightInventory({
         flightId: makeFlightId(flightId),
+        origin: Schema.decodeSync(AirportCodeSchema)("CDG"),
+        destination: Schema.decodeSync(AirportCodeSchema)("JFK"),
         availability: { economy, business, first },
+        flightNumber: Option.none(),
+        departureTime: Option.none(),
+        arrivalTime: Option.none(),
+        durationMinutes: Option.none(),
+        stops: Option.none(),
         version,
         domainEvents: [],
       }),

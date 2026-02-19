@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { FlightNotFoundError } from "@workspace/domain/errors";
 import { FlightInventory, SeatBucket } from "@workspace/domain/inventory";
 import { Money, makeFlightId } from "@workspace/domain/kernel";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Option } from "effect";
 import { describe, expect, it } from "vitest";
 import {
   InventoryRepository,
@@ -16,6 +16,8 @@ describe("InventoryService", () => {
   const createMockInventory = (economySeats = 10): FlightInventory =>
     new FlightInventory({
       flightId,
+      origin: "CDG" as any,
+      destination: "JFK" as any,
       availability: {
         economy: new SeatBucket({
           available: economySeats,
@@ -33,6 +35,11 @@ describe("InventoryService", () => {
           price: Money.of(2000, "USD"),
         }),
       },
+      flightNumber: Option.none(),
+      departureTime: Option.none(),
+      arrivalTime: Option.none(),
+      durationMinutes: Option.none(),
+      stops: Option.none(),
       version: 1,
       domainEvents: [],
     });

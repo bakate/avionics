@@ -17,11 +17,13 @@ describe("UnitOfWork Integration", () => {
   const insertInventory = (sql: SqlClient.SqlClient, flightId: string) => sql`
   INSERT INTO flight_inventory (
                 flight_id,
+                origin, destination,
                 economy_total, economy_available, economy_price_amount, economy_price_currency,
                 business_total, business_available, business_price_amount, business_price_currency,
                 first_total, first_available, first_price_amount, first_price_currency,
                 version
             ) VALUES (${flightId},
+            'CDG', 'JFK',
             100, 100, 100.00, 'EUR', -- economy
             20, 20, 500.00, 'EUR', -- business
             10, 10, 1000.00, 'EUR', -- first
@@ -55,6 +57,8 @@ describe("UnitOfWork Integration", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]).toEqual({
       flight_id: "FL-UOW-COMMIT",
+      origin: "CDG",
+      destination: "JFK",
       economy_total: 100,
       economy_available: 100,
       economy_price_amount: "100.00",
@@ -67,6 +71,11 @@ describe("UnitOfWork Integration", () => {
       first_available: 10,
       first_price_amount: "1000.00",
       first_price_currency: "EUR",
+      flight_number: null,
+      departure_time: null,
+      arrival_time: null,
+      duration_minutes: null,
+      stops: 0,
       last_updated: expect.any(Date),
       version: 1,
     });

@@ -8,6 +8,7 @@ import {
 } from "@workspace/domain/errors";
 import { FlightInventory, SeatBucket } from "@workspace/domain/inventory";
 import {
+  AirportCodeSchema,
   type CabinClass,
   type FlightId,
   Money,
@@ -21,8 +22,10 @@ import {
   Layer,
   Metric,
   MetricBoundaries,
+  Option,
   Queue,
   Schedule,
+  Schema,
 } from "effect";
 import { HoldSeatsResult, ReleaseSeatsResult } from "../models/results.js";
 import {
@@ -475,6 +478,8 @@ export class InventoryService extends Context.Tag("InventoryService")<
   ): FlightInventory =>
     new FlightInventory({
       flightId,
+      origin: Schema.decodeSync(AirportCodeSchema)("CDG"),
+      destination: Schema.decodeSync(AirportCodeSchema)("JFK"),
       availability: {
         economy: new SeatBucket({
           available: economySeats,
@@ -492,6 +497,11 @@ export class InventoryService extends Context.Tag("InventoryService")<
           price: Money.of(2000, "USD"),
         }),
       },
+      flightNumber: Option.none(),
+      departureTime: Option.none(),
+      arrivalTime: Option.none(),
+      durationMinutes: Option.none(),
+      stops: Option.none(),
       version: 1,
       domainEvents: [],
     });

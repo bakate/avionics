@@ -1,6 +1,6 @@
 import { FlightInventory, SeatBucket } from "@workspace/domain/inventory";
-import { FlightId, Money } from "@workspace/domain/kernel";
-import { Schema } from "effect";
+import { AirportCodeSchema, FlightId, Money } from "@workspace/domain/kernel";
+import { Option, Schema } from "effect";
 
 export interface CreateTestInventoryOptions {
   readonly flightId?: string;
@@ -32,6 +32,8 @@ export const createTestInventory = ({
 }: CreateTestInventoryOptions = {}): FlightInventory => {
   return new FlightInventory({
     flightId: Schema.decodeSync(FlightId)(flightId),
+    origin: Schema.decodeSync(AirportCodeSchema)("CDG"),
+    destination: Schema.decodeSync(AirportCodeSchema)("JFK"),
     availability: {
       economy: new SeatBucket({
         capacity: economyTotal,
@@ -49,6 +51,11 @@ export const createTestInventory = ({
         price: Money.of(firstPrice, "EUR"),
       }),
     },
+    flightNumber: Option.none(),
+    departureTime: Option.none(),
+    arrivalTime: Option.none(),
+    durationMinutes: Option.none(),
+    stops: Option.none(),
     version: 0,
     domainEvents: [],
   });

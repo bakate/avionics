@@ -127,7 +127,7 @@ const toBookingResponse = (booking: Booking): BookingResponse =>
     id: booking.id,
     pnrCode: booking.pnrCode,
     status: booking.status,
-    passenger: booking.passenger,
+    passengers: booking.passengers,
     segments: booking.segments,
     expiresAt: booking.expiresAt,
     createdAt: booking.createdAt,
@@ -146,7 +146,7 @@ export const BookingApiLive = HttpApiBuilder.group(
         withBookingService((service) => service.findAll()).pipe(
           Effect.map((bookings) =>
             bookings
-              .filter((b) => b.passenger && b.segments?.length > 0)
+              .filter((b) => b.passengers?.length > 0 && b.segments?.length > 0)
               .map(toBookingResponse),
           ),
           ensureContractErrors(),

@@ -24,15 +24,17 @@ describe("API Schema Validation", () => {
       id: bookingId,
       pnrCode: pnrCode,
       status: "Confirmed",
-      passenger: {
-        id: faker.string.uuid(),
-        firstName,
-        lastName,
-        email,
-        dateOfBirth,
-        gender: faker.helpers.arrayElement(["MALE", "FEMALE"]),
-        type: "ADULT",
-      },
+      passengers: [
+        {
+          id: faker.string.uuid(),
+          firstName,
+          lastName,
+          email,
+          dateOfBirth,
+          gender: faker.helpers.arrayElement(["MALE", "FEMALE"]),
+          type: "ADULT",
+        },
+      ],
       segments: [
         {
           id: faker.string.uuid(),
@@ -74,7 +76,7 @@ describe("API Schema Validation", () => {
       expect(result.id).toBe(bookingId);
       expect(result.pnrCode).toBe(pnrCode);
       expect(result.status).toBe("Confirmed");
-      expect(result.passenger.firstName).toBe(firstName);
+      expect(result.passengers[0].firstName).toBe(firstName);
       expect(O.isNone(result.expiresAt)).toBe(true);
     });
 
