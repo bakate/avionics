@@ -1,4 +1,5 @@
 /** biome-ignore-all lint/style/noRestrictedImports: <> */
+
 import { createServer } from "node:http";
 import {
   FetchHttpClient,
@@ -113,6 +114,8 @@ const InventoryRepoInMemory = Layer.effect(
             return Effect.succeed(
               new FlightInventory({
                 flightId: id as any,
+                origin: "CDG" as any,
+                destination: "JFK" as any,
                 availability: {
                   economy: new SeatBucket({
                     available: 0,
@@ -130,6 +133,11 @@ const InventoryRepoInMemory = Layer.effect(
                     price: Money.of(1000, "EUR"),
                   }),
                 },
+                flightNumber: O.none(),
+                departureTime: O.none(),
+                arrivalTime: O.none(),
+                durationMinutes: O.none(),
+                stops: O.none(),
                 version: 1,
                 domainEvents: [],
               }),

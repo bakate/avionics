@@ -114,7 +114,7 @@ export const fromBookingRow = (
     id: Schema.decodeUnknownSync(BookingId)(row.id),
     pnrCode: Schema.decodeUnknownSync(PnrCodeSchema)(row.pnr_code),
     status: Schema.decodeUnknownSync(BookingStatusSchema)(row.status),
-    passenger: domainPassengers[0] as Passenger,
+    passengers: domainPassengers as [Passenger, ...Array<Passenger>],
     segments: domainSegments,
     version: row.version,
     createdAt: row.created_at,

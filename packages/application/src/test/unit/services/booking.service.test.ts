@@ -299,6 +299,8 @@ describe("BookingService", () => {
     // Create inventory with 1 available seat in economy (capacity 100 for validation)
     const initialInventory = new FlightInventory({
       flightId: makeFlightId(flightId),
+      origin: "CDG" as any,
+      destination: "JFK" as any,
       availability: {
         economy: new SeatBucket({
           available: 1,
@@ -316,6 +318,11 @@ describe("BookingService", () => {
           price: Money.of(0, "EUR"),
         }),
       },
+      flightNumber: Option.none(),
+      departureTime: Option.none(),
+      arrivalTime: Option.none(),
+      durationMinutes: Option.none(),
+      stops: Option.none(),
       version: 1,
       domainEvents: [],
     });
@@ -436,8 +443,8 @@ describe("BookingService", () => {
       pnrCode: Schema.decodeSync(PnrCodeSchema)("PNR123"),
       status: PnrStatus.HELD,
       version: 1,
-      passenger,
-      segments: [segment, ...[]],
+      passengers: [passenger],
+      segments: [segment],
       createdAt: new Date(),
       domainEvents: [],
       expiresAt: Option.none(),

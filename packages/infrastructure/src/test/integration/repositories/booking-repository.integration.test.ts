@@ -41,7 +41,7 @@ describe("BookingRepository Integration Tests", () => {
 
       expect(result).toBeDefined();
       expect(result.pnrCode.valueOf()).toBe("TEST01");
-      expect(result.passenger).toBeDefined();
+      expect(result.passengers[0]).toBeDefined();
       expect(result.segments).toHaveLength(1);
       expect(result?.version).toBe(1);
     });
@@ -104,9 +104,9 @@ describe("BookingRepository Integration Tests", () => {
       );
 
       expect(result).toBeDefined();
-      expect(result.passenger).toBeDefined();
+      expect(result.passengers[0]).toBeDefined();
       expect(result.segments).toHaveLength(2);
-      expect(result.passenger.firstName).toBe("John");
+      expect(result.passengers[0]?.firstName).toBe("John");
       expect(result.segments[0]?.flightId.valueOf()).toBe("FL000");
     });
   });

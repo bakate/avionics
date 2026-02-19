@@ -61,7 +61,7 @@ export const createTestBooking = ({
   return Booking.create({
     id: Schema.decodeSync(BookingId)(crypto.randomUUID()),
     pnrCode: Schema.decodeSync(PnrCodeSchema)(pnrCode),
-    passenger,
+    passengers: [passenger],
     segments,
     expiresAt: expiresAt ? O.some(expiresAt) : O.none(),
   });

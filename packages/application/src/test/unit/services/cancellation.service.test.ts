@@ -42,7 +42,7 @@ const makeExpiredBooking = (pnr: string, flightId = "FL-123") => {
   return Booking.create({
     id: BookingId.make(faker.string.uuid()),
     pnrCode: Schema.decodeSync(PnrCodeSchema)(pnr),
-    passenger,
+    passengers: [passenger],
     segments: [segment],
     expiresAt: O.some(new Date(Date.now() - 1000)), // Expired 1s ago
   });

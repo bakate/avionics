@@ -36,6 +36,13 @@
       "when": 1770534513750,
       "tag": "0004_charming_surge",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1770620000000,
+      "tag": "0005_new_inventory_columns",
+      "breakpoints": true
     }
   ]
 }
