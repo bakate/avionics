@@ -4,6 +4,7 @@
  * Feature: multi-passenger-pricing, Property 8: BookingSummary reflects correct passenger count and total price
  */
 
+import { fc } from "@fast-check/vitest";
 import { BookingQueries } from "@workspace/application/booking-queries";
 import { BookingSummary } from "@workspace/application/read-models";
 import { BookingPersistenceError } from "@workspace/domain/errors";
@@ -14,7 +15,6 @@ import {
 } from "@workspace/domain/kernel";
 import { computePricingBreakdown } from "@workspace/domain/pricing";
 import { Effect, Schema } from "effect";
-import fc from "fast-check";
 import { describe, expect, test } from "vitest";
 import { PostgresBookingQueriesTest } from "../../../queries/booking-queries.js";
 
@@ -52,7 +52,9 @@ const arbBasePrice = fc
     amount: fc.integer({ min: 1, max: 100_000 }),
     currency: arbCurrency,
   })
-  .map(({ amount, currency }) => Money.of(amount, currency));
+  .map(({ amount, currency }: { amount: number; currency: CurrencyCode }) =>
+    Money.of(amount, currency),
+  );
 
 // =============================================================================
 // Property Tests
@@ -73,7 +75,12 @@ describe("BookingSummary Property Tests", () => {
         fc.stringMatching(/^[A-Z0-9]{6}$/),
         arbNonEmptyPassengers,
         arbBasePrice,
-        async (bookingId, pnrCode, passengers, basePrice) => {
+        async (
+          bookingId: string,
+          pnrCode: string,
+          passengers: Array<{ id: string; type: PassengerType }>,
+          basePrice: Money,
+        ) => {
           const breakdown = computePricingBreakdown(passengers, basePrice);
           const passengerCount = passengers.length;
 
