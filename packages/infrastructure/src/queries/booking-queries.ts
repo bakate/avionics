@@ -49,6 +49,11 @@ export const PostgresBookingQueriesLive = Layer.effect(
   Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;
 
+    // Helper to normalize Date values from SQL driver for Schema decoding
+    // Schema.Date expects a string (ISO format) on the encoded side
+    const toDateString = (d: Date | null): string | null =>
+      d instanceof Date ? d.toISOString() : d;
+
     const getSummaryByPnr: BookingQueriesPort["getSummaryByPnr"] = (pnr) =>
       Effect.gen(function* () {
         const rows = yield* sql<BookingSummaryRow>`
@@ -56,16 +61,13 @@ export const PostgresBookingQueriesLive = Layer.effect(
             b.id,
             b.pnr_code,
             b.status,
-            COUNT(DISTINCT p.id)::int as passenger_count,
-            COALESCE(SUM(s.price_amount), 0) as total_price_amount,
-            COALESCE(MAX(s.price_currency), 'EUR') as total_price_currency,
+            (SELECT COUNT(*)::int FROM passengers p WHERE p.booking_id = b.id) as passenger_count,
+            COALESCE((SELECT SUM(s.price_amount) FROM segments s WHERE s.booking_id = b.id), 0) as total_price_amount,
+            COALESCE((SELECT MAX(s.price_currency) FROM segments s WHERE s.booking_id = b.id), 'EUR') as total_price_currency,
             b.created_at,
             b.expires_at
           FROM bookings b
-          LEFT JOIN passengers p ON p.booking_id = b.id
-          LEFT JOIN segments s ON s.booking_id = b.id
           WHERE b.pnr_code = ${pnr}
-          GROUP BY b.id, b.pnr_code, b.status, b.created_at, b.expires_at
         `;
 
         const row = rows[0];
@@ -85,8 +87,8 @@ export const PostgresBookingQueriesLive = Layer.effect(
             amount: Number.parseFloat(row.total_price_amount),
             currency: row.total_price_currency,
           },
-          createdAt: row.created_at,
-          expiresAt: row.expires_at ?? null,
+          createdAt: toDateString(row.created_at),
+          expiresAt: toDateString(row.expires_at) ?? null,
         }).pipe(
           Effect.mapError(
             (error) =>
@@ -139,16 +141,13 @@ export const PostgresBookingQueriesLive = Layer.effect(
               b.id,
               b.pnr_code,
               b.status,
-              COUNT(DISTINCT p.id)::int as passenger_count,
-              COALESCE(SUM(s.price_amount), 0) as total_price_amount,
-              COALESCE(MAX(s.price_currency), 'EUR') as total_price_currency,
+              (SELECT COUNT(*)::int FROM passengers p WHERE p.booking_id = b.id) as passenger_count,
+              COALESCE((SELECT SUM(s.price_amount) FROM segments s WHERE s.booking_id = b.id), 0) as total_price_amount,
+              COALESCE((SELECT MAX(s.price_currency) FROM segments s WHERE s.booking_id = b.id), 'EUR') as total_price_currency,
               b.created_at,
               b.expires_at
             FROM bookings b
-            LEFT JOIN passengers p ON p.booking_id = b.id
-            LEFT JOIN segments s ON s.booking_id = b.id
             WHERE b.status = ${status}
-            GROUP BY b.id, b.pnr_code, b.status, b.created_at, b.expires_at
             ORDER BY b.created_at DESC
             LIMIT ${pageSize}
             OFFSET ${offset}
@@ -159,15 +158,12 @@ export const PostgresBookingQueriesLive = Layer.effect(
               b.id,
               b.pnr_code,
               b.status,
-              COUNT(DISTINCT p.id)::int as passenger_count,
-              COALESCE(SUM(s.price_amount), 0) as total_price_amount,
-              COALESCE(MAX(s.price_currency), 'EUR') as total_price_currency,
+              (SELECT COUNT(*)::int FROM passengers p WHERE p.booking_id = b.id) as passenger_count,
+              COALESCE((SELECT SUM(s.price_amount) FROM segments s WHERE s.booking_id = b.id), 0) as total_price_amount,
+              COALESCE((SELECT MAX(s.price_currency) FROM segments s WHERE s.booking_id = b.id), 'EUR') as total_price_currency,
               b.created_at,
               b.expires_at
             FROM bookings b
-            LEFT JOIN passengers p ON p.booking_id = b.id
-            LEFT JOIN segments s ON s.booking_id = b.id
-            GROUP BY b.id, b.pnr_code, b.status, b.created_at, b.expires_at
             ORDER BY b.created_at DESC
             LIMIT ${pageSize}
             OFFSET ${offset}
@@ -184,8 +180,8 @@ export const PostgresBookingQueriesLive = Layer.effect(
               amount: Number.parseFloat(row.total_price_amount),
               currency: row.total_price_currency,
             },
-            createdAt: row.created_at,
-            expiresAt: row.expires_at ?? null,
+            createdAt: toDateString(row.created_at),
+            expiresAt: toDateString(row.expires_at) ?? null,
           }).pipe(
             Effect.mapError(
               (error) =>
@@ -223,15 +219,13 @@ export const PostgresBookingQueriesLive = Layer.effect(
             b.id as booking_id,
             b.pnr_code,
             b.status,
-            ARRAY_AGG(DISTINCT s.flight_id) as flight_numbers,
-            COALESCE(SUM(s.price_amount), 0) as total_price_amount,
-            COALESCE(MAX(s.price_currency), 'EUR') as total_price_currency,
+            ARRAY(SELECT DISTINCT s.flight_id FROM segments s WHERE s.booking_id = b.id) as flight_numbers,
+            COALESCE((SELECT SUM(s.price_amount) FROM segments s WHERE s.booking_id = b.id), 0) as total_price_amount,
+            COALESCE((SELECT MAX(s.price_currency) FROM segments s WHERE s.booking_id = b.id), 'EUR') as total_price_currency,
             b.created_at as booked_at
           FROM bookings b
           INNER JOIN passengers p ON p.booking_id = b.id
-          LEFT JOIN segments s ON s.booking_id = b.id
           WHERE p.id = ${passengerId}
-          GROUP BY b.id, b.pnr_code, b.status, b.created_at
           ORDER BY b.created_at DESC
         `;
 
@@ -245,7 +239,7 @@ export const PostgresBookingQueriesLive = Layer.effect(
               amount: Number.parseFloat(row.total_price_amount),
               currency: row.total_price_currency,
             },
-            bookedAt: row.booked_at,
+            bookedAt: toDateString(row.booked_at),
           }).pipe(
             Effect.mapError(
               (error) =>
@@ -272,16 +266,13 @@ export const PostgresBookingQueriesLive = Layer.effect(
             b.id,
             b.pnr_code,
             b.status,
-            COUNT(DISTINCT p.id)::int as passenger_count,
-            COALESCE(SUM(s.price_amount), 0) as total_price_amount,
-            COALESCE(MAX(s.price_currency), 'EUR') as total_price_currency,
+            (SELECT COUNT(*)::int FROM passengers p WHERE p.booking_id = b.id) as passenger_count,
+            COALESCE((SELECT SUM(s.price_amount) FROM segments s WHERE s.booking_id = b.id), 0) as total_price_amount,
+            COALESCE((SELECT MAX(s.price_currency) FROM segments s WHERE s.booking_id = b.id), 'EUR') as total_price_currency,
             b.created_at,
             b.expires_at
           FROM bookings b
-          LEFT JOIN passengers p ON p.booking_id = b.id
-          LEFT JOIN segments s ON s.booking_id = b.id
           WHERE b.expires_at < ${before}
-          GROUP BY b.id, b.pnr_code, b.status, b.created_at, b.expires_at
           ORDER BY b.expires_at ASC
           LIMIT ${limit}
         `;
@@ -296,8 +287,8 @@ export const PostgresBookingQueriesLive = Layer.effect(
               amount: Number.parseFloat(row.total_price_amount),
               currency: row.total_price_currency,
             },
-            createdAt: row.created_at,
-            expiresAt: row.expires_at ?? null,
+            createdAt: toDateString(row.created_at),
+            expiresAt: toDateString(row.expires_at) ?? null,
           }).pipe(
             Effect.mapError(
               (error) =>
@@ -325,17 +316,15 @@ export const PostgresBookingQueriesLive = Layer.effect(
             b.id,
             b.pnr_code,
             b.status,
-            COUNT(DISTINCT p.id)::int as passenger_count,
-            COALESCE(SUM(s.price_amount), 0) as total_price_amount,
-            COALESCE(MAX(s.price_currency), 'EUR') as total_price_currency,
+            (SELECT COUNT(*)::int FROM passengers p2 WHERE p2.booking_id = b.id) as passenger_count,
+            COALESCE((SELECT SUM(s.price_amount) FROM segments s WHERE s.booking_id = b.id), 0) as total_price_amount,
+            COALESCE((SELECT MAX(s.price_currency) FROM segments s WHERE s.booking_id = b.id), 'EUR') as total_price_currency,
             b.created_at,
             b.expires_at
           FROM bookings b
           INNER JOIN passengers p ON p.booking_id = b.id
-          LEFT JOIN segments s ON s.booking_id = b.id
           WHERE p.first_name ILIKE ${searchPattern}
              OR p.last_name ILIKE ${searchPattern}
-          GROUP BY b.id, b.pnr_code, b.status, b.created_at, b.expires_at
           ORDER BY b.created_at DESC
           LIMIT ${limit}
         `;
@@ -350,8 +339,8 @@ export const PostgresBookingQueriesLive = Layer.effect(
               amount: Number.parseFloat(row.total_price_amount),
               currency: row.total_price_currency,
             },
-            createdAt: row.created_at,
-            expiresAt: row.expires_at ?? null,
+            createdAt: toDateString(row.created_at),
+            expiresAt: toDateString(row.expires_at) ?? null,
           }).pipe(
             Effect.mapError(
               (error) =>
