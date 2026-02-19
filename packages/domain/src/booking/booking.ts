@@ -9,7 +9,7 @@ import {
   type EventId,
 } from "../events.js";
 import { BookingId, PnrCodeSchema } from "../kernel.js";
-
+import { countSeatsNeeded } from "../pricing/pricing-engine.js";
 import { Passenger } from "./passenger.js";
 import { BookingSegment } from "./segment.js";
 
@@ -145,6 +145,8 @@ export class Booking extends Schema.Class<Booking>("Booking")({
         );
       }
 
+      const seatsToRelease = countSeatsNeeded(this.passengers);
+
       const event = new BookingCancelled({
         eventId: crypto.randomUUID() as EventId,
         occurredAt: now,
@@ -156,7 +158,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
         segments: this.segments.map((s) => ({
           flightId: s.flightId,
           cabin: s.cabin,
-          quantity: this.passengers.length,
+          quantity: seatsToRelease,
         })),
       });
 
@@ -177,6 +179,8 @@ export class Booking extends Schema.Class<Booking>("Booking")({
     return O.match(this.expiresAt, {
       onNone: () => this,
       onSome: (expiredAt) => {
+        const seatsToRelease = countSeatsNeeded(this.passengers);
+
         const event = new BookingExpired({
           eventId: crypto.randomUUID() as EventId,
           occurredAt: now,
@@ -188,7 +192,7 @@ export class Booking extends Schema.Class<Booking>("Booking")({
           segments: this.segments.map((s) => ({
             flightId: s.flightId,
             cabin: s.cabin,
-            quantity: this.passengers.length,
+            quantity: seatsToRelease,
           })),
         });
 
