@@ -50,6 +50,8 @@ const arbPassenger = fc
     type: fc.constantFrom(
       "ADULT",
       "CHILD",
+      "INFANT",
+      "YOUNG_ADULT",
       "SENIOR",
     ) as fc.Arbitrary<PassengerType>,
   })
