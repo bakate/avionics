@@ -96,7 +96,32 @@
     "seatsLeft_one": "{{count}} place restante",
     "seatsLeft_other": "{{count}} places restantes",
     "totalPrice": "Prix total",
-    "continue": "Continuer"
+    "continue": "Continuer",
+    "includedPerPassenger": "Inclus par passager",
+    "features": {
+      "bags": {
+        "small": "1 petit sac (40 x 30 x 15 cm)",
+        "cabin": "1 bagage à main (55 x 35 x 25 cm)",
+        "checked_one": "{{count}} bagage en soute (23 kg)",
+        "checked_other": "{{count}} bagages en soute (23 kg chacun)",
+        "none": "Bagage en soute non inclus"
+      },
+      "seat": {
+        "standard": "Sélection gratuite du siège standard",
+        "legroom": "Siège avec plus d'espace pour les jambes",
+        "flatbed": "Siège s'inclinant en lit plat",
+        "private": "Suite individuelle"
+      },
+      "food": {
+        "snack": "Snacks et boissons",
+        "gourmet": "Menu gourmet",
+        "fineDining": "Cuisine gastronomique"
+      },
+      "service": {
+        "priority": "Parcours Prioritaire SkyPriority",
+        "lounge": "Accès au salon SkyTeam"
+      }
+    }
   },
   "passengers": {
     "title": "Informations passagers",
@@ -146,5 +171,11 @@
     "switch": "Changer de langue",
     "fr": "Français",
     "en": "English"
+  },
+  "theme": {
+    "toggle": "Changer de thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
   }
 }

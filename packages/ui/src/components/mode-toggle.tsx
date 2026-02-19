@@ -1,4 +1,4 @@
-import { Moon02Icon, Sun03Icon } from "@hugeicons/core-free-icons";
+import { LaptopIcon, Moon02Icon, Sun03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { Button } from "./button";
@@ -10,14 +10,30 @@ import {
 } from "./dropdown-menu";
 import { useTheme } from "./theme-provider";
 
-export function ModeToggle() {
+export interface ModeToggleProps {
+  labels?: {
+    light: string;
+    dark: string;
+    system: string;
+    toggle: string;
+  };
+}
+
+export function ModeToggle({
+  labels = {
+    light: "Light",
+    dark: "Dark",
+    system: "System",
+    toggle: "Toggle theme",
+  },
+}: ModeToggleProps) {
   const { setTheme } = useTheme();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="outline" size="icon">
+          <Button variant="ghost" size="icon">
             <HugeiconsIcon
               icon={Sun03Icon}
               size={20}
@@ -28,19 +44,22 @@ export function ModeToggle() {
               size={20}
               className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"
             />
-            <span className="sr-only">Toggle theme</span>
+            <span className="sr-only">{labels.toggle}</span>
           </Button>
         }
       />
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="min-w-[110px]">
         <DropdownMenuItem onClick={() => setTheme("light")}>
-          Light
+          <HugeiconsIcon icon={Sun03Icon} size={16} />
+          {labels.light}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("dark")}>
-          Dark
+          <HugeiconsIcon icon={Moon02Icon} size={16} />
+          {labels.dark}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("system")}>
-          System
+          <HugeiconsIcon icon={LaptopIcon} size={16} />
+          {labels.system}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
