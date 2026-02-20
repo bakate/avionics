@@ -18,7 +18,7 @@ export class BookingResponse extends Schema.Class<BookingResponse>(
   id: BookingId,
   pnrCode: PnrCodeSchema,
   status: BookingStatusSchema,
-  passenger: Passenger,
+  passengers: Schema.NonEmptyArray(Passenger),
   segments: Schema.NonEmptyArray(BookingSegment),
   expiresAt: Schema.Option(Schema.Date),
   createdAt: Schema.Date,

@@ -2,11 +2,11 @@ import { ThemeProvider } from "@workspace/ui/components/theme-provider";
 import { I18nextProvider as I18nProvider } from "react-i18next";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import BaseLayout from "./components/layout/base-layout.tsx";
+import { bookingActor } from "./features/booking/machines/booking.actor.ts";
+import HomePage from "./features/search/screens/home.screen.tsx";
+import NotFoundPage from "./features/search/screens/not-found.screen.tsx";
 import i18n from "./i18n/config.ts";
-import { bookingActor } from "./machines/booking.actor.ts";
 import ConfirmationPage from "./pages/confirmation.page.tsx";
-import HomePage from "./pages/home.page.tsx";
-import NotFoundPage from "./pages/not-found.page.tsx";
 import PassengersPage from "./pages/passengers.page.tsx";
 import PaymentPage from "./pages/payment.page.tsx";
 import ResultsPage from "./pages/results.page.tsx";
@@ -28,8 +28,9 @@ const router = createBrowserRouter([
         },
         element: <HomePage />,
       },
-      { path: ROUTES.results, element: <ResultsPage /> },
-      { path: ROUTES.select, element: <SelectPage /> },
+      { path: ROUTES.outbound, element: <ResultsPage /> },
+      { path: "/results", element: <ResultsPage /> },
+      { path: "/select/:flightId", element: <SelectPage /> },
       { path: ROUTES.passengers, element: <PassengersPage /> },
       { path: ROUTES.payment, element: <PaymentPage /> },
       { path: ROUTES.confirmation, element: <ConfirmationPage /> },

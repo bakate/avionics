@@ -8,9 +8,9 @@ import { Button } from "@workspace/ui/components/button";
 import { Heading } from "@workspace/ui/components/heading";
 import { SectionCard } from "@workspace/ui/components/section-card";
 import { useTranslation } from "react-i18next";
-import { BookingSummaryCard } from "../components/booking/booking-summary-card";
-import { SearchForm } from "../components/search/search-form";
-import { useBookingMachine } from "../hooks/use-booking-machine";
+import { BookingSummaryCard } from "../../booking/components/booking-summary";
+import { useBookingMachine } from "../../booking/hooks/use-booking-machine";
+import { SearchForm } from "../components/search-form";
 
 const HomePage = () => {
   const { t } = useTranslation();

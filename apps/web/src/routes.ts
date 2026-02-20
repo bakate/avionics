@@ -3,8 +3,8 @@
 
 export const ROUTES = {
   home: "/",
-  results: "/results",
-  select: "/select/:flightId",
+  outbound: "/outbound",
+  return: "/return",
   passengers: "/passengers",
   payment: "/payment",
   confirmation: "/confirmation/:pnr",
@@ -15,9 +15,8 @@ export type RoutePath = (typeof ROUTES)[RouteName];
 
 export const buildRoute = {
   home: () => ROUTES.home,
-  results: () => ROUTES.results,
-  select: (flightId: string) =>
-    `/select/${encodeURIComponent(flightId)}` as const,
+  outbound: () => ROUTES.outbound,
+  return: () => ROUTES.return,
   passengers: () => ROUTES.passengers,
   payment: () => ROUTES.payment,
   confirmation: (pnr: string) =>

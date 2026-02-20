@@ -24,15 +24,17 @@ describe("API Schema Validation", () => {
       id: bookingId,
       pnrCode: pnrCode,
       status: "Confirmed",
-      passenger: {
-        id: faker.string.uuid(),
-        firstName,
-        lastName,
-        email,
-        dateOfBirth,
-        gender: faker.helpers.arrayElement(["MALE", "FEMALE"]),
-        type: "ADULT",
-      },
+      passengers: [
+        {
+          id: faker.string.uuid(),
+          firstName,
+          lastName,
+          email,
+          dateOfBirth,
+          gender: faker.helpers.arrayElement(["MALE", "FEMALE"]),
+          type: "ADULT",
+        },
+      ],
       segments: [
         {
           id: faker.string.uuid(),

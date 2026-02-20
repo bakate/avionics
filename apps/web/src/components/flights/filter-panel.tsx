@@ -7,7 +7,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { useTranslation } from "react-i18next";
-import { cabinOptions } from "../search/types";
+import { cabinOptions } from "../../features/search/components/types";
 
 export type FilterState = {
   cabinClass: string;
