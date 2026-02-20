@@ -82,3 +82,27 @@ export const formatMoney = (money: Money): string =>
     style: "currency",
     currency: money.currency,
   }).format(money.amount);
+
+// ---------------------------------------------------------------------------
+// Total price calculation
+// ---------------------------------------------------------------------------
+
+type PriceInput = { readonly amount: number; readonly currency: string };
+
+/**
+ * Calculate total booking price.
+ * Formula: (outbound price + return price) × total passenger count
+ *
+ */
+export const calculateTotalPrice = (params: {
+  outboundPrice: PriceInput;
+  returnPrice: PriceInput | null;
+  passengerCount: number;
+}): PriceInput => {
+  const returnAmount = params.returnPrice?.amount ?? 0;
+  const perPassenger = params.outboundPrice.amount + returnAmount;
+  return {
+    amount: perPassenger * params.passengerCount,
+    currency: params.outboundPrice.currency,
+  };
+};

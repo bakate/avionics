@@ -1,6 +1,7 @@
 // Date carousel — ~7 days centered on selected date with lowest price per day
 
 import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { cn } from "@workspace/ui/lib/utils";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -52,7 +53,7 @@ export const DateCarousel = ({
         className="hidden md:flex size-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 min-h-[44px] min-w-[44px]"
         aria-label={t("common.back")}
       >
-        <ArrowLeft01Icon style={{ width: 16, height: 16 }} />
+        <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />
       </button>
 
       <div
@@ -105,7 +106,7 @@ export const DateCarousel = ({
         className="hidden md:flex size-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 min-h-[44px] min-w-[44px]"
         aria-label={t("common.back")}
       >
-        <ArrowRight01Icon style={{ width: 16, height: 16 }} />
+        <HugeiconsIcon icon={ArrowRight01Icon} size={16} />
       </button>
     </div>
   );

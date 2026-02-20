@@ -3,13 +3,14 @@ import { I18nextProvider as I18nProvider } from "react-i18next";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import BaseLayout from "./components/layout/base-layout.tsx";
 import { bookingActor } from "./features/booking/machines/booking.actor.ts";
+import OutboundScreen from "./features/booking/screens/outbound.screen.tsx";
+import ReturnScreen from "./features/booking/screens/return.screen.tsx";
 import HomePage from "./features/search/screens/home.screen.tsx";
 import NotFoundPage from "./features/search/screens/not-found.screen.tsx";
 import i18n from "./i18n/config.ts";
 import ConfirmationPage from "./pages/confirmation.page.tsx";
 import PassengersPage from "./pages/passengers.page.tsx";
 import PaymentPage from "./pages/payment.page.tsx";
-import ResultsPage from "./pages/results.page.tsx";
 import { ROUTES } from "./routes.ts";
 
 const router = createBrowserRouter([
@@ -27,8 +28,8 @@ const router = createBrowserRouter([
         },
         element: <HomePage />,
       },
-      { path: ROUTES.outbound, element: <ResultsPage /> },
-      { path: ROUTES.return, element: <ResultsPage /> },
+      { path: ROUTES.outbound, element: <OutboundScreen /> },
+      { path: ROUTES.return, element: <ReturnScreen /> },
       { path: ROUTES.passengers, element: <PassengersPage /> },
       { path: ROUTES.payment, element: <PaymentPage /> },
       { path: ROUTES.confirmation, element: <ConfirmationPage /> },
