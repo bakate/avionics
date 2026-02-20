@@ -25,7 +25,6 @@
     "react-hook-form": "catalog:",
     "react-resizable-panels": "^4.6.4",
     "recharts": "2.15.4",
-    "shadcn": "^3.8.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.1",
     "tailwindcss": "catalog:",
@@ -41,6 +40,7 @@
     "@workspace/prettier-config": "workspace:*",
     "@workspace/tsconfig": "workspace:*",
     "prettier": "catalog:",
+    "shadcn": "^3.8.5",
     "typescript": "catalog:"
   },
   "exports": {
