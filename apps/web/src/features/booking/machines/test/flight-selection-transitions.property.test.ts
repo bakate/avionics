@@ -1,6 +1,5 @@
 /**
  * Feature: web-booking-app, Property 23: Flight selection stores and transitions correctly
- * Validates: Requirements 5.2, 5.4
  *
  * For any valid FlightSelection and direction (outbound or return), the
  * Booking_Machine should store the selection in the correct context field
@@ -13,8 +12,8 @@ import { describe, expect, test } from "vitest";
 import { createActor, fromPromise, waitFor } from "xstate";
 import { type SearchParams } from "../../schemas/search.schema";
 import {
-  bookingMachine,
   type BookingResult,
+  bookingMachine,
   type FlightResult,
   type FlightSelection,
 } from "../booking.machine";
@@ -75,7 +74,8 @@ const flightSelectionArb = flightResultArb.chain((flight) =>
   fc
     .integer({ min: 0, max: flight.cabins.length - 1 })
     .map((idx): FlightSelection => {
-      const cabinData = flight.cabins[idx]!;
+      const cabinData = flight.cabins[idx] ?? flight.cabins[0];
+      if (!cabinData) throw new Error("unreachable: cabins has minLength 1");
       return { flight, cabin: cabinData.cabin, price: cabinData.price };
     }),
 );
@@ -108,10 +108,10 @@ describe("Property 23: Flight selection stores and transitions correctly", () =>
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<FlightResult[]> => [selection.flight],
+              async (): Promise<Array<FlightResult>> => [selection.flight],
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<FlightResult[]> => [],
+              async (): Promise<Array<FlightResult>> => [],
             ),
             submitBooking: fromPromise(async (): Promise<BookingResult> => {
               throw new Error("Not implemented");
@@ -130,9 +130,9 @@ describe("Property 23: Flight selection stores and transitions correctly", () =>
         const validNextStates = ["searchingReturn", "selectingReturn"];
         expect(validNextStates).toContain(snap.value);
         expect(snap.context.selectedOutbound).toEqual(selection);
-        expect(snap.context.selectedOutbound!.flight).toEqual(selection.flight);
-        expect(snap.context.selectedOutbound!.cabin).toBe(selection.cabin);
-        expect(snap.context.selectedOutbound!.price).toEqual(selection.price);
+        expect(snap.context.selectedOutbound?.flight).toEqual(selection.flight);
+        expect(snap.context.selectedOutbound?.cabin).toBe(selection.cabin);
+        expect(snap.context.selectedOutbound?.price).toEqual(selection.price);
         // selectedReturn should still be null at this point
         expect(snap.context.selectedReturn).toBeNull();
         actor.stop();
@@ -147,10 +147,10 @@ describe("Property 23: Flight selection stores and transitions correctly", () =>
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<FlightResult[]> => [selection.flight],
+              async (): Promise<Array<FlightResult>> => [selection.flight],
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<FlightResult[]> => [],
+              async (): Promise<Array<FlightResult>> => [],
             ),
             submitBooking: fromPromise(async (): Promise<BookingResult> => {
               throw new Error("Not implemented");
@@ -185,10 +185,10 @@ describe("Property 23: Flight selection stores and transitions correctly", () =>
           const machine = bookingMachine.provide({
             actors: {
               searchFlights: fromPromise(
-                async (): Promise<FlightResult[]> => [outbound.flight],
+                async (): Promise<Array<FlightResult>> => [outbound.flight],
               ),
               searchReturnFlights: fromPromise(
-                async (): Promise<FlightResult[]> => [returnSel.flight],
+                async (): Promise<Array<FlightResult>> => [returnSel.flight],
               ),
               submitBooking: fromPromise(async (): Promise<BookingResult> => {
                 throw new Error("Not implemented");
@@ -208,9 +208,9 @@ describe("Property 23: Flight selection stores and transitions correctly", () =>
           const snap = actor.getSnapshot();
           expect(snap.value).toBe("enteringPassengers");
           expect(snap.context.selectedReturn).toEqual(returnSel);
-          expect(snap.context.selectedReturn!.flight).toEqual(returnSel.flight);
-          expect(snap.context.selectedReturn!.cabin).toBe(returnSel.cabin);
-          expect(snap.context.selectedReturn!.price).toEqual(returnSel.price);
+          expect(snap.context.selectedReturn?.flight).toEqual(returnSel.flight);
+          expect(snap.context.selectedReturn?.cabin).toBe(returnSel.cabin);
+          expect(snap.context.selectedReturn?.price).toEqual(returnSel.price);
           // Outbound should still be preserved
           expect(snap.context.selectedOutbound).toEqual(outbound);
           actor.stop();
@@ -229,10 +229,10 @@ describe("Property 23: Flight selection stores and transitions correctly", () =>
           const machine = bookingMachine.provide({
             actors: {
               searchFlights: fromPromise(
-                async (): Promise<FlightResult[]> => [outbound.flight],
+                async (): Promise<Array<FlightResult>> => [outbound.flight],
               ),
               searchReturnFlights: fromPromise(
-                async (): Promise<FlightResult[]> => [returnSel.flight],
+                async (): Promise<Array<FlightResult>> => [returnSel.flight],
               ),
               submitBooking: fromPromise(async (): Promise<BookingResult> => {
                 throw new Error("Not implemented");

@@ -1,6 +1,5 @@
 /**
  * Feature: web-booking-app, Property 22: Outbound/return selection symmetry
- * Validates: Requirements 5.2, 5.4
  *
  * For any valid FlightSelection (flight + cabin + price), the selection should
  * be valid as both an outbound and a return selection. The FlightSelection type
@@ -14,8 +13,8 @@ import { describe, expect, test } from "vitest";
 import { createActor, fromPromise, waitFor } from "xstate";
 import { type SearchParams } from "../../schemas/search.schema";
 import {
-  bookingMachine,
   type BookingResult,
+  bookingMachine,
   createFlightSelection,
   type FlightResult,
   type FlightSelection,
@@ -78,7 +77,7 @@ const flightSelectionArb = flightResultArb.chain((flight) =>
   fc
     .integer({ min: 0, max: flight.cabins.length - 1 })
     .map((idx): FlightSelection => {
-      const cabinData = flight.cabins[idx]!;
+      const cabinData = flight.cabins[idx] ?? flight.cabins[0];
       return { flight, cabin: cabinData.cabin, price: cabinData.price };
     }),
 );
@@ -103,10 +102,10 @@ describe("Property 22: Outbound/return selection symmetry", () => {
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<FlightResult[]> => [selection.flight],
+              async (): Promise<Array<FlightResult>> => [selection.flight],
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<FlightResult[]> => [],
+              async (): Promise<Array<FlightResult>> => [],
             ),
             submitBooking: fromPromise(async (): Promise<BookingResult> => {
               throw new Error("Not implemented");
@@ -124,9 +123,9 @@ describe("Property 22: Outbound/return selection symmetry", () => {
         // Should have transitioned past selectingOutbound
         expect(snap.value).not.toBe("selectingOutbound");
         expect(snap.context.selectedOutbound).toEqual(selection);
-        expect(snap.context.selectedOutbound!.flight).toEqual(selection.flight);
-        expect(snap.context.selectedOutbound!.cabin).toBe(selection.cabin);
-        expect(snap.context.selectedOutbound!.price).toEqual(selection.price);
+        expect(snap.context.selectedOutbound?.flight).toEqual(selection.flight);
+        expect(snap.context.selectedOutbound?.cabin).toBe(selection.cabin);
+        expect(snap.context.selectedOutbound?.price).toEqual(selection.price);
         actor.stop();
       }),
       { numRuns: 100 },
@@ -142,10 +141,14 @@ describe("Property 22: Outbound/return selection symmetry", () => {
           const machine = bookingMachine.provide({
             actors: {
               searchFlights: fromPromise(
-                async (): Promise<FlightResult[]> => [outboundSelection.flight],
+                async (): Promise<Array<FlightResult>> => [
+                  outboundSelection.flight,
+                ],
               ),
               searchReturnFlights: fromPromise(
-                async (): Promise<FlightResult[]> => [returnSelection.flight],
+                async (): Promise<Array<FlightResult>> => [
+                  returnSelection.flight,
+                ],
               ),
               submitBooking: fromPromise(async (): Promise<BookingResult> => {
                 throw new Error("Not implemented");
@@ -165,13 +168,13 @@ describe("Property 22: Outbound/return selection symmetry", () => {
           const snap = actor.getSnapshot();
           expect(snap.value).toBe("enteringPassengers");
           expect(snap.context.selectedReturn).toEqual(returnSelection);
-          expect(snap.context.selectedReturn!.flight).toEqual(
+          expect(snap.context.selectedReturn?.flight).toEqual(
             returnSelection.flight,
           );
-          expect(snap.context.selectedReturn!.cabin).toBe(
+          expect(snap.context.selectedReturn?.cabin).toBe(
             returnSelection.cabin,
           );
-          expect(snap.context.selectedReturn!.price).toEqual(
+          expect(snap.context.selectedReturn?.price).toEqual(
             returnSelection.price,
           );
           actor.stop();
@@ -188,10 +191,10 @@ describe("Property 22: Outbound/return selection symmetry", () => {
         const machine1 = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<FlightResult[]> => [selection.flight],
+              async (): Promise<Array<FlightResult>> => [selection.flight],
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<FlightResult[]> => [selection.flight],
+              async (): Promise<Array<FlightResult>> => [selection.flight],
             ),
             submitBooking: fromPromise(async (): Promise<BookingResult> => {
               throw new Error("Not implemented");
