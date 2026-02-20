@@ -16,9 +16,9 @@ import {
 import { Effect } from "effect";
 import { v4 as uuidv4 } from "uuid";
 import { assign, fromPromise, setup } from "xstate";
-import { bookFlight, getBookings } from "../api/booking.api";
-import { runPromise } from "../api/client";
-import { findAvailableFlights } from "../api/inventory.api";
+import { bookFlight, getBookings } from "../../../api/booking.api";
+import { runPromise } from "../../../api/client";
+import { findAvailableFlights } from "../../../api/inventory.api";
 import { type PassengerInput } from "../schemas/passenger.schema";
 import { type SearchParams } from "../schemas/search.schema";
 
@@ -205,15 +205,17 @@ export const bookingMachine = setup({
         const command: BookFlightCommand = {
           flightId: input.flightId,
           cabinClass: input.cabinClass,
-          passenger: {
-            id: uuidv4(),
-            firstName: input.passenger.firstName,
-            lastName: input.passenger.lastName,
-            email: input.passenger.email,
-            dateOfBirth: input.passenger.dateOfBirth,
-            gender: input.passenger.gender,
-            type: derivePassengerType(input.passenger.dateOfBirth),
-          },
+          passengers: [
+            {
+              id: uuidv4(),
+              firstName: input.passenger.firstName,
+              lastName: input.passenger.lastName,
+              email: input.passenger.email,
+              dateOfBirth: input.passenger.dateOfBirth,
+              gender: input.passenger.gender,
+              type: derivePassengerType(input.passenger.dateOfBirth),
+            },
+          ],
           successUrl: `${window.location.origin}/success`,
           cancelUrl: `${window.location.origin}/cancel`,
         };

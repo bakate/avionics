@@ -8,12 +8,12 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useSelector } from "@xstate/react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
-import { bookingActor } from "../machines/booking.actor";
+import { bookingActor } from "../features/booking/machines/booking.actor";
 import {
   encodePassengerInput,
   PassengerInput,
   type PassengerInputEncoded,
-} from "../schemas/passenger.schema";
+} from "../features/booking/schemas/passenger.schema";
 
 const inputClass = (hasError: boolean) =>
   `h-12 w-full rounded-xl border px-4 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${

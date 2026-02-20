@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { buildRoute } from "../routes.ts";
+import { buildRoute } from "../../../routes.ts";
 
 const NotFoundPage = () => {
   return (

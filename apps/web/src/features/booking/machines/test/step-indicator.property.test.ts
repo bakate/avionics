@@ -18,7 +18,7 @@ import {
   type BookingStateValue,
   STEP_LABELS,
   stateToStep,
-} from "../booking.machine.js";
+} from "../booking.machine";
 
 // ---------------------------------------------------------------------------
 // Expected mapping (ground truth from the design)

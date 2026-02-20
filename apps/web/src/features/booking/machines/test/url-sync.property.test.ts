@@ -17,7 +17,7 @@ import {
   initialContext,
   routeToState,
   stateToRoute,
-} from "../booking.machine.js";
+} from "../booking.machine";
 
 // ---------------------------------------------------------------------------
 // Helpers

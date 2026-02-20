@@ -11,13 +11,13 @@ import { Option } from "effect";
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
 import { createActor, fromPromise, waitFor } from "xstate";
-import { type PassengerInput } from "../../schemas/passenger.schema.js";
-import { type SearchParams } from "../../schemas/search.schema.js";
+import { type PassengerInput } from "../../schemas/passenger.schema";
+import { type SearchParams } from "../../schemas/search.schema";
 import {
   type BookingResult,
   bookingMachine,
   type FlightResult,
-} from "../booking.machine.js";
+} from "../booking.machine";
 
 const makeFlight = (id: string): FlightResult => ({
   flightId: id,
@@ -169,7 +169,7 @@ describe("Property 13: Back navigation preserves context", () => {
 
         actor.send({ type: "SELECT_FLIGHT", flight });
         actor.send({ type: "SELECT_CABIN", cabin: "BUSINESS" });
-        actor.send(type: "SET_PASSENGER", passenger );
+        actor.send({ type: "SET_PASSENGER", passenger });
 
         // Should be in paying state
         expect(actor.getSnapshot().value).toBe("paying");

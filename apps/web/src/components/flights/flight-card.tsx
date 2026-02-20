@@ -9,7 +9,7 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { useTranslation } from "react-i18next";
-import { type FlightResult } from "../../machines/booking.machine";
+import { type FlightResult } from "../../features/booking/machines/booking.machine";
 
 export type FlightCardProps = {
   readonly flight: FlightResult;

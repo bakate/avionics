@@ -1,6 +1,6 @@
 import * as fc from "fast-check";
 import { describe, it } from "vitest";
-import { type FlightResult } from "../machines/booking.machine";
+import { type FlightResult } from "../features/booking/machines/booking.machine";
 import { filterFlights, sortFlights } from "./results-logic";
 
 // Arbitraries
@@ -130,6 +130,13 @@ describe("results-logic", () => {
             if (!a || !b) continue;
             if (a.economyPrice.amount < b.economyPrice.amount) return false;
           }
+          return true;
+        }),
+      );
+    });
+
+    it("should sort by departure ascending", () => {
+      fc.assert(
         fc.property(fc.array(flightArbitrary, { minLength: 1 }), (flights) => {
           const sorted = sortFlights(flights, "departure", "asc", "ECONOMY");
           for (let i = 0; i < sorted.length - 1; i++) {

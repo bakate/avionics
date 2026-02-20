@@ -4,7 +4,7 @@ import {
   type SortField,
   type SortOrder,
 } from "../components/flights/sort-controls";
-import { type FlightResult } from "../machines/booking.machine";
+import { type FlightResult } from "../features/booking/machines/booking.machine";
 
 /**
  * Pure functions for flight sorting and filtering.
