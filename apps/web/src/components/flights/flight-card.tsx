@@ -31,33 +31,18 @@ export const FlightCard = ({
 }: FlightCardProps) => {
   const { t } = useTranslation();
 
-  // Simulated times for prototype
-  // In a real system, these would come from the Flight read model
-  const departureDate = new Date();
-  departureDate.setHours(10, 30, 0, 0);
-  const arrivalDate = new Date(
-    departureDate.getTime() + 2 * 60 * 60 * 1000 + 45 * 60 * 1000,
-  ); // +2h45
+  const departureDate = new Date(flight.departureTime);
+  const arrivalDate = new Date(flight.arrivalTime);
 
   const formatTime = (date: Date) =>
     date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  const duration = "2h 45m";
+  const hours = Math.floor(flight.durationMinutes / 60);
+  const mins = flight.durationMinutes % 60;
+  const duration = `${hours}h ${mins}m`;
 
-  const getPrice = () => {
-    switch (selectedCabin) {
-      case "ECONOMY":
-        return flight.economyPrice;
-      case "BUSINESS":
-        return flight.businessPrice;
-      case "FIRST":
-        return flight.firstPrice;
-      default:
-        return flight.economyPrice;
-    }
-  };
-
-  const price = getPrice();
+  const cabinData = flight.cabins.find((c) => c.cabin === selectedCabin);
+  const price = cabinData?.price ?? { amount: 0, currency: "EUR" };
 
   return (
     <Card className="group relative overflow-hidden border-white/10 bg-white/5 transition-all hover:bg-white/10 hover:shadow-xl">
@@ -70,7 +55,7 @@ export const FlightCard = ({
             </div>
             <div>
               <h3 className="text-sm font-bold tracking-wider text-slate-400 uppercase">
-                {flight.flightId}
+                {flight.flightNumber}
               </h3>
               <p className="text-xs text-slate-500">Operated by Avionics</p>
             </div>
@@ -88,8 +73,7 @@ export const FlightCard = ({
             <div className="relative flex flex-1 flex-col items-center">
               <Badge
                 variant="outline"
-                className="mb-2 flex items-center gap-2 border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-tighter text-slate-500"
-              >
+                className="mb-2 flex items-center gap-2 border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-tighter text-slate-500">
                 <HugeiconsIcon icon={Time01Icon} size={12} />
                 {duration}
               </Badge>
@@ -103,7 +87,9 @@ export const FlightCard = ({
                 />
               </div>
               <div className="mt-1 text-[10px] font-medium text-slate-500">
-                Direct
+                {flight.stops === 0
+                  ? "Direct"
+                  : `${flight.stops} stop${flight.stops > 1 ? "s" : ""}`}
               </div>
             </div>
 
@@ -132,8 +118,7 @@ export const FlightCard = ({
             </div>
             <Button
               onClick={() => onSelect(flight.flightId)}
-              className="mt-2 rounded-xl bg-white text-slate-900 hover:bg-slate-200"
-            >
+              className="mt-2 rounded-xl bg-white text-slate-900 hover:bg-slate-200">
               {t("search.select").toUpperCase()}
             </Button>
           </div>

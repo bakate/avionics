@@ -98,14 +98,17 @@ const ResultsPage = () => {
     const flight = flights.find((f) => f.flightId === flightId);
     if (!flight) return;
 
-    send({
-      type: "SELECT_FLIGHT",
-      flight,
-    });
+    const cabin = filters.cabinClass as CabinClass;
+    const cabinData = flight.cabins.find((c) => c.cabin === cabin);
+    if (!cabinData) return;
 
     send({
-      type: "SELECT_CABIN",
-      cabin: filters.cabinClass as CabinClass,
+      type: "SELECT_OUTBOUND",
+      selection: {
+        flight,
+        cabin,
+        price: cabinData.price,
+      },
     });
   };
 
@@ -122,8 +125,7 @@ const ResultsPage = () => {
         </h2>
         <Button
           onClick={() => navigate(buildRoute.home())}
-          className="mt-4 rounded-xl bg-blue-600 px-6 py-2 text-sm font-bold text-white"
-        >
+          className="mt-4 rounded-xl bg-blue-600 px-6 py-2 text-sm font-bold text-white">
           {t("search.backToHome")}
         </Button>
       </div>
@@ -140,8 +142,7 @@ const ResultsPage = () => {
               variant="ghost"
               size="icon"
               onClick={() => navigate(buildRoute.home())}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all"
-            >
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all">
               <HugeiconsIcon icon={ArrowLeft01Icon} size={20} />
             </Button>
             <div className="flex-1">
@@ -152,7 +153,9 @@ const ResultsPage = () => {
               </h1>
               <p className="text-xs font-medium text-slate-500">
                 {new Date(searchParams.departureDate).toLocaleDateString()} •{" "}
-                {searchParams.passengerCount}{" "}
+                {searchParams.passengers.adults +
+                  searchParams.passengers.children +
+                  searchParams.passengers.infants}{" "}
                 {t("search.passengers").toLowerCase()}
               </p>
             </div>
@@ -193,8 +196,7 @@ const ResultsPage = () => {
                   render={
                     <Button
                       variant="outline"
-                      className="flex items-center justify-center gap-2 lg:hidden"
-                    >
+                      className="flex items-center justify-center gap-2 lg:hidden">
                       <HugeiconsIcon icon={FilterHorizontalIcon} size={16} />
                       {t("search.filters").toUpperCase()}
                     </Button>
@@ -245,8 +247,7 @@ const ResultsPage = () => {
                 <p className="mb-6 text-sm text-slate-400">{error}</p>
                 <Button
                   onClick={() => search(searchParams)}
-                  className="rounded-xl bg-red-600 px-6 py-2 text-sm font-bold text-white transition-all hover:bg-red-500"
-                >
+                  className="rounded-xl bg-red-600 px-6 py-2 text-sm font-bold text-white transition-all hover:bg-red-500">
                   {t("common.retry")}
                 </Button>
               </div>
@@ -268,8 +269,7 @@ const ResultsPage = () => {
                 </EmptyDescription>
                 <Button
                   onClick={() => navigate(buildRoute.home())}
-                  className="mt-6 rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-blue-500"
-                >
+                  className="mt-6 rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-blue-500">
                   {t("search.modifySearch")}
                 </Button>
               </Empty>

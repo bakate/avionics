@@ -11,6 +11,24 @@ import { type FlightResult } from "../features/booking/machines/booking.machine"
  * Extracted for testability (Property-based testing).
  */
 
+/** Get price for a specific cabin from the cabins array */
+const getCabinPrice = (
+  flight: FlightResult,
+  cabin: CabinClass,
+): { amount: number; currency: string } => {
+  const cabinData = flight.cabins.find((c) => c.cabin === cabin);
+  return cabinData?.price ?? { amount: 0, currency: "EUR" };
+};
+
+/** Get available seats for a specific cabin */
+const getCabinAvailability = (
+  flight: FlightResult,
+  cabin: CabinClass,
+): number => {
+  const cabinData = flight.cabins.find((c) => c.cabin === cabin);
+  return cabinData?.availableSeats ?? 0;
+};
+
 /**
  * Apply filtering logic to a list of flights.
  */
@@ -35,9 +53,7 @@ export const filterFlights = (
 
     // Filter by availability in selected cabin class
     const cabin = filters.cabinClass as CabinClass;
-    if (cabin === "ECONOMY" && flight.economyAvailable <= 0) return false;
-    if (cabin === "BUSINESS" && flight.businessAvailable <= 0) return false;
-    if (cabin === "FIRST" && flight.firstAvailable <= 0) return false;
+    if (getCabinAvailability(flight, cabin) <= 0) return false;
 
     return true;
   });
@@ -58,16 +74,10 @@ export const sortFlights = (
     let valA: number;
     let valB: number;
 
-    const getPrice = (f: FlightResult) => {
-      if (cabinClass === "BUSINESS") return f.businessPrice.amount;
-      if (cabinClass === "FIRST") return f.firstPrice.amount;
-      return f.economyPrice.amount;
-    };
-
     switch (field) {
       case "price":
-        valA = getPrice(a);
-        valB = getPrice(b);
+        valA = getCabinPrice(a, cabinClass).amount;
+        valB = getCabinPrice(b, cabinClass).amount;
         break;
       case "departure":
         valA = new Date(a.departureTime).getTime();

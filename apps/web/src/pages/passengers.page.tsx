@@ -57,8 +57,8 @@ const PassengersPage = () => {
     formState: { errors },
   } = useForm<PassengerInputEncoded>({
     resolver: effectTsResolver(PassengerInput) as any,
-    defaultValues: state.context.passenger
-      ? encodePassengerInput(state.context.passenger)
+    defaultValues: state.context.passengers[0]
+      ? encodePassengerInput(state.context.passengers[0])
       : {
           firstName: "",
           lastName: "",
@@ -71,21 +71,20 @@ const PassengersPage = () => {
   const onSubmit = (data: unknown) => {
     // The resolver transforms the data to the decoded Type
     bookingActor.send({
-      type: "SET_PASSENGER",
-      passenger: data as PassengerInput,
+      type: "SET_PASSENGERS",
+      passengers: [data as PassengerInput],
     });
     void navigate("/payment");
   };
 
-  if (!state.context.selectedFlight) {
+  if (!state.context.selectedOutbound) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <p className="text-slate-500">Aucun vol sélectionné.</p>
         <button
           type="button"
           className="mt-4 font-bold text-blue-600 hover:underline"
-          onClick={() => void navigate("/")}
-        >
+          onClick={() => void navigate("/")}>
           Retourner à l'accueil
         </button>
       </div>
@@ -101,21 +100,19 @@ const PassengersPage = () => {
         <p className="mt-2 text-slate-500">
           Veuillez saisir les détails du passager pour votre vol vers{" "}
           <span className="font-semibold text-slate-700">
-            {state.context.selectedFlight.flightNumber}
+            {state.context.selectedOutbound.flight.flightNumber}
           </span>
         </p>
       </div>
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
-      >
+        className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <FieldWrapper
             label="Prénom"
             icon={UserCircleIcon}
-            error={errors.firstName?.message}
-          >
+            error={errors.firstName?.message}>
             <input
               {...register("firstName")}
               placeholder="Ex: Jean"
@@ -126,8 +123,7 @@ const PassengersPage = () => {
           <FieldWrapper
             label="Nom"
             icon={UserCircleIcon}
-            error={errors.lastName?.message}
-          >
+            error={errors.lastName?.message}>
             <input
               {...register("lastName")}
               placeholder="Ex: Dupont"
@@ -139,8 +135,7 @@ const PassengersPage = () => {
         <FieldWrapper
           label="Email"
           icon={Mail01Icon}
-          error={errors.email?.message}
-        >
+          error={errors.email?.message}>
           <input
             {...register("email")}
             type="email"
@@ -153,8 +148,7 @@ const PassengersPage = () => {
           <FieldWrapper
             label="Date de naissance"
             icon={Calendar03Icon}
-            error={errors.dateOfBirth?.message}
-          >
+            error={errors.dateOfBirth?.message}>
             <input
               {...register("dateOfBirth")}
               type="date"
@@ -165,12 +159,10 @@ const PassengersPage = () => {
           <FieldWrapper
             label="Genre"
             icon={UserCircleIcon}
-            error={errors.gender?.message}
-          >
+            error={errors.gender?.message}>
             <select
               {...register("gender")}
-              className={inputClass(Boolean(errors.gender))}
-            >
+              className={inputClass(Boolean(errors.gender))}>
               <option value="MALE">Homme</option>
               <option value="FEMALE">Femme</option>
               <option value="OTHER">Autre</option>
@@ -182,14 +174,12 @@ const PassengersPage = () => {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="text-sm font-bold text-slate-500 hover:text-slate-700"
-          >
+            className="text-sm font-bold text-slate-500 hover:text-slate-700">
             Retour
           </button>
           <button
             type="submit"
-            className="rounded-xl bg-blue-600 px-8 py-3 font-bold text-white transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-50"
-          >
+            className="rounded-xl bg-blue-600 px-8 py-3 font-bold text-white transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-50">
             Continuer vers le paiement
           </button>
         </div>

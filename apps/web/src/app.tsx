@@ -10,7 +10,6 @@ import ConfirmationPage from "./pages/confirmation.page.tsx";
 import PassengersPage from "./pages/passengers.page.tsx";
 import PaymentPage from "./pages/payment.page.tsx";
 import ResultsPage from "./pages/results.page.tsx";
-import SelectPage from "./pages/select.page.tsx";
 import { ROUTES } from "./routes.ts";
 
 const router = createBrowserRouter([
@@ -29,8 +28,7 @@ const router = createBrowserRouter([
         element: <HomePage />,
       },
       { path: ROUTES.outbound, element: <ResultsPage /> },
-      { path: "/results", element: <ResultsPage /> },
-      { path: "/select/:flightId", element: <SelectPage /> },
+      { path: ROUTES.return, element: <ResultsPage /> },
       { path: ROUTES.passengers, element: <PassengersPage /> },
       { path: ROUTES.payment, element: <PaymentPage /> },
       { path: ROUTES.confirmation, element: <ConfirmationPage /> },

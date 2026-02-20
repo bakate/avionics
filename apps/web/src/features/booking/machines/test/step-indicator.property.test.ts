@@ -1,14 +1,15 @@
 /**
- * Feature: web-booking-app, Property 12: Step indicator matches machine state
- * Validates: Requirements 7.1
+ * Feature: web-booking-app, Property 13: Stepper reflects machine state
+ * Validates: Requirements 9.1, 9.6
  *
- * For any state of the Booking_Machine, the step indicator should highlight
+ * For any state of the Booking_Machine, the stepper bar should highlight
  * the correct step corresponding to that state:
- *   idle/searching → Search (0)
- *   selectingFlight/selectingCabin → Select (1)
- *   enteringPassengers → Passengers (2)
- *   paying → Payment (3)
- *   confirmed → Confirmation (4)
+ *   idle/searching → 0 (Recherche)
+ *   selectingOutbound/searchingReturn → 1 (Vol aller)
+ *   selectingReturn → 2 (Vol retour)
+ *   enteringPassengers → 3 (Passagers)
+ *   paying → 4 (Paiement)
+ *   confirmed → 5
  *   error → -1
  */
 
@@ -28,11 +29,12 @@ const expectedMapping: Record<BookingStateValue, number> = {
   idle: 0,
   fetchingBookings: 0,
   searching: 0,
-  selectingFlight: 1,
-  selectingCabin: 1,
-  enteringPassengers: 2,
-  paying: 3,
-  confirmed: 4,
+  selectingOutbound: 1,
+  searchingReturn: 1,
+  selectingReturn: 2,
+  enteringPassengers: 3,
+  paying: 4,
+  confirmed: 5,
   error: -1,
 };
 
@@ -40,8 +42,9 @@ const allStates: ReadonlyArray<BookingStateValue> = [
   "idle",
   "fetchingBookings",
   "searching",
-  "selectingFlight",
-  "selectingCabin",
+  "selectingOutbound",
+  "searchingReturn",
+  "selectingReturn",
   "enteringPassengers",
   "paying",
   "confirmed",
@@ -54,7 +57,7 @@ const stateArb = fc.constantFrom(...allStates);
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("Property 12: Step indicator matches machine state", () => {
+describe("Property 13: Stepper reflects machine state", () => {
   test("stateToStep maps every machine state to the correct step index", () => {
     fc.assert(
       fc.property(stateArb, (state) => {
@@ -65,15 +68,17 @@ describe("Property 12: Step indicator matches machine state", () => {
     );
   });
 
-  test("non-error states map to a valid STEP_LABELS index", () => {
+  test("non-error states map to a valid STEP_LABELS index or confirmed (5)", () => {
     fc.assert(
       fc.property(stateArb, (state) => {
         const step = stateToStep(state);
-        if (state !== "error") {
+        if (state === "error") {
+          expect(step).toBe(-1);
+        } else if (state === "confirmed") {
+          expect(step).toBe(5);
+        } else {
           expect(step).toBeGreaterThanOrEqual(0);
           expect(step).toBeLessThan(STEP_LABELS.length);
-        } else {
-          expect(step).toBe(-1);
         }
       }),
       { numRuns: 100 },
