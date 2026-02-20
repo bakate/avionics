@@ -1,10 +1,11 @@
 /**
  * Feature: web-booking-app, Property 2: Search form validation rejects missing required fields
- * Validates: Requirements 1.4
+ * Validates: Requirements 1.4, 1.6
  *
  * For any combination of search form inputs where at least one required field
- * (origin, destination, departure date) is missing or empty, the validation
- * should reject the submission and produce error messages for exactly the missing fields.
+ * (origin, destination, departure date, or return date when trip type is round-trip)
+ * is missing or empty, the validation should reject the submission and produce
+ * error messages for exactly the missing fields.
  */
 
 import { fc, test } from "@fast-check/vitest";
@@ -13,10 +14,12 @@ import { describe, expect } from "vitest";
 import { SearchParams } from "../search.schema.js";
 
 const validBase = {
+  tripType: "roundTrip" as const,
   origin: "CDG",
   destination: "JFK",
-  departureDate: new Date("2026-06-15").toISOString(),
-  passengerCount: 1,
+  departureDate: "2026-06-15",
+  returnDate: "2026-06-22",
+  passengers: { adults: 1, children: 0, infants: 0 },
 };
 
 const requiredFieldSubset = fc.subarray(
@@ -52,18 +55,36 @@ describe("Property 2: Search form validation rejects missing required fields", (
   );
 
   test.prop([fc.integer({ min: -10, max: 0 })], { numRuns: 20 })(
-    "passengerCount below 1 causes validation failure",
+    "adults below 1 causes validation failure",
     (count) => {
-      const input = { ...validBase, passengerCount: count };
+      const input = {
+        ...validBase,
+        passengers: { adults: count, children: 0, infants: 0 },
+      };
       expect(Schema.decodeUnknownEither(SearchParams)(input)._tag).toBe("Left");
     },
   );
 
   test.prop([fc.integer({ min: 10, max: 100 })], { numRuns: 20 })(
-    "passengerCount above 9 causes validation failure",
+    "adults above 9 causes validation failure",
     (count) => {
-      const input = { ...validBase, passengerCount: count };
+      const input = {
+        ...validBase,
+        passengers: { adults: count, children: 0, infants: 0 },
+      };
       expect(Schema.decodeUnknownEither(SearchParams)(input)._tag).toBe("Left");
     },
   );
+
+  test("round-trip without returnDate causes validation failure", () => {
+    const input = { ...validBase, tripType: "roundTrip" as const };
+    delete input.returnDate;
+    expect(Schema.decodeUnknownEither(SearchParams)(input)._tag).toBe("Left");
+  });
+
+  test("one-way without returnDate is valid", () => {
+    const input = { ...validBase, tripType: "oneWay" as const };
+    delete input.returnDate;
+    expect(Schema.decodeUnknownEither(SearchParams)(input)._tag).toBe("Right");
+  });
 });

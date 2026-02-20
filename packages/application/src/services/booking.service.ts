@@ -211,7 +211,7 @@ export class BookingService extends Context.Tag("BookingService")<
               ),
             );
 
-            if (!b.passenger || !b.segments?.length) {
+            if (!b.passengers?.length || !b.segments?.length) {
               return yield* Effect.fail(
                 new BookingPersistenceError({
                   bookingId: b.id,

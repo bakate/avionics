@@ -1,3 +1,4 @@
+import { type CabinClass } from "@workspace/domain/kernel";
 import * as fc from "fast-check";
 import { describe, it } from "vitest";
 import { type FlightResult } from "../features/booking/machines/booking.machine";
@@ -11,30 +12,46 @@ const safeDateStr = fc
   })
   .map((t) => new Date(t).toISOString());
 
-const flightArbitrary = fc.record<FlightResult>({
+const moneyArb = fc.record({
+  amount: fc.integer({ min: 50, max: 5000 }),
+  currency: fc.constant("EUR"),
+});
+
+const cabinArb = (cabin: CabinClass) =>
+  fc.record({
+    cabin: fc.constant(cabin),
+    availableSeats: fc.integer({ min: 0, max: 100 }),
+    price: moneyArb,
+  });
+
+const flightArbitrary: fc.Arbitrary<FlightResult> = fc.record({
   flightId: fc.uuid(),
   flightNumber: fc.stringMatching(/^[A-Z]{2}\d{4}$/),
+  origin: fc.constant("CDG"),
+  destination: fc.constant("JFK"),
   departureTime: safeDateStr,
   arrivalTime: safeDateStr,
   durationMinutes: fc.integer({ min: 30, max: 1500 }),
   stops: fc.integer({ min: 0, max: 2 }),
-  economyAvailable: fc.integer({ min: 0, max: 100 }),
-  businessAvailable: fc.integer({ min: 0, max: 100 }),
-  firstAvailable: fc.integer({ min: 0, max: 100 }),
-  economyPrice: fc.record({
-    amount: fc.integer({ min: 50, max: 5000 }),
-    currency: fc.constant("EUR"),
-  }),
-  businessPrice: fc.record({
-    amount: fc.integer({ min: 200, max: 10000 }),
-    currency: fc.constant("EUR"),
-  }),
-  firstPrice: fc.record({
-    amount: fc.integer({ min: 500, max: 20000 }),
-    currency: fc.constant("EUR"),
-  }),
+  cabins: fc.tuple(
+    cabinArb("ECONOMY"),
+    cabinArb("BUSINESS"),
+    cabinArb("FIRST"),
+  ),
   lastUpdated: safeDateStr,
 });
+
+/** Helper to get price for a cabin from a FlightResult */
+const getCabinPrice = (f: FlightResult, cabin: CabinClass): number => {
+  const c = f.cabins.find((c) => c.cabin === cabin);
+  return c?.price.amount ?? 0;
+};
+
+/** Helper to get availability for a cabin from a FlightResult */
+const getCabinAvailability = (f: FlightResult, cabin: CabinClass): number => {
+  const c = f.cabins.find((c) => c.cabin === cabin);
+  return c?.availableSeats ?? 0;
+};
 
 describe("results-logic", () => {
   describe("filterFlights", () => {
@@ -84,20 +101,18 @@ describe("results-logic", () => {
       fc.assert(
         fc.property(
           fc.array(flightArbitrary),
-          fc.constantFrom("ECONOMY", "BUSINESS", "FIRST") as fc.Arbitrary<
-            "ECONOMY" | "BUSINESS" | "FIRST"
-          >,
+          fc.constantFrom(
+            "ECONOMY",
+            "BUSINESS",
+            "FIRST",
+          ) as fc.Arbitrary<CabinClass>,
           (flights, cabin) => {
             const filtered = filterFlights(flights, {
               cabinClass: cabin,
               maxStops: null,
               timeRange: null,
             });
-            return filtered.every((f) => {
-              if (cabin === "ECONOMY") return f.economyAvailable > 0;
-              if (cabin === "BUSINESS") return f.businessAvailable > 0;
-              return f.firstAvailable > 0;
-            });
+            return filtered.every((f) => getCabinAvailability(f, cabin) > 0);
           },
         ),
       );
@@ -113,7 +128,8 @@ describe("results-logic", () => {
             const a = sorted[i];
             const b = sorted[i + 1];
             if (!a || !b) continue;
-            if (a.economyPrice.amount > b.economyPrice.amount) return false;
+            if (getCabinPrice(a, "ECONOMY") > getCabinPrice(b, "ECONOMY"))
+              return false;
           }
           return true;
         }),
@@ -128,7 +144,8 @@ describe("results-logic", () => {
             const a = sorted[i];
             const b = sorted[i + 1];
             if (!a || !b) continue;
-            if (a.economyPrice.amount < b.economyPrice.amount) return false;
+            if (getCabinPrice(a, "ECONOMY") < getCabinPrice(b, "ECONOMY"))
+              return false;
           }
           return true;
         }),

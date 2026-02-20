@@ -10,6 +10,7 @@
 
 import { FetchHttpClient } from "@effect/platform";
 import { type FlightAvailability } from "@workspace/application/read-models";
+import { type CabinClass } from "@workspace/domain/kernel";
 import { Effect } from "effect";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { findAvailableFlights } from "../../../api/inventory.api.ts";
@@ -55,25 +56,38 @@ const ensureISO = (d: Date | string | undefined | null): string => {
 const toFlightResult = (raw: FlightAvailability): FlightResult => ({
   flightId: raw.flightId,
   flightNumber: raw.flightNumber,
+  origin: (raw as any).origin ?? "",
+  destination: (raw as any).destination ?? "",
   departureTime: ensureISO(raw.departureTime),
   arrivalTime: ensureISO(raw.arrivalTime),
   durationMinutes: raw.durationMinutes,
   stops: raw.stops,
-  economyAvailable: raw.economyAvailable,
-  businessAvailable: raw.businessAvailable,
-  firstAvailable: raw.firstAvailable,
-  economyPrice: {
-    amount: raw.economyPrice.amount,
-    currency: raw.economyPrice.currency,
-  },
-  businessPrice: {
-    amount: raw.businessPrice.amount,
-    currency: raw.businessPrice.currency,
-  },
-  firstPrice: {
-    amount: raw.firstPrice.amount,
-    currency: raw.firstPrice.currency,
-  },
+  cabins: [
+    {
+      cabin: "ECONOMY" as CabinClass,
+      availableSeats: raw.economyAvailable,
+      price: {
+        amount: raw.economyPrice.amount,
+        currency: raw.economyPrice.currency,
+      },
+    },
+    {
+      cabin: "BUSINESS" as CabinClass,
+      availableSeats: raw.businessAvailable,
+      price: {
+        amount: raw.businessPrice.amount,
+        currency: raw.businessPrice.currency,
+      },
+    },
+    {
+      cabin: "FIRST" as CabinClass,
+      availableSeats: raw.firstAvailable,
+      price: {
+        amount: raw.firstPrice.amount,
+        currency: raw.firstPrice.currency,
+      },
+    },
+  ],
   lastUpdated: ensureISO(raw.lastUpdated),
 });
 
@@ -93,13 +107,16 @@ export const useFlightStream = () => {
 
     setState({ flights: [], isLoading: true, error: null, isComplete: false });
 
-    const cabin =
-      params.cabinClass._tag === "Some" ? params.cabinClass.value : "ECONOMY";
+    const cabin = params.cabinClass ?? "ECONOMY";
+    const totalPassengers =
+      params.passengers.adults +
+      params.passengers.children +
+      params.passengers.infants;
 
     const program = findAvailableFlights({
       cabin,
-      minSeats: params.passengerCount,
-      departureDate: params.departureDate,
+      minSeats: totalPassengers,
+      departureDate: new Date(params.departureDate),
       origin: params.origin,
       destination: params.destination,
     }).pipe(

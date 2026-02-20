@@ -1,14 +1,13 @@
 /**
- * Feature: web-booking-app, Property 16: API Schema round-trip
- * Validates: Requirements 8.4
+ * Feature: web-booking-app, Property 17: API Schema round-trip
+ * Validates: Requirements 10.4
  *
  * For any valid SearchParams or PassengerInput, encoding then decoding
  * via Effect Schema should produce a value equivalent to the original.
  */
 
 import { fc, test } from "@fast-check/vitest";
-import { type AirportCode } from "@workspace/domain/kernel";
-import { Option, Schema } from "effect";
+import { Schema } from "effect";
 import { describe, expect } from "vitest";
 import { PassengerInput } from "../passenger.schema.js";
 import { SearchParams } from "../search.schema.js";
@@ -28,21 +27,45 @@ const pastDateArb = fc
   .date({ min: new Date("1920-01-01"), max: new Date() })
   .map((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()));
 
-const futureDateArb = fc
+const futureDateStrArb = fc
   .date({ min: new Date("2026-03-01"), max: new Date("2028-12-31") })
-  .map((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()));
+  .map((d) => d.toISOString().split("T")[0]!);
 
-const searchParamsArb = fc.record({
+const passengersArb = fc.record({
+  adults: fc.integer({ min: 1, max: 9 }),
+  children: fc.integer({ min: 0, max: 8 }),
+  infants: fc.integer({ min: 0, max: 4 }),
+});
+
+const roundTripSearchParamsArb = fc.record({
+  tripType: fc.constant("roundTrip" as const),
   origin: airportCodeArb,
   destination: airportCodeArb,
-  departureDate: futureDateArb,
-  returnDate: fc.option(futureDateArb, { nil: undefined }),
-  passengerCount: fc.integer({ min: 1, max: 9 }),
+  departureDate: futureDateStrArb,
+  returnDate: futureDateStrArb,
+  passengers: passengersArb,
   cabinClass: fc.option(
     fc.constantFrom("ECONOMY" as const, "BUSINESS" as const, "FIRST" as const),
     { nil: undefined },
   ),
 });
+
+const oneWaySearchParamsArb = fc.record({
+  tripType: fc.constant("oneWay" as const),
+  origin: airportCodeArb,
+  destination: airportCodeArb,
+  departureDate: futureDateStrArb,
+  passengers: passengersArb,
+  cabinClass: fc.option(
+    fc.constantFrom("ECONOMY" as const, "BUSINESS" as const, "FIRST" as const),
+    { nil: undefined },
+  ),
+});
+
+const searchParamsArb = fc.oneof(
+  roundTripSearchParamsArb,
+  oneWaySearchParamsArb,
+);
 
 const emailArb = fc
   .tuple(
@@ -76,40 +99,24 @@ const passengerInputArb = fc.record({
 // Tests
 // ---------------------------------------------------------------------------
 
-describe("Property 16: API Schema round-trip", () => {
+describe("Property 17: API Schema round-trip", () => {
   test.prop([searchParamsArb], { numRuns: 20 })(
     "SearchParams encode → decode round-trip",
     (params) => {
-      const encoded = Schema.encodeSync(SearchParams)({
-        origin: params.origin as AirportCode,
-        destination: params.destination as AirportCode,
-        departureDate: params.departureDate,
-        passengerCount: params.passengerCount,
-        returnDate: Option.fromNullable(params.returnDate),
-        cabinClass: Option.fromNullable(params.cabinClass),
-      });
-      const decoded = Schema.decodeSync(SearchParams)(encoded);
+      const decoded = Schema.decodeSync(SearchParams)(params as any);
+      const encoded = Schema.encodeSync(SearchParams)(decoded);
+      const reDecoded = Schema.decodeSync(SearchParams)(encoded);
 
-      expect(decoded.origin).toBe(params.origin);
-      expect(decoded.destination).toBe(params.destination);
-      expect(decoded.departureDate.getTime()).toBe(
-        params.departureDate.getTime(),
-      );
-      expect(decoded.passengerCount).toBe(params.passengerCount);
+      expect(reDecoded.origin).toBe(params.origin);
+      expect(reDecoded.destination).toBe(params.destination);
+      expect(reDecoded.departureDate).toBe(params.departureDate);
+      expect(reDecoded.tripType).toBe(params.tripType);
+      expect(reDecoded.passengers.adults).toBe(params.passengers.adults);
+      expect(reDecoded.passengers.children).toBe(params.passengers.children);
+      expect(reDecoded.passengers.infants).toBe(params.passengers.infants);
 
-      // Verify returnDate round-trip
-      if (params.returnDate) {
-        const decodedDate = Option.getOrThrow(decoded.returnDate);
-        expect(decodedDate.getTime()).toBe(params.returnDate.getTime());
-      } else {
-        expect(Option.isNone(decoded.returnDate)).toBe(true);
-      }
-
-      // Verify cabinClass round-trip
-      if (params.cabinClass) {
-        expect(Option.getOrThrow(decoded.cabinClass)).toBe(params.cabinClass);
-      } else {
-        expect(Option.isNone(decoded.cabinClass)).toBe(true);
+      if (params.tripType === "roundTrip" && "returnDate" in params) {
+        expect(reDecoded.returnDate).toBe(params.returnDate);
       }
     },
   );
