@@ -1,6 +1,5 @@
 /**
  * Feature: web-booking-app, Property 17: API Schema round-trip
- * Validates: Requirements 10.4
  *
  * For any valid SearchParams or PassengerInput, encoding then decoding
  * via Effect Schema should produce a value equivalent to the original.
@@ -29,7 +28,7 @@ const pastDateArb = fc
 
 const futureDateStrArb = fc
   .date({ min: new Date("2026-03-01"), max: new Date("2028-12-31") })
-  .map((d) => d.toISOString().split("T")[0]!);
+  .map((d) => d.toISOString().split("T")[0] ?? "");
 
 const passengersArb = fc.record({
   adults: fc.integer({ min: 1, max: 9 }),

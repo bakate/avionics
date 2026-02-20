@@ -1,6 +1,5 @@
 /**
  * Feature: web-booking-app, Property 6: Cabin selection creates correct FlightSelection
- * Validates: Requirements 2.4, 4.2
  *
  * For any FlightResult and any available cabin in that flight, selecting that
  * cabin should produce a FlightSelection containing the correct FlightResult,
@@ -77,9 +76,9 @@ describe("Property 6: Cabin selection creates correct FlightSelection", () => {
           const selection = createFlightSelection(flight, cabinData.cabin);
 
           expect(selection).not.toBeNull();
-          expect(selection!.flight).toBe(flight);
-          expect(selection!.cabin).toBe(cabinData.cabin);
-          expect(selection!.price).toEqual(cabinData.price);
+          expect(selection?.flight).toBe(flight);
+          expect(selection?.cabin).toBe(cabinData.cabin);
+          expect(selection?.price).toEqual(cabinData.price);
         }
       }),
       { numRuns: 100 },
