@@ -357,9 +357,9 @@ describe("Booking API Integration (Multi-Passenger)", () => {
       expect(bookings.length).toBeGreaterThanOrEqual(1);
       const found = bookings.find((b) => b.id === bookingId);
       expect(found).toBeDefined();
-      expect(found!.passengers).toHaveLength(2);
-      expect(found!.passengers[0].type).toBe(PassengerType.ADULT);
-      expect(found!.passengers[1].type).toBe(PassengerType.SENIOR);
+      expect(found?.passengers).toHaveLength(2);
+      expect(found?.passengers[0].type).toBe(PassengerType.ADULT);
+      expect(found?.passengers[1].type).toBe(PassengerType.SENIOR);
     });
 
     await Effect.runPromise(

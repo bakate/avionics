@@ -20,7 +20,7 @@ import { CancellationService } from "../../../services/cancellation.service.js";
 import { InventoryService } from "../../../services/inventory.service.js";
 
 const makeExpiredBooking = (pnr: string, flightId = "FL-123") => {
-  const passenger = new Passenger({
+  const _passenger = new Passenger({
     // it should be a UUID
     id: PassengerId.make(faker.string.uuid()),
     firstName: faker.person.firstName(),
@@ -42,16 +42,7 @@ const makeExpiredBooking = (pnr: string, flightId = "FL-123") => {
   return Booking.create({
     id: BookingId.make(faker.string.uuid()),
     pnrCode: Schema.decodeSync(PnrCodeSchema)(pnr),
-    passengers: [new Passenger({
-      // it should be a UUID
-      id: PassengerId.make(faker.string.uuid()),
-      firstName: faker.person.firstName(),
-      lastName: faker.person.lastName(),
-      email: Schema.decodeSync(EmailSchema)(faker.internet.email()),
-      dateOfBirth: faker.date.birthdate(),
-      gender: "MALE",
-      type: "ADULT",
-    })],
+    passengers: [_passenger],
     segments: [segment],
     expiresAt: O.some(new Date(Date.now() - 1000)), // Expired 1s ago
   });

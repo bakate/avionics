@@ -41,7 +41,7 @@ export const FilterPanel = ({
             size={16}
             className="text-blue-400"
           />
-          <h3 className="text-sm font-bold uppercase tracking-wider text-white">
+          <h3 className="text-sm font-bold uppercase tracking-wider dark:text-white">
             {t("search.filters")}
           </h3>
         </div>
@@ -49,7 +49,7 @@ export const FilterPanel = ({
           variant="ghost"
           size="sm"
           onClick={onClear}
-          className="h-auto p-0 text-xs font-medium text-slate-500 hover:bg-transparent hover:text-white transition-colors"
+          className="h-auto p-0 text-xs font-medium text-slate-500 hover:bg-transparent hover:dark:text-white transition-colors"
         >
           {t("search.clearAll")}
         </Button>
@@ -73,7 +73,7 @@ export const FilterPanel = ({
                   "h-auto px-3 py-1.5 text-xs font-medium transition-all",
                   filters.cabinClass === opt.value
                     ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/50 hover:bg-blue-600/30 hover:text-blue-300"
-                    : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white",
+                    : "bg-white/5 text-slate-400 hover:bg-white/10 hover:dark:text-white",
                 )}
               >
                 {opt.label}
@@ -98,7 +98,7 @@ export const FilterPanel = ({
                 "flex-1 py-2 text-xs font-medium transition-all",
                 filters.maxStops === stop
                   ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/50 hover:bg-blue-600/30 hover:text-blue-300"
-                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white",
+                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:dark:text-white",
               )}
             >
               {stop === 0 ? "Non-stop" : "1 stop max"}
@@ -130,7 +130,7 @@ export const FilterPanel = ({
                 "w-full py-2 text-xs font-medium transition-all",
                 filters.timeRange?.[0] === item.range[0]
                   ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/50 hover:bg-blue-600/30 hover:text-blue-300"
-                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white",
+                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:dark:text-white",
               )}
             >
               {item.label}

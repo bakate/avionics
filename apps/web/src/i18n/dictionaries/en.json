@@ -8,6 +8,8 @@
     "passengers": "Passengers",
     "payment": "Payment",
     "confirmation": "Confirmation",
+    "outbound": "Outbound flight",
+    "return": "Return flight",
     "aria": { "label": "Booking steps" },
     "state": {
       "completed": "completed",
@@ -34,10 +36,20 @@
     "returnDate": "Return date",
     "dates": "Dates",
     "selectDates": "Select dates",
+    "selectDeparture": "Select departure",
     "passengers": "Passengers",
     "cabinClass": "Cabin class",
     "submit": "Search",
     "swap": "Swap origin and destination",
+    "tripType": "Trip type",
+    "roundTrip": "Round trip",
+    "oneWay": "One way",
+    "adults": "Adults",
+    "children": "Children",
+    "infants": "Infants",
+    "passengersCount": "{{count}} passenger(s)",
+    "addPassenger": "Add",
+    "removePassenger": "Remove",
     "select": "Select",
     "sortBy": "Sort by",
     "sortPrice": "Price",
@@ -121,6 +133,29 @@
         "priority": "SkyPriority boarding and service",
         "lounge": "SkyTeam Lounge access"
       }
+    },
+    "rules": {
+      "baggage": {
+        "ECONOMY": "1 checked bag (23 kg)",
+        "BUSINESS": "2 checked bags (32 kg each)",
+        "FIRST": "3 checked bags (32 kg each)"
+      },
+      "seat": {
+        "ECONOMY": "Paid seat selection",
+        "BUSINESS": "Free seat selection",
+        "FIRST": "Free seat selection"
+      },
+      "modification": {
+        "ECONOMY": "Modifiable: Fee (€150) + fare difference",
+        "BUSINESS": "Modifiable: Flexible (fare difference may apply)",
+        "FIRST": "Modifiable: Flexible without fee"
+      },
+      "refund": {
+        "ECONOMY": "Non-refundable",
+        "BUSINESS": "Refundable before first flight departure",
+        "FIRST": "Refundable"
+      },
+      "disclaimer": "* Total cabin baggage weight must not exceed 12 kg in Economy and Premium cabins, and 18 kg in Business and First cabins."
     }
   },
   "passengers": {
@@ -155,6 +190,7 @@
   },
   "common": {
     "back": "Back",
+    "next": "Next",
     "cancel": "Cancel",
     "loading": "Loading…",
     "error": "An error occurred",

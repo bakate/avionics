@@ -5,6 +5,8 @@
  * Navigation disabled (no step skipping). Responsive.
  */
 
+import { Tick02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Stepper,
   StepperIndicator,
@@ -15,7 +17,6 @@ import {
   StepperTrigger,
 } from "@workspace/ui/components/reui/stepper";
 import { cn } from "@workspace/ui/lib/utils";
-import { CheckIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { STEP_LABELS } from "../machines/booking.machine";
 
@@ -51,7 +52,11 @@ export const StepperBar = ({ currentStep }: StepperBarProps) => {
                       isCompleted && "bg-emerald-600 text-white",
                     )}
                   >
-                    {isCompleted ? <CheckIcon className="size-3.5" /> : step}
+                    {isCompleted ? (
+                      <HugeiconsIcon icon={Tick02Icon} size={14} />
+                    ) : (
+                      step
+                    )}
                   </StepperIndicator>
                   <StepperTitle className="hidden text-xs md:inline">
                     {t(labelKey)}

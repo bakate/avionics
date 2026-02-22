@@ -120,12 +120,8 @@ const ResultsPage = () => {
           size={48}
           className="mb-4 text-red-500"
         />
-        <h2 className="text-xl font-bold text-white">
-          {t("error.invalidParams")}
-        </h2>
-        <Button
-          onClick={() => navigate(buildRoute.home())}
-          className="mt-4 rounded-xl bg-blue-600 px-6 py-2 text-sm font-bold text-white">
+        <h2 className="text-xl font-bold">{t("error.invalidParams")}</h2>
+        <Button onClick={() => navigate(buildRoute.home())}>
           {t("search.backToHome")}
         </Button>
       </div>
@@ -142,11 +138,12 @@ const ResultsPage = () => {
               variant="ghost"
               size="icon"
               onClick={() => navigate(buildRoute.home())}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all">
+              className="flex size-10 items-center justify-center rounded-full bg-white/5 text-slate-400 hover:bg-white/10 transition-all"
+            >
               <HugeiconsIcon icon={ArrowLeft01Icon} size={20} />
             </Button>
             <div className="flex-1">
-              <h1 className="flex items-center gap-2 text-lg font-bold text-white md:text-xl">
+              <h1 className="flex items-center gap-2 text-lg font-bold dark:text-white md:text-xl">
                 {searchParams.origin}
                 <span className="text-slate-600">→</span>
                 {searchParams.destination}
@@ -196,7 +193,8 @@ const ResultsPage = () => {
                   render={
                     <Button
                       variant="outline"
-                      className="flex items-center justify-center gap-2 lg:hidden">
+                      className="flex items-center justify-center gap-2 lg:hidden"
+                    >
                       <HugeiconsIcon icon={FilterHorizontalIcon} size={16} />
                       {t("search.filters").toUpperCase()}
                     </Button>
@@ -247,7 +245,8 @@ const ResultsPage = () => {
                 <p className="mb-6 text-sm text-slate-400">{error}</p>
                 <Button
                   onClick={() => search(searchParams)}
-                  className="rounded-xl bg-red-600 px-6 py-2 text-sm font-bold text-white transition-all hover:bg-red-500">
+                  className="rounded-xl bg-red-600 px-6 py-2 text-sm font-bold text-white transition-all hover:bg-red-500"
+                >
                   {t("common.retry")}
                 </Button>
               </div>
@@ -269,7 +268,8 @@ const ResultsPage = () => {
                 </EmptyDescription>
                 <Button
                   onClick={() => navigate(buildRoute.home())}
-                  className="mt-6 rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-blue-500">
+                  className="mt-6 rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-blue-500"
+                >
                   {t("search.modifySearch")}
                 </Button>
               </Empty>

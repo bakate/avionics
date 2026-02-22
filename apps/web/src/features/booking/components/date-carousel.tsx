@@ -18,26 +18,32 @@ export type DateCarouselProps = {
   readonly selectedDate: string;
   readonly prices: ReadonlyArray<DatePrice>;
   readonly onDateChange: (date: string) => void;
+  readonly onPrevious?: () => void;
+  readonly onNext?: () => void;
+  readonly passengers: { adults: number; children: number; infants: number };
   readonly isLoading?: boolean;
 };
 
-const formatDay = (iso: string) => {
+const formatDay = (iso: string, locale?: string) => {
   const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { weekday: "short" });
+  return d.toLocaleDateString(locale, { weekday: "short" });
 };
 
-const formatShortDate = (iso: string) => {
+const formatShortDate = (iso: string, locale?: string) => {
   const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return d.toLocaleDateString(locale, { day: "numeric", month: "short" });
 };
 
 export const DateCarousel = ({
   selectedDate,
   prices,
   onDateChange,
+  onPrevious,
+  onNext,
+  passengers,
   isLoading,
 }: DateCarouselProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const scrollBy = (dir: number) => {
@@ -49,64 +55,80 @@ export const DateCarousel = ({
       {/* Desktop arrows */}
       <button
         type="button"
-        onClick={() => scrollBy(-1)}
-        className="hidden md:flex size-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 min-h-[44px] min-w-[44px]"
+        onClick={onPrevious ? onPrevious : () => scrollBy(-1)}
+        className="hidden md:flex size-10 items-center justify-center rounded-full border border-border/50 bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground active:scale-95 transition-all shadow-sm shrink-0"
         aria-label={t("common.back")}
       >
-        <HugeiconsIcon icon={ArrowLeft01Icon} size={16} />
+        <HugeiconsIcon icon={ArrowLeft01Icon} size={18} />
       </button>
 
       <div
         ref={scrollRef}
-        className="flex flex-1 gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-1 px-1"
+        className="flex flex-1 gap-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory py-2 px-1"
       >
-        {prices.map((dp) => {
-          const isSelected = dp.date === selectedDate;
-          return (
-            <button
-              key={dp.date}
-              type="button"
-              onClick={() => onDateChange(dp.date)}
-              disabled={isLoading}
-              className={cn(
-                "flex min-w-[90px] snap-center flex-col items-center rounded-lg px-3 py-2 text-center transition-all min-h-[44px]",
-                isSelected
-                  ? "bg-blue-600 text-white shadow-md ring-2 ring-blue-300"
-                  : "bg-white text-gray-700 ring-1 ring-gray-200 hover:ring-blue-200 hover:bg-blue-50",
-                isLoading && "opacity-60 cursor-wait",
-              )}
-              aria-current={isSelected ? "date" : undefined}
-            >
-              <span className="text-[10px] font-medium uppercase tracking-wider opacity-70">
-                {formatDay(dp.date)}
-              </span>
-              <span className="text-xs font-semibold">
-                {formatShortDate(dp.date)}
-              </span>
-              {dp.lowestPrice ? (
-                <span
-                  className={cn(
-                    "text-sm font-bold mt-0.5",
-                    isSelected ? "text-white" : "text-gray-900",
-                  )}
-                >
-                  {dp.lowestPrice.amount} {dp.lowestPrice.currency}
+        {prices
+          .filter((dp) => dp.lowestPrice !== null)
+          .map((dp) => {
+            const isSelected = dp.date === selectedDate;
+            const hasFlights = dp.lowestPrice !== null;
+            return (
+              <button
+                key={dp.date}
+                type="button"
+                onClick={() => onDateChange(dp.date)}
+                disabled={isLoading || !hasFlights}
+                className={cn(
+                  "flex flex-1 min-w-[90px] snap-center flex-col items-center justify-center rounded-xl px-2 py-3 text-center transition-all",
+                  isSelected
+                    ? "bg-primary text-primary-foreground shadow-lg ring-2 ring-primary/30 scale-[1.02]"
+                    : "bg-card text-card-foreground ring-1 ring-border/50",
+                  !isSelected &&
+                    hasFlights &&
+                    "hover:bg-accent hover:text-accent-foreground hover:ring-accent",
+                  !hasFlights &&
+                    "opacity-40 cursor-not-allowed bg-muted/50 grayscale",
+                  isLoading && "opacity-60 cursor-wait",
+                )}
+                aria-current={isSelected ? "date" : undefined}
+              >
+                <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80 mb-1">
+                  {formatDay(dp.date, i18n.language)}
                 </span>
-              ) : (
-                <span className="text-[10px] mt-0.5 opacity-50">—</span>
-              )}
-            </button>
-          );
-        })}
+                <span className="text-sm font-bold">
+                  {formatShortDate(dp.date, i18n.language)}
+                </span>
+                {dp.lowestPrice ? (
+                  <span
+                    className={cn(
+                      "text-xs font-semibold mt-1",
+                      isSelected
+                        ? "text-primary-foreground/90"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {Number(
+                      (
+                        dp.lowestPrice.amount *
+                        (passengers.adults * 1.0 + passengers.children * 0.75)
+                      ).toFixed(2),
+                    )}{" "}
+                    {dp.lowestPrice.currency}
+                  </span>
+                ) : (
+                  <span className="text-[10px] mt-1 opacity-50">—</span>
+                )}
+              </button>
+            );
+          })}
       </div>
 
       <button
         type="button"
-        onClick={() => scrollBy(1)}
-        className="hidden md:flex size-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 min-h-[44px] min-w-[44px]"
-        aria-label={t("common.back")}
+        onClick={onNext ? onNext : () => scrollBy(1)}
+        className="hidden md:flex size-10 items-center justify-center rounded-full border border-border/50 bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground active:scale-95 transition-all shadow-sm shrink-0"
+        aria-label={t("common.next")}
       >
-        <HugeiconsIcon icon={ArrowRight01Icon} size={16} />
+        <HugeiconsIcon icon={ArrowRight01Icon} size={18} />
       </button>
     </div>
   );

@@ -16,18 +16,22 @@ import { SearchParams } from "../search.schema.js";
 // ---------------------------------------------------------------------------
 
 const airportCodeArb = fc
-  .stringOf(fc.constantFrom(..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"), {
+  .string({
     minLength: 3,
     maxLength: 3,
   })
+  .map((s) => s.toUpperCase())
   .filter((s) => /^[A-Z]{3}$/.test(s));
 
 const pastDateArb = fc
-  .date({ min: new Date("1920-01-01"), max: new Date() })
+  .date({ min: new Date("1920-01-01T00:00:00Z"), max: new Date() })
   .map((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()));
 
 const futureDateStrArb = fc
-  .date({ min: new Date("2026-03-01"), max: new Date("2028-12-31") })
+  .date({
+    min: new Date("2026-03-01T00:00:00Z"),
+    max: new Date("2028-12-31T23:59:59Z"),
+  })
   .map((d) => d.toISOString().split("T")[0] ?? "");
 
 const passengersArb = fc.record({
@@ -66,29 +70,18 @@ const searchParamsArb = fc.oneof(
   oneWaySearchParamsArb,
 );
 
-const emailArb = fc
-  .tuple(
-    fc.stringOf(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz0123456789"), {
-      minLength: 1,
-      maxLength: 8,
-    }),
-    fc.stringOf(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz"), {
-      minLength: 1,
-      maxLength: 6,
-    }),
-    fc.constantFrom("com", "org", "fr", "net"),
-  )
-  .map(([user, domain, tld]) => `${user}@${domain}.${tld}`);
+const emailArb = fc.emailAddress();
+
+const nameArb = fc
+  .array(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz"), {
+    minLength: 1,
+    maxLength: 10,
+  })
+  .map((arr) => arr.join(""));
 
 const passengerInputArb = fc.record({
-  firstName: fc.stringOf(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz"), {
-    minLength: 1,
-    maxLength: 10,
-  }),
-  lastName: fc.stringOf(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz"), {
-    minLength: 1,
-    maxLength: 10,
-  }),
+  firstName: nameArb,
+  lastName: nameArb,
   email: emailArb,
   dateOfBirth: pastDateArb,
   gender: fc.constantFrom("MALE" as const, "FEMALE" as const),

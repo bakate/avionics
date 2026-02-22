@@ -3,12 +3,10 @@
  * Same interface as outbound but for the return direction.
  * Dispatches SELECT_RETURN / CHANGE_RETURN_DATE to the booking machine.
  * Back button returns to outbound selection.
- *
  */
 
 import {
   AlertCircleIcon,
-  ArrowLeft01Icon,
   FilterHorizontalIcon,
   ReloadIcon,
 } from "@hugeicons/core-free-icons";
@@ -29,9 +27,11 @@ import {
   SheetTrigger,
 } from "@workspace/ui/components/sheet";
 import { Spinner } from "@workspace/ui/components/spinner";
-import { useCallback, useMemo, useState } from "react";
+import { Effect } from "effect";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { type DatePrice, getDatePrices } from "../../../api/inventory.api";
 import {
   FilterPanel,
   type FilterState,
@@ -43,8 +43,9 @@ import {
 } from "../../../components/flights/sort-controls";
 import { filterFlights, sortFlights } from "../../../pages/results-logic";
 import { buildRoute } from "../../../routes";
-import { DateCarousel, type DatePrice } from "../components/date-carousel";
+import { DateCarousel } from "../components/date-carousel";
 import { FlightResultsTable } from "../components/flight-results-table";
+import { FlightScreenHeader } from "../components/flight-screen-header";
 import { useBookingMachine } from "../hooks/use-booking-machine";
 import {
   createFlightSelection,
@@ -55,39 +56,18 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Build ~7 day date prices from the return flights currently loaded. */
-const buildDatePrices = (
-  selectedDate: string,
-  flights: ReadonlyArray<FlightResult>,
-): ReadonlyArray<DatePrice> => {
+/** Build ~7 day ISO strings centered on the selected date. */
+const buildDateRange = (selectedDate: string): ReadonlyArray<string> => {
   if (!selectedDate || Number.isNaN(new Date(selectedDate).getTime())) {
     return [];
   }
   const center = new Date(selectedDate);
-  const days: Array<DatePrice> = [];
+  const days: Array<string> = [];
   for (let i = -3; i <= 3; i++) {
     const d = new Date(center);
     d.setDate(d.getDate() + i);
     const iso = d.toISOString().split("T")[0] as string;
-
-    if (iso === selectedDate && flights.length > 0) {
-      const lowest = flights.reduce<number | null>((min, f) => {
-        const cheapest = f.cabins.reduce<number | null>((m, c) => {
-          if (c.availableSeats <= 0) return m;
-          return m === null ? c.price.amount : Math.min(m, c.price.amount);
-        }, null);
-        if (cheapest === null) return min;
-        return min === null ? cheapest : Math.min(min, cheapest);
-      }, null);
-
-      const currency = flights[0]?.cabins[0]?.price.currency ?? "EUR";
-      days.push({
-        date: iso,
-        lowestPrice: lowest !== null ? { amount: lowest, currency } : null,
-      });
-    } else {
-      days.push({ date: iso, lowestPrice: null });
-    }
+    days.push(iso);
   }
   return days;
 };
@@ -106,7 +86,39 @@ export const ReturnScreen = () => {
   const selectedDate =
     searchParams?.returnDate ?? searchParams?.departureDate ?? "";
 
-  // --- Local state: sorting & filtering ---
+  // --- Date Carousel State ---
+  const [referenceDate, setReferenceDate] = useState(
+    () => selectedDate || (new Date().toISOString().split("T")[0] as string),
+  );
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    const ref = new Date(referenceDate).getTime();
+    const sel = new Date(selectedDate).getTime();
+    if (Number.isNaN(ref) || Number.isNaN(sel)) return;
+
+    if (Math.abs(ref - sel) >= 7 * 24 * 60 * 60 * 1000) {
+      setReferenceDate(selectedDate);
+    }
+  }, [selectedDate, referenceDate]);
+
+  const handlePreviousDays = useCallback(() => {
+    setReferenceDate((prev) => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() - 7);
+      return d.toISOString().split("T")[0] as string;
+    });
+  }, []);
+
+  const handleNextDays = useCallback(() => {
+    setReferenceDate((prev) => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + 7);
+      return d.toISOString().split("T")[0] as string;
+    });
+  }, []);
+
+  // --- Local state: sorting, filtering, date prices ---
   const [sortField, setSortField] = useState<SortField>("price");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [filters, setFilters] = useState<FilterState>({
@@ -114,6 +126,37 @@ export const ReturnScreen = () => {
     maxStops: null,
     timeRange: null,
   });
+  const [datePrices, setDatePrices] = useState<ReadonlyArray<DatePrice>>([]);
+  const [pendingSelection, setPendingSelection] = useState<{
+    flight: FlightResult;
+    cabin: CabinClass;
+  } | null>(null);
+
+  // --- Fetch real date prices from API for the carousel ---
+  useEffect(() => {
+    if (!searchParams) return;
+    const dates = buildDateRange(referenceDate);
+    if (dates.length === 0) return;
+
+    let cancelled = false;
+    const effect = getDatePrices({
+      origin: searchParams.destination,
+      destination: searchParams.origin,
+      dates,
+    });
+    Effect.runPromise(effect)
+      .then((prices) => {
+        if (!cancelled) setDatePrices(prices);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDatePrices(dates.map((d) => ({ date: d, lowestPrice: null })));
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDate, searchParams]);
 
   // --- Derived data ---
   const filteredAndSorted = useMemo(() => {
@@ -126,21 +169,29 @@ export const ReturnScreen = () => {
     );
   }, [flights, sortField, sortOrder, filters]);
 
-  const datePrices = useMemo(
-    () => buildDatePrices(selectedDate, flights),
-    [selectedDate, flights],
-  );
-
   // --- Handlers ---
   const handleSelectCabin = useCallback(
     (flight: FlightResult, cabin: CabinClass) => {
-      const selection = createFlightSelection(flight, cabin);
-      if (selection) {
-        send({ type: "SELECT_RETURN", selection });
-      }
+      setPendingSelection((prev) => {
+        if (prev?.flight.flightId === flight.flightId && prev.cabin === cabin) {
+          return null; // Toggle off if clicked again
+        }
+        return { flight, cabin };
+      });
     },
-    [send],
+    [],
   );
+
+  const handleConfirmSelection = useCallback(() => {
+    if (!pendingSelection) return;
+    const selection = createFlightSelection(
+      pendingSelection.flight,
+      pendingSelection.cabin,
+    );
+    if (selection) {
+      send({ type: "SELECT_RETURN", selection });
+    }
+  }, [send, pendingSelection]);
 
   const handleDateChange = useCallback(
     (date: string) => {
@@ -157,13 +208,8 @@ export const ReturnScreen = () => {
   if (!searchParams) {
     return (
       <div className="flex h-[60vh] flex-col items-center justify-center p-4">
-        <p className="text-lg font-bold text-white">
-          {t("error.invalidParams")}
-        </p>
-        <Button
-          onClick={() => void navigate(buildRoute.home())}
-          className="mt-4 rounded-xl bg-blue-600 px-6 py-2 text-sm font-bold text-white"
-        >
+        <h2 className="text-lg font-bold">{t("error.invalidParams")}</h2>
+        <Button onClick={() => void navigate(buildRoute.home())}>
           {t("search.backToHome")}
         </Button>
       </div>
@@ -178,33 +224,14 @@ export const ReturnScreen = () => {
   return (
     <div className="min-h-screen pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-30 border-b border-white/5 bg-slate-950/80 backdrop-blur-md">
-        <div className="mx-auto max-w-7xl px-4 py-4 md:px-8">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleBack}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white transition-all"
-            >
-              <HugeiconsIcon icon={ArrowLeft01Icon} size={20} />
-            </Button>
-            <div className="flex-1">
-              <h1 className="flex items-center gap-2 text-lg font-bold text-white md:text-xl">
-                {searchParams.destination}
-                <span className="text-slate-600">→</span>
-                {searchParams.origin}
-              </h1>
-              <p className="text-xs font-medium text-slate-500">
-                {selectedDate
-                  ? new Date(selectedDate).toLocaleDateString()
-                  : ""}{" "}
-                • {totalPassengers} {t("search.passengers").toLowerCase()}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <FlightScreenHeader
+        origin={searchParams.destination}
+        destination={searchParams.origin}
+        date={selectedDate}
+        passengersCount={totalPassengers}
+        stepLabel={t("steps.return")}
+        onBack={handleBack}
+      />
 
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
         {/* Date Carousel */}
@@ -213,6 +240,9 @@ export const ReturnScreen = () => {
             selectedDate={selectedDate}
             prices={datePrices}
             onDateChange={handleDateChange}
+            onPrevious={handlePreviousDays}
+            onNext={handleNextDays}
+            passengers={searchParams.passengers}
             isLoading={isLoading}
           />
         </div>
@@ -296,13 +326,15 @@ export const ReturnScreen = () => {
                   size={40}
                   className="mx-auto mb-4 text-red-500"
                 />
-                <h3 className="mb-2 text-lg font-bold text-white">
+                <h3 className="mb-2 text-lg font-bold dark:text-white">
                   {t("error.searchFailed")}
                 </h3>
-                <p className="mb-6 text-sm text-slate-400">{context.error}</p>
+                <p className="mb-6 text-sm text-slate-400 dark:text-slate-500">
+                  {context.error}
+                </p>
                 <Button
                   onClick={() => send({ type: "RETRY" })}
-                  className="rounded-xl bg-red-600 px-6 py-2 text-sm font-bold text-white transition-all hover:bg-red-500"
+                  className="rounded-xl bg-red-600 px-6 py-2 text-sm font-bold darktext-white transition-all hover:bg-red-500"
                 >
                   {t("common.retry")}
                 </Button>
@@ -317,26 +349,28 @@ export const ReturnScreen = () => {
                     <HugeiconsIcon icon={ReloadIcon} size={32} />
                   </div>
                 </EmptyMedia>
-                <EmptyTitle className="text-lg font-bold text-white">
+                <EmptyTitle className="text-lg font-bold dark:text-white">
                   {t("search.noFlights")}
                 </EmptyTitle>
-                <EmptyDescription className="text-slate-500">
+                <EmptyDescription className="text-slate-500 dark:text-slate-400">
                   {t("search.tryDifferentDates")}
                 </EmptyDescription>
                 <Button
                   onClick={handleBack}
-                  className="mt-6 rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-blue-500"
+                  className="mt-6 rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold dark:text-white transition-all hover:bg-blue-500"
                 >
                   {t("common.back")}
                 </Button>
               </Empty>
             )}
 
-            {/* Flight results table */}
             {filteredAndSorted.length > 0 && (
               <FlightResultsTable
                 flights={filteredAndSorted}
+                pendingSelection={pendingSelection}
+                passengers={searchParams.passengers}
                 onSelectCabin={handleSelectCabin}
+                onConfirmCabin={handleConfirmSelection}
               />
             )}
           </div>
@@ -345,5 +379,3 @@ export const ReturnScreen = () => {
     </div>
   );
 };
-
-export default ReturnScreen;
