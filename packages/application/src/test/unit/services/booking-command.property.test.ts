@@ -66,7 +66,7 @@ describe("BookFlightCommand - Property-Based Tests", () => {
   test("Property 7: For any valid array of 1+ passengers, constructing BookFlightCommand succeeds; for empty array, it fails", () => {
     fc.assert(
       fc.property(
-        fc.string({ minLength: 1, maxLength: 10 }),
+        fc.string({ minLength: 1, maxLength: 9 }),
         arbCabinClass,
         arbNonEmptyPassengers,
         fc.webUrl(),

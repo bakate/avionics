@@ -9,9 +9,26 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { formatDuration } from "../../../lib/format";
 import { type FlightResult } from "../machines/booking.machine";
+import { FareDetailPanel } from "./fare-detail-panel";
+
 export type FlightResultsTableProps = {
   readonly flights: ReadonlyArray<FlightResult>;
+  readonly pendingSelection: { flight: FlightResult; cabin: CabinClass } | null;
+  readonly passengers: { adults: number; children: number; infants: number };
   readonly onSelectCabin: (flight: FlightResult, cabin: CabinClass) => void;
+  readonly onConfirmCabin: () => void;
+};
+
+const calculateTotal = (
+  baseAmount: number,
+  passengers: { adults: number; children: number; infants: number },
+) => {
+  return Number(
+    (
+      baseAmount *
+      (passengers.adults * 1.0 + passengers.children * 0.75)
+    ).toFixed(2),
+  );
 };
 
 const CABIN_COLORS: Record<
@@ -42,6 +59,7 @@ type CabinPriceCellProps = {
   readonly cabin: CabinClass;
   readonly price: { readonly amount: number; readonly currency: string };
   readonly availableSeats: number;
+  readonly passengers: { adults: number; children: number; infants: number };
   readonly onSelect: () => void;
 };
 
@@ -49,6 +67,7 @@ const CabinPriceCell = ({
   cabin,
   price,
   availableSeats,
+  passengers,
   onSelect,
 }: CabinPriceCellProps) => {
   const { t } = useTranslation();
@@ -73,7 +92,7 @@ const CabinPriceCell = ({
       aria-label={
         soldOut
           ? `${t(`select.${cabin}` as any)} — ${t("select.soldOut")}`
-          : `${t(`select.${cabin}` as any)} — ${price.amount} ${price.currency}`
+          : `${t(`select.${cabin}` as any)} — ${calculateTotal(price.amount, passengers)} ${price.currency}`
       }
     >
       <span className="text-[10px] font-semibold uppercase tracking-wider opacity-70">
@@ -84,7 +103,7 @@ const CabinPriceCell = ({
       ) : (
         <>
           <span className="text-base font-bold">
-            {price.amount}
+            {calculateTotal(price.amount, passengers)}
             <span className="ml-0.5 text-[10px] font-medium opacity-70">
               {price.currency}
             </span>
@@ -102,75 +121,123 @@ const CabinPriceCell = ({
 
 type FlightRowProps = {
   readonly flight: FlightResult;
+  readonly pendingSelection: { flight: FlightResult; cabin: CabinClass } | null;
+  readonly passengers: { adults: number; children: number; infants: number };
   readonly onSelectCabin: (f: FlightResult, c: CabinClass) => void;
+  readonly onConfirmCabin: () => void;
 };
 
-const FlightRow = ({ flight, onSelectCabin }: FlightRowProps) => {
+const FlightRow = ({
+  flight,
+  pendingSelection,
+  passengers,
+  onSelectCabin,
+  onConfirmCabin,
+}: FlightRowProps) => {
   const dur = formatDuration(flight.durationMinutes);
+  const isExpanded = pendingSelection?.flight.flightId === flight.flightId;
+
   return (
-    <tr className="border-b border-gray-100 transition-colors hover:bg-gray-50/50">
-      <td className="px-4 py-4">
-        <div className="flex items-center gap-4">
-          <div className="text-center">
-            <p className="text-lg font-bold text-gray-900">
-              {fmtTime(flight.departureTime)}
-            </p>
-            <p className="text-xs font-medium text-gray-500">{flight.origin}</p>
-          </div>
-          <div className="flex flex-col items-center gap-0.5">
-            <span className="text-[10px] font-medium text-gray-400">{dur}</span>
-            <div className="relative h-px w-16 bg-gray-300">
-              <div className="absolute top-1/2 left-0 size-1.5 -translate-y-1/2 rounded-full bg-gray-400" />
-              <div className="absolute top-1/2 right-0 size-1.5 -translate-y-1/2 rounded-full bg-gray-400" />
+    <>
+      <tr
+        className={cn(
+          "border-b border-gray-100 dark:border-white/5 transition-colors hover:bg-gray-50/50 dark:hover:bg-white/5",
+          isExpanded && "bg-slate-50/50 dark:bg-slate-900/20",
+        )}
+      >
+        <td className="px-4 py-4">
+          <div className="flex items-center gap-4">
+            <div className="text-center">
+              <p className="text-lg font-bold text-gray-900">
+                {fmtTime(flight.departureTime)}
+              </p>
+              <p className="text-xs font-medium text-gray-500">
+                {flight.origin}
+              </p>
             </div>
-            <span className="text-[10px] text-gray-400">
-              {flight.stops === 0
-                ? "Direct"
-                : `${flight.stops} stop${flight.stops > 1 ? "s" : ""}`}
-            </span>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[10px] font-medium text-gray-400">
+                {dur}
+              </span>
+              <div className="relative h-px w-16 bg-gray-300">
+                <div className="absolute top-1/2 left-0 size-1.5 -translate-y-1/2 rounded-full bg-gray-400" />
+                <div className="absolute top-1/2 right-0 size-1.5 -translate-y-1/2 rounded-full bg-gray-400" />
+              </div>
+              <span className="text-[10px] text-gray-400">
+                {flight.stops === 0
+                  ? "Direct"
+                  : `${flight.stops} stop${flight.stops > 1 ? "s" : ""}`}
+              </span>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold text-gray-900">
+                {fmtTime(flight.arrivalTime)}
+              </p>
+              <p className="text-xs font-medium text-gray-500">
+                {flight.destination}
+              </p>
+            </div>
           </div>
-          <div className="text-center">
-            <p className="text-lg font-bold text-gray-900">
-              {fmtTime(flight.arrivalTime)}
-            </p>
-            <p className="text-xs font-medium text-gray-500">
-              {flight.destination}
-            </p>
-          </div>
-        </div>
-      </td>
-      <td className="px-4 py-4">
-        <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-          {flight.flightNumber}
-        </span>
-      </td>
-      {CABIN_ORDER.map((cab) => {
-        const cd = flight.cabins.find((c) => c.cabin === cab);
-        return (
-          <td key={cab} className="px-2 py-4">
-            {cd ? (
-              <CabinPriceCell
-                cabin={cab}
-                price={cd.price}
-                availableSeats={cd.availableSeats}
-                onSelect={() => onSelectCabin(flight, cab)}
-              />
-            ) : (
-              <span className="text-xs text-gray-300">—</span>
-            )}
+        </td>
+        <td className="px-4 py-4">
+          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+            {flight.flightNumber}
+          </span>
+        </td>
+        {CABIN_ORDER.map((cab) => {
+          const cd = flight.cabins.find((c) => c.cabin === cab);
+          return (
+            <td key={cab} className="px-2 py-4">
+              {cd ? (
+                <CabinPriceCell
+                  cabin={cab}
+                  price={cd.price}
+                  availableSeats={cd.availableSeats}
+                  passengers={passengers}
+                  onSelect={() => onSelectCabin(flight, cab)}
+                />
+              ) : (
+                <span className="text-xs text-gray-300 dark:text-gray-600">
+                  —
+                </span>
+              )}
+            </td>
+          );
+        })}
+      </tr>
+      {isExpanded && (
+        <tr>
+          <td
+            colSpan={5}
+            className="p-0 border-b border-gray-100 dark:border-white/5"
+          >
+            <FareDetailPanel
+              flight={flight}
+              cabin={pendingSelection.cabin}
+              passengers={passengers}
+              onConfirm={onConfirmCabin}
+            />
           </td>
-        );
-      })}
-    </tr>
+        </tr>
+      )}
+    </>
   );
 };
 
-const FlightMobileCard = ({ flight, onSelectCabin }: FlightRowProps) => {
+const FlightMobileCard = ({
+  flight,
+  pendingSelection,
+  passengers,
+  onSelectCabin,
+  onConfirmCabin,
+}: FlightRowProps) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<CabinClass>("ECONOMY");
   const dur = formatDuration(flight.durationMinutes);
+  const isExpanded = pendingSelection?.flight.flightId === flight.flightId;
+
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-gray-200 dark:border-white/10 dark:bg-slate-950 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex size-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
@@ -238,7 +305,7 @@ const FlightMobileCard = ({ flight, onSelectCabin }: FlightRowProps) => {
                 ) : (
                   <>
                     <span className="text-xl font-bold text-gray-900">
-                      {cd.price.amount}
+                      {calculateTotal(cd.price.amount, passengers)}
                       <span className="ml-1 text-sm font-medium text-gray-400">
                         {cd.price.currency}
                       </span>
@@ -265,13 +332,26 @@ const FlightMobileCard = ({ flight, onSelectCabin }: FlightRowProps) => {
           );
         })()}
       </div>
+      {isExpanded && pendingSelection.cabin === activeTab && (
+        <div className="mt-4 -mx-4 -mb-4 border-t border-gray-200 dark:border-white/10">
+          <FareDetailPanel
+            flight={flight}
+            cabin={pendingSelection.cabin}
+            passengers={passengers}
+            onConfirm={onConfirmCabin}
+          />
+        </div>
+      )}
     </div>
   );
 };
 
 export const FlightResultsTable = ({
   flights,
+  pendingSelection,
+  passengers,
   onSelectCabin,
+  onConfirmCabin,
 }: FlightResultsTableProps) => {
   const { t } = useTranslation();
   if (flights.length === 0) return null;
@@ -302,7 +382,10 @@ export const FlightResultsTable = ({
               <FlightRow
                 key={f.flightId}
                 flight={f}
+                pendingSelection={pendingSelection}
+                passengers={passengers}
                 onSelectCabin={onSelectCabin}
+                onConfirmCabin={onConfirmCabin}
               />
             ))}
           </tbody>
@@ -313,7 +396,10 @@ export const FlightResultsTable = ({
           <FlightMobileCard
             key={f.flightId}
             flight={f}
+            pendingSelection={pendingSelection}
+            passengers={passengers}
             onSelectCabin={onSelectCabin}
+            onConfirmCabin={onConfirmCabin}
           />
         ))}
       </div>

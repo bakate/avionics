@@ -32,10 +32,12 @@ const flightAvailabilityArb = fc.record({
   economyPrice: moneyArb,
   businessPrice: moneyArb,
   firstPrice: moneyArb,
-  lastUpdated: fc.date({
-    min: new Date("2020-01-01"),
-    max: new Date("2030-01-01"),
-  }),
+  lastUpdated: fc
+    .date({
+      min: new Date("2020-01-01T00:00:00Z"),
+      max: new Date("2030-01-01T00:00:00Z"),
+    })
+    .filter((d) => !Number.isNaN(d.getTime())),
 });
 
 // ---------------------------------------------------------------------------

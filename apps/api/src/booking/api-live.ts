@@ -127,7 +127,7 @@ const toBookingResponse = (booking: Booking): BookingResponse =>
     id: booking.id,
     pnrCode: booking.pnrCode,
     status: booking.status,
-    passenger: booking.passenger,
+    passengers: booking.passengers,
     segments: booking.segments,
     expiresAt: booking.expiresAt,
     createdAt: booking.createdAt,

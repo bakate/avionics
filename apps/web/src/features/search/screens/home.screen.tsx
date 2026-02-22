@@ -1,6 +1,7 @@
 import {
   Airplane01Icon,
   Loading02Icon,
+  Sparkles,
   Time01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -20,21 +21,26 @@ const HomePage = () => {
   const hasBookings = context.allBookings.length > 0;
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative flex min-h-[60vh] flex-col items-center justify-center px-4 pt-20 pb-32">
+      <section className="relative flex min-h-[62vh] flex-col items-center justify-center px-4 pt-20 pb-32">
+        {/* Background image + overlay */}
         <div
           className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url("/hero-bg.png")' }}
+          style={{ backgroundImage: 'url("/hero-bg.jpg")' }}
         >
-          <div className="absolute inset-0 bg-linear-to-b from-slate-900/60 via-slate-900/40 to-slate-50" />
+          {/* Overlay that adapts: warm dark overlay in light mode, deeper overlay in dark mode */}
+          <div className="absolute inset-0 bg-linear-to-b from-foreground/60 via-foreground/40 to-background" />
         </div>
 
         <div className="relative z-10 w-full max-w-5xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-blue-500/20 px-4 py-1.5 text-sm font-semibold text-blue-100 backdrop-blur-md ring-1 ring-blue-500/30">
-            <HugeiconsIcon icon={Airplane01Icon} size={16} />
-            <span>{t("home.badge") || "New routes available to Paris"}</span>
+          {/* Badge */}
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/15 px-4 py-1.5 text-sm font-semibold text-primary-foreground backdrop-blur-md">
+            <HugeiconsIcon icon={Sparkles} size={16} />
+            <span>Nouvelles destinations disponibles</span>
           </div>
+
+          {/* Heading */}
 
           <Heading
             title={t("home.title") || "Where excellence meets the horizon"}
@@ -47,7 +53,9 @@ const HomePage = () => {
             descriptionClassName="text-slate-200 text-lg md:text-xl mx-auto max-w-2xl"
           />
 
-          <div className="mx-auto w-full max-w-4xl transform transition-all hover:scale-[1.01]">
+          {/* push this section all the way to the bottom */}
+
+          <div className="mx-auto mt-4 w-full max-w-4xl transform transition-all hover:scale-[1.01]">
             <SearchForm
               onSearch={(values) =>
                 send({
@@ -146,8 +154,8 @@ const HomePage = () => {
         </SectionCard>
       </section>
 
-      {/* Footer-like Gradient */}
-      <div className="pointer-events-none fixed bottom-0 left-0 right-0 h-32 bg-linear-to-t from-slate-50 to-transparent" />
+      {/* Bottom gradient fade */}
+      <div className="pointer-events-none fixed bottom-0 left-0 right-0 h-32 bg-linear-to-t from-background to-transparent" />
     </div>
   );
 };

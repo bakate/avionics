@@ -77,7 +77,7 @@ const flightSelectionArb = flightResultArb.chain((flight) =>
   fc
     .integer({ min: 0, max: flight.cabins.length - 1 })
     .map((idx): FlightSelection => {
-      const cabinData = flight.cabins[idx] ?? flight.cabins[0];
+      const cabinData = (flight.cabins[idx] ?? flight.cabins[0])!;
       return { flight, cabin: cabinData.cabin, price: cabinData.price };
     }),
 );

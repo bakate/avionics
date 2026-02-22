@@ -8,6 +8,8 @@
     "passengers": "Passagers",
     "payment": "Paiement",
     "confirmation": "Confirmation",
+    "outbound": "Vol aller",
+    "return": "Vol retour",
     "aria": { "label": "Étapes de réservation" },
     "state": {
       "completed": "terminée",
@@ -34,10 +36,20 @@
     "returnDate": "Date de retour",
     "dates": "Dates",
     "selectDates": "Sélectionner des dates",
+    "selectDeparture": "Sélectionner le départ",
     "passengers": "Passagers",
     "cabinClass": "Classe de cabine",
     "submit": "Rechercher",
     "swap": "Inverser origine et destination",
+    "tripType": "Type de voyage",
+    "roundTrip": "Aller-retour",
+    "oneWay": "Aller simple",
+    "adults": "Adultes",
+    "children": "Enfants",
+    "infants": "Bébés",
+    "passengersCount": "{{count}} passager(s)",
+    "addPassenger": "Ajouter",
+    "removePassenger": "Retirer",
     "select": "Sélectionner",
     "sortBy": "Trier par",
     "sortPrice": "Prix",
@@ -121,6 +133,29 @@
         "priority": "Parcours Prioritaire SkyPriority",
         "lounge": "Accès au salon SkyTeam"
       }
+    },
+    "rules": {
+      "baggage": {
+        "ECONOMY": "1 bagage en soute (23 kg)",
+        "BUSINESS": "2 bagages en soute (32 kg chacun)",
+        "FIRST": "3 bagages en soute (32 kg chacun)"
+      },
+      "seat": {
+        "ECONOMY": "Sélection payante du siège",
+        "BUSINESS": "Sélection gratuite du siège",
+        "FIRST": "Sélection gratuite du siège"
+      },
+      "modification": {
+        "ECONOMY": "Modifiable : Frais (150€) + différence tarifaire",
+        "BUSINESS": "Modifiable : Flexible (différence tarifaire éventuelle)",
+        "FIRST": "Modifiable : Flexible sans frais"
+      },
+      "refund": {
+        "ECONOMY": "Non remboursable",
+        "BUSINESS": "Remboursable avant le départ du 1er vol",
+        "FIRST": "Remboursable"
+      },
+      "disclaimer": "* Le poids total des bagages autorisés en cabine ne doit pas dépasser 12 kg en cabines Economy et Premium, et 18 kg en cabines Business et La Première."
     }
   },
   "passengers": {
@@ -155,6 +190,7 @@
   },
   "common": {
     "back": "Retour",
+    "next": "Suivant",
     "cancel": "Annuler",
     "loading": "Chargement…",
     "error": "Une erreur est survenue",

@@ -23,7 +23,10 @@ export const initialFormState: SearchFormInput = {
   origin: "CDG",
   destination: "LHR",
   departureDate: new Date().toISOString().split("T")[0] ?? "",
-  returnDate: "",
+  returnDate:
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0] ?? "", // TODO: set to today + 7 days
   passengers: { adults: 1, children: 0, infants: 0 },
   cabinClass: CabinClass.ECONOMY,
 };
