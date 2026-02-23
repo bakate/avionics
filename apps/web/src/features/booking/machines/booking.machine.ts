@@ -70,6 +70,7 @@ export type BookingResult = {
   readonly status: string;
   readonly totalPrice: { readonly amount: number; readonly currency: string };
   readonly confirmedAt: string;
+  readonly checkoutUrl?: string | undefined;
 };
 
 // ---------------------------------------------------------------------------
@@ -286,8 +287,7 @@ export const bookingMachine = setup({
         input,
       }: {
         input: {
-          flightId: string;
-          cabinClass: CabinClass;
+          segments: Array<{ flightId: string; cabinClass: CabinClass }>;
           passengers: ReadonlyArray<PassengerInput>;
         };
       }): Promise<BookingResult> => {
@@ -306,11 +306,10 @@ export const bookingMachine = setup({
         }));
 
         const command: BookFlightCommand = {
-          flightId: input.flightId,
-          cabinClass: input.cabinClass,
+          segments: input.segments as unknown as BookFlightCommand["segments"],
           passengers:
             mappedPassengers as unknown as BookFlightCommand["passengers"],
-          successUrl: `${window.location.origin}/success`,
+          successUrl: `${window.location.origin}/success?pnr={{PNR}}`,
           cancelUrl: `${window.location.origin}/cancel`,
         };
 
@@ -331,6 +330,7 @@ export const bookingMachine = setup({
             currency: totalPrice.currency,
           },
           confirmedAt: response.booking.createdAt.toISOString(),
+          checkoutUrl: response.checkoutUrl,
         };
       },
     ),
@@ -521,7 +521,7 @@ export const bookingMachine = setup({
     enteringPassengers: {
       on: {
         SET_PASSENGERS: {
-          target: "paying",
+          target: "reviewingSummary",
           actions: assign({
             passengers: ({ event }) => event.passengers,
           }),
@@ -545,23 +545,59 @@ export const bookingMachine = setup({
       },
     },
 
+    reviewingSummary: {
+      on: {
+        CONFIRM_PAYMENT: "paying",
+        BACK: "enteringPassengers",
+        ERROR: {
+          target: "error",
+          actions: assign({ error: ({ event }) => event.message }),
+        },
+        RESET: { target: "idle", actions: assign(initialContext) },
+      },
+    },
+
     paying: {
       tags: ["loading"],
       invoke: {
         src: "submitBooking",
-        input: ({ context }) => ({
-          flightId: context.selectedOutbound?.flight.flightId ?? "",
-          cabinClass:
-            context.selectedOutbound?.cabin ?? ("ECONOMY" as CabinClass),
-          passengers: context.passengers,
-        }),
-        onDone: {
-          target: "confirmed",
-          actions: assign({
-            bookingResult: ({ event }) => event.output,
-            error: () => null,
-          }),
+        input: ({ context }) => {
+          const segments: Array<{ flightId: string; cabinClass: CabinClass }> =
+            [];
+          if (context.selectedOutbound) {
+            segments.push({
+              flightId: context.selectedOutbound.flight.flightId,
+              cabinClass: context.selectedOutbound.cabin,
+            });
+          }
+          if (context.selectedReturn) {
+            segments.push({
+              flightId: context.selectedReturn.flight.flightId,
+              cabinClass: context.selectedReturn.cabin,
+            });
+          }
+          return {
+            segments,
+            passengers: context.passengers,
+          };
         },
+        onDone: [
+          {
+            guard: ({ event }) => Boolean(event.output.checkoutUrl),
+            target: "redirecting",
+            actions: assign({
+              bookingResult: ({ event }) => event.output,
+              error: () => null,
+            }),
+          },
+          {
+            target: "confirmed",
+            actions: assign({
+              bookingResult: ({ event }) => event.output,
+              error: () => null,
+            }),
+          },
+        ],
         onError: {
           target: "error",
           actions: assign({
@@ -574,13 +610,33 @@ export const bookingMachine = setup({
       },
       on: {
         BACK: {
-          target: "enteringPassengers",
+          target: "reviewingSummary",
         },
         RESET: { target: "idle", actions: assign(initialContext) },
       },
     },
 
+    redirecting: {
+      entry: ({ context }) => {
+        if (context.bookingResult?.checkoutUrl) {
+          window.location.href = context.bookingResult.checkoutUrl;
+        }
+      },
+      on: {
+        RESET: { target: "idle", actions: assign(initialContext) },
+      },
+    },
+
     confirmed: {
+      entry: ({ context }) => {
+        // Only redirect if somehow we already have a checkoutUrl and we are confirmed (unlikely in this flow)
+        if (
+          context.bookingResult?.checkoutUrl &&
+          !window.location.pathname.startsWith("/confirmation")
+        ) {
+          window.location.href = context.bookingResult.checkoutUrl;
+        }
+      },
       on: {
         RESET: { target: "idle", actions: assign(initialContext) },
       },
@@ -609,7 +665,9 @@ export type BookingStateValue =
   | "searchingReturn"
   | "selectingReturn"
   | "enteringPassengers"
+  | "reviewingSummary"
   | "paying"
+  | "redirecting"
   | "confirmed"
   | "error";
 
@@ -623,7 +681,9 @@ export const stateToStep = (state: BookingStateValue): number => {
     searchingReturn: 1,
     selectingReturn: 2,
     enteringPassengers: 3,
+    reviewingSummary: 4,
     paying: 4,
+    redirecting: 4,
     confirmed: 5,
     error: -1,
   };
@@ -658,7 +718,9 @@ export const stateToRoute = (
       return "/return";
     case "enteringPassengers":
       return "/passengers";
+    case "reviewingSummary":
     case "paying":
+    case "redirecting":
       return "/payment";
     case "confirmed":
       return context.bookingResult
