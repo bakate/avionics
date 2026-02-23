@@ -1,66 +1,102 @@
-// Step indicator placeholder — full implementation in task 13.
-// Displays the current position in the booking flow.
-
-import { useTranslation as useI18n } from "react-i18next";
+import {
+  AirplaneLanding01Icon,
+  AirplaneTakeOff01Icon,
+  CreditCardIcon,
+  SearchSquareIcon,
+  UserSquareIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Stepper,
+  StepperIndicator,
+  StepperItem,
+  StepperNav,
+  StepperSeparator,
+  StepperTitle,
+  StepperTrigger,
+} from "@workspace/ui/components/reui/stepper";
+import { useTranslation } from "react-i18next";
+import { useBookingMachine } from "../../features/booking/hooks/use-booking-machine";
+import { stateToStep } from "../../features/booking/machines/booking.machine";
 
 const STEPS = [
-  "steps.search",
-  "steps.select",
-  "steps.passengers",
-  "steps.payment",
-  "steps.confirmation",
+  {
+    title: "steps.search",
+    icon: (
+      <HugeiconsIcon
+        icon={SearchSquareIcon}
+        strokeWidth={2}
+        className="size-4"
+      />
+    ),
+  },
+  {
+    title: "steps.outbound",
+    icon: (
+      <HugeiconsIcon
+        icon={AirplaneTakeOff01Icon}
+        strokeWidth={2}
+        className="size-4"
+      />
+    ),
+  },
+  {
+    title: "steps.return",
+    icon: (
+      <HugeiconsIcon
+        icon={AirplaneLanding01Icon}
+        strokeWidth={2}
+        className="size-4"
+      />
+    ),
+  },
+  {
+    title: "steps.passengers",
+    icon: (
+      <HugeiconsIcon icon={UserSquareIcon} strokeWidth={2} className="size-4" />
+    ),
+  },
+  {
+    title: "steps.payment",
+    icon: (
+      <HugeiconsIcon icon={CreditCardIcon} strokeWidth={2} className="size-4" />
+    ),
+  },
 ] as const;
 
-type StepIndicatorProps = {
-  currentStep?: number;
-};
+export const StepIndicator = () => {
+  const { t } = useTranslation();
+  const { state } = useBookingMachine();
 
-const StepIndicator = ({ currentStep = 0 }: StepIndicatorProps) => {
-  const { t } = useI18n();
+  const activeStep = stateToStep(state) + 1;
+
   return (
-    <nav
-      aria-label={t("steps.aria.label")}
-      className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3"
+    <Stepper
+      value={activeStep}
+      className="max-w-7xl backdrop-blur-sm mx-auto bg-neutral-50 dark:bg-neutral-900 rounded-sm space-y-8 w-full mt-3 px-3"
     >
-      {STEPS.map((label, index) => {
-        const state =
-          index < currentStep
-            ? t("steps.state.completed")
-            : index === currentStep
-              ? t("steps.state.current")
-              : t("steps.state.upcoming");
-        const isCurrent = index === currentStep;
-
-        return (
-          <div
-            key={label}
-            aria-current={isCurrent ? "step" : undefined}
-            className="flex items-center gap-2"
+      <StepperNav className="gap-3">
+        {STEPS.map((step, index) => (
+          <StepperItem
+            step={index + 1}
+            className="flex-1 items-start relative"
+            key={step.title}
           >
-            <span className="sr-only">{state}</span>
-            <span
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                index <= currentStep
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-500"
-              }`}
+            <StepperTrigger
+              className="flex grow flex-col items-start justify-center gap-2.5"
+              asChild
             >
-              {index + 1}
-            </span>
-            <span
-              className={`hidden text-sm md:inline ${
-                index <= currentStep
-                  ? "font-medium text-gray-900"
-                  : "text-gray-400"
-              }`}
-            >
-              {t(label)}
-            </span>
-          </div>
-        );
-      })}
-    </nav>
+              <StepperIndicator className="data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=completed]:bg-success size-8 border-2 data-[state=completed]:text-white data-[state=inactive]:bg-transparent">
+                {step.icon}
+              </StepperIndicator>
+              <StepperTitle>{t(step.title)}</StepperTitle>
+            </StepperTrigger>
+            {STEPS.length > index + 1 ? (
+              <StepperSeparator className="group-data-[state=completed]/step:bg-success absolute inset-x-0 start-9 top-4 m-0 group-data-[orientation=horizontal]/stepper-nav:w-[calc(100%-2rem)] group-data-[orientation=horizontal]/stepper-nav:flex-none" />
+            ) : null}
+          </StepperItem>
+        ))}
+      </StepperNav>
+    </Stepper>
   );
 };
-
-export default StepIndicator;

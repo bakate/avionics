@@ -19,7 +19,7 @@ export const formatDate = (date: Date): string =>
   DateTime.format(DateTime.unsafeMake(date), {
     locale: "fr-FR",
     day: "2-digit",
-    month: "short",
+    month: "long",
     year: "numeric",
   });
 

@@ -2,6 +2,7 @@ import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@workspace/ui/components/button";
 import { useTranslation } from "react-i18next";
+import { formatDate } from "../../../lib/format";
 
 export type FlightScreenHeaderProps = {
   readonly origin: string;
@@ -20,7 +21,7 @@ export const FlightScreenHeader = ({
   stepLabel,
   onBack,
 }: FlightScreenHeaderProps) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   return (
     <div className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md">
@@ -45,14 +46,8 @@ export const FlightScreenHeader = ({
               {destination}
             </h1>
             <p className="text-sm font-medium text-muted-foreground mt-1">
-              {date
-                ? new Date(date).toLocaleDateString(i18n?.language, {
-                    weekday: "short",
-                    day: "numeric",
-                    month: "short",
-                  })
-                : ""}{" "}
-              • {passengersCount} {t("search.passengers").toLowerCase()}
+              {date ? formatDate(new Date(date)) : ""} • {passengersCount}{" "}
+              {t("search.passengers").toLowerCase()}
             </p>
           </div>
         </div>

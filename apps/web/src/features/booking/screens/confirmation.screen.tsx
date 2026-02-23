@@ -2,6 +2,7 @@ import { Tick01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type BookingSummary } from "@workspace/application/read-models";
 import { Button } from "@workspace/ui/components/button";
+import { type None } from "effect/Option";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
 import { ROUTES } from "../../../routes";
@@ -28,7 +29,7 @@ export const ConfirmationScreen = () => {
     status: booking.status as BookingSummary["status"],
     totalPrice: booking.totalPrice as BookingSummary["totalPrice"],
     createdAt: new Date(booking.confirmedAt),
-    expiresAt: { _tag: "None" } as any, // Not held anymore
+    expiresAt: { _tag: "None" } as None<Date>,
     passengerCount: context.passengers.length,
   };
 

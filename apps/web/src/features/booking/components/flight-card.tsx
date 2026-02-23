@@ -9,7 +9,8 @@ import { Badge } from "@workspace/ui/components/badge";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { useTranslation } from "react-i18next";
-import { type FlightResult } from "../../features/booking/machines/booking.machine";
+import { formatDuration, formatTime } from "../../../lib/format";
+import { type FlightResult } from "../machines/booking.machine";
 
 export type FlightCardProps = {
   readonly flight: FlightResult;
@@ -34,12 +35,7 @@ export const FlightCard = ({
   const departureDate = new Date(flight.departureTime);
   const arrivalDate = new Date(flight.arrivalTime);
 
-  const formatTime = (date: Date) =>
-    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-  const hours = Math.floor(flight.durationMinutes / 60);
-  const mins = flight.durationMinutes % 60;
-  const duration = `${hours}h ${mins}m`;
+  const duration = formatDuration(flight.durationMinutes);
 
   const cabinData = flight.cabins.find((c) => c.cabin === selectedCabin);
   const price = cabinData?.price ?? { amount: 0, currency: "EUR" };
@@ -108,7 +104,7 @@ export const FlightCard = ({
           <div className="flex items-center justify-between border-t border-white/5 pt-4 md:flex-col md:items-end md:border-t-0 md:pt-0">
             <div className="text-right">
               <p className="text-xs font-medium text-slate-400">
-                {t(`select.${selectedCabin}` as any)}
+                {t(`select.${selectedCabin}`)}
               </p>
               <p className="text-2xl font-black">
                 {price.amount}

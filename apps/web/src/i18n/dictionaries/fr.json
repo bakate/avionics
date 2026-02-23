@@ -55,6 +55,8 @@
     "sortPrice": "Prix",
     "sortTime": "Heure de départ",
     "sortDuration": "Durée",
+    "noResultTitle": "Désolé, aucun vol trouvé",
+    "noResultDescription": "Essayez de modifier vos critères de recherche ou vos dates.",
     "filters": "Filtres",
     "clearAll": "Tout effacer",
     "stops": "Escales",
@@ -238,5 +240,13 @@
     "light": "Clair",
     "dark": "Sombre",
     "system": "Système"
+  },
+  "globalError": {
+    "title": "Système Indisponible",
+    "subtitle": "Une erreur critique est survenue dans le moteur de réservation.",
+    "details": "Détails de l'erreur",
+    "notice": "Nos ingénieurs ont été notifiés de l'incident.",
+    "reset": "Réinitialiser l'application",
+    "backHome": "Retourner à l'accueil"
   }
 }

@@ -1,6 +1,7 @@
 import { effectTsResolver } from "@hookform/resolvers/effect-ts";
 import { type PassengerType } from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
+import { Heading } from "@workspace/ui/components/heading";
 import { Schema } from "effect";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -105,14 +106,11 @@ export const PassengersScreen = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">
-          {t("passengers.title")}
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          {t("passengers.who_is_traveling")}
-        </p>
-      </div>
+      <Heading
+        title={t("passengers.title")}
+        description={t("passengers.who_is_traveling")}
+        className="mb-8"
+      />
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="space-y-6">

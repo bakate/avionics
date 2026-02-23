@@ -6,8 +6,7 @@ import { Config, Context, Effect, Layer, ManagedRuntime } from "effect";
  * API Client Configuration
  */
 const getBaseUrl = () => {
-  if ((import.meta as any).env?.VITE_API_URL)
-    return (import.meta as any).env.VITE_API_URL;
+  if (import.meta.env?.VITE_API_URL) return import.meta.env.VITE_API_URL;
   return "http://localhost:3000";
 };
 

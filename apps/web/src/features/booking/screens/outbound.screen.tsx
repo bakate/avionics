@@ -5,11 +5,7 @@
  *
  */
 
-import {
-  AlertCircleIcon,
-  FilterHorizontalIcon,
-  ReloadIcon,
-} from "@hugeicons/core-free-icons";
+import { FilterHorizontalIcon, ReloadIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type CabinClass } from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
@@ -19,6 +15,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@workspace/ui/components/empty";
+import { SectionCard } from "@workspace/ui/components/section-card";
 import {
   Sheet,
   SheetContent,
@@ -32,20 +29,18 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { type DatePrice, getDatePrices } from "../../../api/inventory.api";
-import {
-  FilterPanel,
-  type FilterState,
-} from "../../../components/flights/filter-panel";
+import { ErrorDisplay } from "../../../components/error-display";
+import { filterFlights, sortFlights } from "../../../pages/results-logic";
+import { buildRoute } from "../../../routes";
+import { DateCarousel } from "../components/date-carousel";
+import { FilterPanel, type FilterState } from "../components/filter-panel";
+import { FlightResultsTable } from "../components/flight-results-table";
+import { FlightScreenHeader } from "../components/flight-screen-header";
 import {
   SortControls,
   type SortField,
   type SortOrder,
-} from "../../../components/flights/sort-controls";
-import { filterFlights, sortFlights } from "../../../pages/results-logic";
-import { buildRoute } from "../../../routes";
-import { DateCarousel } from "../components/date-carousel";
-import { FlightResultsTable } from "../components/flight-results-table";
-import { FlightScreenHeader } from "../components/flight-screen-header";
+} from "../components/sort-controls";
 import { useBookingMachine } from "../hooks/use-booking-machine";
 import {
   createFlightSelection,
@@ -261,17 +256,23 @@ export const OutboundScreen = () => {
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* Sidebar filters (desktop) */}
           <aside className="hidden w-72 shrink-0 lg:block">
-            <FilterPanel
-              filters={filters}
-              onFiltersChange={setFilters}
-              onClear={() =>
-                setFilters({
-                  cabinClass: "ECONOMY",
-                  maxStops: null,
-                  timeRange: null,
-                })
-              }
-            />
+            <SectionCard
+              title={t("search.filters")}
+              icon={<HugeiconsIcon icon={FilterHorizontalIcon} size={18} />}
+              className="sticky top-24"
+            >
+              <FilterPanel
+                filters={filters}
+                onFiltersChange={setFilters}
+                onClear={() =>
+                  setFilters({
+                    cabinClass: "ECONOMY",
+                    maxStops: null,
+                    timeRange: null,
+                  })
+                }
+              />
+            </SectionCard>
           </aside>
 
           {/* Main content */}
@@ -331,23 +332,11 @@ export const OutboundScreen = () => {
 
             {/* Error state */}
             {context.error && flights.length === 0 && (
-              <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-8 text-center">
-                <HugeiconsIcon
-                  icon={AlertCircleIcon}
-                  size={40}
-                  className="mx-auto mb-4 text-red-500"
-                />
-                <h3 className="mb-2 text-lg font-bold text-white">
-                  {t("error.searchFailed")}
-                </h3>
-                <p className="mb-6 text-sm text-slate-400">{context.error}</p>
-                <Button
-                  onClick={() => send({ type: "RETRY" })}
-                  className="rounded-xl bg-red-600 px-6 py-2 text-sm font-bold text-white transition-all hover:bg-red-500"
-                >
-                  {t("common.retry")}
-                </Button>
-              </div>
+              <ErrorDisplay
+                title={t("error.searchFailed")}
+                message={context.error}
+                onRetry={() => send({ type: "RETRY" })}
+              />
             )}
 
             {/* Empty state */}

@@ -25,11 +25,11 @@ import {
   SelectValue,
 } from "@workspace/ui/components/select";
 import { cn } from "@workspace/ui/lib/utils";
-import { format } from "date-fns";
 import { useTransition } from "react";
 import { type DateRange } from "react-day-picker";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { formatDate } from "../../../lib/format";
 import {
   cabinOptions,
   initialFormState,
@@ -274,11 +274,11 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                               {dateRange.from ? (
                                 dateRange.to ? (
                                   <>
-                                    {format(dateRange.from, "LLL dd, y")} -{" "}
-                                    {format(dateRange.to, "LLL dd, y")}
+                                    {formatDate(dateRange.from)} -{" "}
+                                    {formatDate(dateRange.to)}
                                   </>
                                 ) : (
-                                  format(dateRange.from, "LLL dd, y")
+                                  formatDate(dateRange.from)
                                 )
                               ) : (
                                 <span>{t("search.selectDates")}</span>
@@ -336,7 +336,7 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                               className="mr-2 text-muted-foreground"
                             />
                             {selectedDate ? (
-                              format(selectedDate, "LLL dd, y")
+                              formatDate(selectedDate)
                             ) : (
                               <span>{t("search.selectDeparture")}</span>
                             )}
