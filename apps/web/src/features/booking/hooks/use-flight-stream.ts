@@ -13,9 +13,9 @@ import { type FlightAvailability } from "@workspace/application/read-models";
 import { type CabinClass } from "@workspace/domain/kernel";
 import { Effect } from "effect";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { findAvailableFlights } from "../../../api/inventory.api.ts";
-import { type FlightResult } from "../machines/booking.machine.ts";
-import { type SearchParams } from "../schemas/search.schema.ts";
+import { findAvailableFlights } from "@/api/inventory.api";
+import { type FlightResult } from "@/features/booking/machines/booking.machine";
+import { type SearchParams } from "@/features/booking/schemas/search.schema";
 
 // ---------------------------------------------------------------------------
 // Types

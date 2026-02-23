@@ -28,24 +28,27 @@ import { Effect } from "effect";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { type DatePrice, getDatePrices } from "../../../api/inventory.api";
-import { ErrorDisplay } from "../../../components/error-display";
-import { filterFlights, sortFlights } from "../../../pages/results-logic";
-import { buildRoute } from "../../../routes";
-import { DateCarousel } from "../components/date-carousel";
-import { FilterPanel, type FilterState } from "../components/filter-panel";
-import { FlightResultsTable } from "../components/flight-results-table";
-import { FlightScreenHeader } from "../components/flight-screen-header";
+import { type DatePrice, getDatePrices } from "@/api/inventory.api";
+import { ErrorDisplay } from "@/components/error-display";
+import { DateCarousel } from "@/features/booking/components/date-carousel";
+import {
+  FilterPanel,
+  type FilterState,
+} from "@/features/booking/components/filter-panel";
+import { FlightResultsTable } from "@/features/booking/components/flight-results-table";
+import { FlightScreenHeader } from "@/features/booking/components/flight-screen-header";
 import {
   SortControls,
   type SortField,
   type SortOrder,
-} from "../components/sort-controls";
-import { useBookingMachine } from "../hooks/use-booking-machine";
+} from "@/features/booking/components/sort-controls";
+import { useBookingMachine } from "@/features/booking/hooks/use-booking-machine";
 import {
   createFlightSelection,
   type FlightResult,
-} from "../machines/booking.machine";
+} from "@/features/booking/machines/booking.machine";
+import { filterFlights, sortFlights } from "@/pages/results-logic";
+import { buildRoute } from "@/routes";
 
 // ---------------------------------------------------------------------------
 // Helpers

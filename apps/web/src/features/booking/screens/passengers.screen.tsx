@@ -5,12 +5,12 @@ import { Heading } from "@workspace/ui/components/heading";
 import { Schema } from "effect";
 import { useFieldArray, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { PassengerForm } from "../components/passenger-form";
-import { useBookingMachine } from "../hooks/use-booking-machine";
+import { PassengerForm } from "@/features/booking/components/passenger-form";
+import { useBookingMachine } from "@/features/booking/hooks/use-booking-machine";
 import {
   PassengerInput,
   type PassengerInputEncoded,
-} from "../schemas/passenger.schema";
+} from "@/features/booking/schemas/passenger.schema";
 
 const PassengersFormSchema = Schema.Struct({
   passengers: Schema.mutable(

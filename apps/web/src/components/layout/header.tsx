@@ -1,9 +1,8 @@
 import { ModeToggle } from "@workspace/ui/components/mode-toggle";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { buildRoute } from "../../routes.ts";
-
-import { LanguageSelector } from "./language-selector";
+import { LanguageSelector } from "@/components/layout/language-selector";
+import { buildRoute } from "@/routes";
 
 const Header = () => {
   const { t } = useTranslation();

@@ -5,8 +5,8 @@
 
 import { type CabinClass } from "@workspace/domain/kernel";
 import { useTranslation } from "react-i18next";
-import { formatDuration, formatTime } from "../../../lib/format";
-import { type FlightResult } from "../machines/booking.machine";
+import { type FlightResult } from "@/features/booking/machines/booking.machine";
+import { formatDuration, formatTime } from "@/lib/format";
 import { CabinCard } from "./cabin-card";
 
 export type FlightDetailPanelProps = {

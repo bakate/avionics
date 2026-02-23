@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from "react-router";
-import Header from "./header.tsx";
-import { StepIndicator } from "./step-indicator.tsx";
+import Header from "@/components/layout/header";
+import { StepIndicator } from "@/components/layout/step-indicator";
 
 export const BaseLayout = () => {
   const pathname = useLocation().pathname;

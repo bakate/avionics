@@ -1,7 +1,7 @@
 import { type CabinClass } from "@workspace/domain/kernel";
 import * as fc from "fast-check";
 import { describe, it } from "vitest";
-import { type FlightResult } from "../features/booking/machines/booking.machine";
+import { type FlightResult } from "@/features/booking/machines/booking.machine";
 import { filterFlights, sortFlights } from "./results-logic";
 
 // Arbitraries

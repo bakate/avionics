@@ -8,14 +8,14 @@ import { SectionCard } from "@workspace/ui/components/section-card";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
+import { useBookingMachine } from "@/features/booking/hooks/use-booking-machine";
 import {
   formatDate,
   formatDuration,
   formatMoney,
   formatTime,
-} from "../../../lib/format";
-import { ROUTES } from "../../../routes";
-import { useBookingMachine } from "../hooks/use-booking-machine";
+} from "@/lib/format";
+import { ROUTES } from "@/routes";
 
 export const SummaryScreen = () => {
   const { is, send, context } = useBookingMachine();

@@ -16,8 +16,8 @@ import {
   StepperTrigger,
 } from "@workspace/ui/components/reui/stepper";
 import { useTranslation } from "react-i18next";
-import { useBookingMachine } from "../../features/booking/hooks/use-booking-machine";
-import { stateToStep } from "../../features/booking/machines/booking.machine";
+import { useBookingMachine } from "@/features/booking/hooks/use-booking-machine";
+import { stateToStep } from "@/features/booking/machines/booking.machine";
 
 const STEPS = [
   {

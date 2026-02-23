@@ -2,8 +2,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "@workspace/ui/globals.css";
 import { ErrorBoundary } from "react-error-boundary";
-import App from "./app.tsx";
-import { GlobalErrorFallback } from "./components/shared/global-error-fallback.tsx";
+import App from "@/app";
+import { GlobalErrorFallback } from "@/components/shared/global-error-fallback";
 
 const root = document.getElementById("app");
 

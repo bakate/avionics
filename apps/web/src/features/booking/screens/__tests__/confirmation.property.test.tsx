@@ -106,7 +106,7 @@ describe("ConfirmationScreen Property Tests", () => {
             expect(screen.queryByTestId("navigate")).toBeNull();
 
             // Should display success message
-            expect(screen.getByText("Booking Confirmed!")).toBeDefined();
+            expect(screen.getByText("confirmation.successTitle")).toBeDefined();
 
             // Should display PNR
             expect(
@@ -114,7 +114,7 @@ describe("ConfirmationScreen Property Tests", () => {
             ).toBeDefined();
 
             // Should display Button
-            expect(screen.getByText("Book Another Flight")).toBeDefined();
+            expect(screen.getByText("confirmation.newBooking")).toBeDefined();
           } finally {
             cleanup();
           }

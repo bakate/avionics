@@ -1,4 +1,4 @@
-import { PassengersScreen } from "../features/booking/screens/passengers.screen";
+import { PassengersScreen } from "@/features/booking/screens/passengers.screen";
 
 const PassengersPage = () => {
   return <PassengersScreen />;

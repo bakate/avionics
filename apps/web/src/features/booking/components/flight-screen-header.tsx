@@ -2,7 +2,7 @@ import { ArrowLeft01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@workspace/ui/components/button";
 import { useTranslation } from "react-i18next";
-import { formatDate } from "../../../lib/format";
+import { formatDate } from "@/lib/format";
 
 export type FlightScreenHeaderProps = {
   readonly origin: string;
