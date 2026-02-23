@@ -233,7 +233,7 @@ describe("Property 14: Back navigation preserves context", () => {
     );
   });
 
-  test("BACK from paying preserves all previously entered context", async () => {
+  test("BACK from reviewingSummary preserves all previously entered context", async () => {
     await fc.assert(
       fc.asyncProperty(flightIdArb, async (flightId) => {
         const flight = makeFlight(flightId);
@@ -276,7 +276,7 @@ describe("Property 14: Back navigation preserves context", () => {
         actor.send({ type: "SELECT_RETURN", selection: retSelection });
         actor.send({ type: "SET_PASSENGERS", passengers });
 
-        expect(actor.getSnapshot().value).toBe("paying");
+        expect(actor.getSnapshot().value).toBe("reviewingSummary");
 
         actor.send({ type: "BACK" });
         const snap = actor.getSnapshot();

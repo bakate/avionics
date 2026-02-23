@@ -33,7 +33,9 @@ const expectedMapping: Record<BookingStateValue, number> = {
   searchingReturn: 1,
   selectingReturn: 2,
   enteringPassengers: 3,
+  reviewingSummary: 4,
   paying: 4,
+  redirecting: 4,
   confirmed: 5,
   error: -1,
 };
