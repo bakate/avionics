@@ -165,7 +165,7 @@ export const eventOutbox = pgTable(
 export const auditLog = pgTable("audit_log", {
   id: uuid("id").primaryKey().defaultRandom(),
   aggregateType: varchar("aggregate_type", { length: 50 }).notNull(),
-  aggregateId: uuid("aggregate_id").notNull(),
+  aggregateId: varchar("aggregate_id", { length: 100 }).notNull(),
   operation: varchar("operation", { length: 20 }).notNull(),
   changes: jsonb("changes"),
   userId: varchar("user_id", { length: 100 }),
