@@ -1,9 +1,9 @@
 import { type CabinClass } from "@workspace/domain/kernel";
-import { type FilterState } from "../components/flights/filter-panel";
+import { type FilterState } from "../features/booking/components/filter-panel";
 import {
   type SortField,
   type SortOrder,
-} from "../components/flights/sort-controls";
+} from "../features/booking/components/sort-controls";
 import { type FlightResult } from "../features/booking/machines/booking.machine";
 
 /**

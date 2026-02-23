@@ -55,6 +55,8 @@
     "sortPrice": "Price",
     "sortTime": "Departure time",
     "sortDuration": "Duration",
+    "noResultTitle": "Sorry, no flights found",
+    "noResultDescription": "Try adjusting your search criteria or dates.",
     "filters": "Filters",
     "clearAll": "Clear all",
     "stops": "Stops",
@@ -238,5 +240,13 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "globalError": {
+    "title": "System Unavailable",
+    "subtitle": "A critical error occurred in the booking engine.",
+    "details": "Error Details",
+    "notice": "Our engineers have been notified of the incident.",
+    "reset": "Reset Application",
+    "backHome": "Back to Home"
   }
 }

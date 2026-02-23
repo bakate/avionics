@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
 import { type BookingSummary } from "@workspace/application/read-models";
+import { type None } from "effect/Option";
 import fc from "fast-check";
 import { describe, expect, it, vi } from "vitest";
 import { BookingSummaryCard } from "../booking-summary.tsx";
@@ -28,7 +29,9 @@ const bookingSummaryArb = fc.record({
   createdAt: fc.date({ min: new Date("2020-01-01") }),
   expiresAt: fc
     .option(fc.date(), { nil: undefined })
-    .map((d) => (d ? { _tag: "Some", value: d } : { _tag: "None" }) as any),
+    .map(
+      (d) => (d ? { _tag: "Some", value: d } : { _tag: "None" }) as None<Date>,
+    ),
 });
 
 describe("BookingSummaryCard Property Tests", () => {

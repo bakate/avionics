@@ -7,8 +7,9 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type BookingSummary } from "@workspace/application/read-models";
 import { Badge } from "@workspace/ui/components/badge";
-import { Card, CardContent } from "@workspace/ui/components/card";
+import { SectionCard } from "@workspace/ui/components/section-card";
 import { useTranslation } from "react-i18next";
+import { formatDate, formatDateTime, formatMoney } from "../../../lib/format";
 
 interface BookingSummaryCardProps {
   booking: BookingSummary;
@@ -35,66 +36,61 @@ export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
   };
 
   return (
-    <Card className="group relative overflow-hidden border-white/20 bg-white/40 shadow-xl backdrop-blur-md transition-all hover:bg-white/60 hover:shadow-2xl">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-200">
-              <HugeiconsIcon icon={AirplaneTakeOff01Icon} size={20} />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900">{booking.pnrCode}</h3>
-              <p className="text-sm text-slate-500">
-                {new Date(booking.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-          <Badge
-            variant="outline"
-            className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${getStatusColor(
-              booking.status,
-            )}`}
-          >
-            {booking.status}
-          </Badge>
+    <SectionCard
+      title={booking.pnrCode}
+      icon={
+        <div className="flex size-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-200">
+          <HugeiconsIcon icon={AirplaneTakeOff01Icon} size={20} />
         </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <HugeiconsIcon
-              icon={UserCircleIcon}
-              size={16}
-              className="text-slate-400"
-            />
-            <span>
-              {booking.passengerCount}{" "}
-              {booking.passengerCount === 1
-                ? t("common.passenger" as any)
-                : t("common.passengers" as any)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <HugeiconsIcon
-              icon={CreditCardIcon}
-              size={16}
-              className="text-slate-400"
-            />
-            <span className="font-medium text-slate-900">
-              {booking.totalPrice.amount} {booking.totalPrice.currency}
-            </span>
-          </div>
+      }
+      action={
+        <Badge
+          variant="outline"
+          className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${getStatusColor(
+            booking.status,
+          )}`}
+        >
+          {booking.status}
+        </Badge>
+      }
+      description={formatDate(new Date(booking.createdAt))}
+      className="group relative overflow-hidden border-white/20 bg-white/40 shadow-xl backdrop-blur-md transition-all hover:bg-white/60 hover:shadow-2xl"
+    >
+      <div className="mt-2 grid grid-cols-2 gap-4">
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <HugeiconsIcon
+            icon={UserCircleIcon}
+            size={16}
+            className="text-slate-400"
+          />
+          <span>
+            {booking.passengerCount}{" "}
+            {booking.passengerCount === 1
+              ? t("common.passenger")
+              : t("common.passengers")}
+          </span>
         </div>
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <HugeiconsIcon
+            icon={CreditCardIcon}
+            size={16}
+            className="text-slate-400"
+          />
+          <span className="font-medium text-slate-900">
+            {formatMoney(booking.totalPrice)}
+          </span>
+        </div>
+      </div>
 
-        {booking.expiresAt._tag === "Some" && booking.status === "Held" && (
-          <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50/50 p-2 text-xs text-amber-700">
-            <HugeiconsIcon icon={Calendar03Icon} size={14} />
-            <span>
-              {t("booking.expiresAt")}:{" "}
-              {new Date(booking.expiresAt.value).toLocaleString()}
-            </span>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {booking.expiresAt._tag === "Some" && booking.status === "Held" && (
+        <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50/50 p-2 text-xs text-amber-700">
+          <HugeiconsIcon icon={Calendar03Icon} size={14} />
+          <span>
+            {t("booking.expiresAt")}:{" "}
+            {formatDateTime(new Date(booking.expiresAt.value))}
+          </span>
+        </div>
+      )}
+    </SectionCard>
   );
 };

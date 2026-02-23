@@ -46,8 +46,8 @@ const flightResultArb = fc
     ([id, cabins]): FlightResult => ({
       flightId: `FL-${id}`,
       flightNumber: "AF123",
-      origin: "CDG" as any,
-      destination: "JFK" as any,
+      origin: "CDG",
+      destination: "JFK",
       departureTime: new Date().toISOString(),
       arrivalTime: new Date().toISOString(),
       durationMinutes: 120,

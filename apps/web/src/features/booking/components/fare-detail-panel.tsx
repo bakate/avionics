@@ -1,6 +1,12 @@
-import { type CabinClass } from "@workspace/domain/kernel";
+import {
+  type CabinClass,
+  type CurrencyCode,
+  Money,
+} from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
+import { Heading } from "@workspace/ui/components/heading";
 import { useTranslation } from "react-i18next";
+import { formatMoney } from "../../../lib/format";
 import { type FlightResult } from "../machines/booking.machine";
 
 export type FareDetailPanelProps = {
@@ -23,24 +29,25 @@ export const FareDetailPanel = ({
 
   const totalPassengers =
     passengers.adults + passengers.children + passengers.infants;
-  const totalPrice = Number(
-    (
-      cabinData.price.amount *
-      (passengers.adults * 1.0 + passengers.children * 0.75)
-    ).toFixed(2),
-  );
+
+  const totalPriceAmount =
+    cabinData.price.amount *
+    (passengers.adults * 1.0 + passengers.children * 0.75);
 
   return (
     <div className="flex flex-col gap-6 p-6 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-white/10 rounded-b-xl">
       <div className="flex justify-between items-start">
-        <div>
-          <h2 className="text-xl font-bold dark:text-white">
-            {t(`select.${cabin}` as any)}
-          </h2>
+        <div className="w-full">
+          <Heading title={t(`select.${cabin}`)} className="mb-4" />
           <div className="flex flex-col gap-1 mt-1">
             <div className="flex items-baseline gap-2">
               <p className="text-slate-900 font-bold text-xl dark:text-white">
-                {totalPrice} {cabinData.price.currency}
+                {formatMoney(
+                  Money.of(
+                    totalPriceAmount,
+                    cabinData.price.currency as CurrencyCode,
+                  ),
+                )}
               </p>
               {totalPassengers > 1 && (
                 <span className="text-xs text-slate-500 font-medium">
@@ -56,29 +63,31 @@ export const FareDetailPanel = ({
                 {passengers.adults > 0 && (
                   <p>
                     {passengers.adults}x {t("search.adults")} :{" "}
-                    {Number(
-                      (cabinData.price.amount * passengers.adults).toFixed(2),
-                    )}{" "}
-                    {cabinData.price.currency}
+                    {formatMoney(
+                      Money.of(
+                        cabinData.price.amount * passengers.adults,
+                        cabinData.price.currency as CurrencyCode,
+                      ),
+                    )}
                   </p>
                 )}
                 {passengers.children > 0 && (
                   <p>
                     {passengers.children}x {t("search.children")} :{" "}
-                    {Number(
-                      (
-                        cabinData.price.amount *
-                        passengers.children *
-                        0.75
-                      ).toFixed(2),
-                    )}{" "}
-                    {cabinData.price.currency}
+                    {formatMoney(
+                      Money.of(
+                        cabinData.price.amount * passengers.children * 0.75,
+                        cabinData.price.currency as CurrencyCode,
+                      ),
+                    )}
                   </p>
                 )}
                 {passengers.infants > 0 && (
                   <p>
-                    {passengers.infants}x {t("search.infants")} : 0{" "}
-                    {cabinData.price.currency}
+                    {passengers.infants}x {t("search.infants")} :{" "}
+                    {formatMoney(
+                      Money.of(0, cabinData.price.currency as CurrencyCode),
+                    )}
                   </p>
                 )}
               </div>
@@ -109,7 +118,7 @@ export const FareDetailPanel = ({
               <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                 ✓
               </span>
-              <span>{t(`select.rules.baggage.${cabin}` as any)}</span>
+              <span>{t(`select.rules.baggage.${cabin}`)}</span>
             </li>
             <li className="flex items-start gap-2">
               {cabin === "ECONOMY" ? (
@@ -121,13 +130,13 @@ export const FareDetailPanel = ({
                   ✓
                 </span>
               )}
-              <span>{t(`select.rules.seat.${cabin}` as any)}</span>
+              <span>{t(`select.rules.seat.${cabin}`)}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                 ✓
               </span>
-              <span>{t(`select.rules.modification.${cabin}` as any)}</span>
+              <span>{t(`select.rules.modification.${cabin}`)}</span>
             </li>
             <li className="flex items-start gap-2">
               {cabin === "ECONOMY" ? (
@@ -139,12 +148,12 @@ export const FareDetailPanel = ({
                   ✓
                 </span>
               )}
-              <span>{t(`select.rules.refund.${cabin}` as any)}</span>
+              <span>{t(`select.rules.refund.${cabin}`)}</span>
             </li>
           </ul>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-8">
-          {t("select.rules.disclaimer" as any)}
+          {t("select.rules.disclaimer")}
         </p>
       </div>
 

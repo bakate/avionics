@@ -56,8 +56,8 @@ const ensureISO = (d: Date | string | undefined | null): string => {
 const toFlightResult = (raw: FlightAvailability): FlightResult => ({
   flightId: raw.flightId,
   flightNumber: raw.flightNumber,
-  origin: (raw as any).origin ?? "",
-  destination: (raw as any).destination ?? "",
+  origin: raw.origin,
+  destination: raw.destination,
   departureTime: ensureISO(raw.departureTime),
   arrivalTime: ensureISO(raw.arrivalTime),
   durationMinutes: raw.durationMinutes,

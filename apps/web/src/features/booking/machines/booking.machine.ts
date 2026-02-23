@@ -7,13 +7,16 @@
  * Requirements: 11.1, 11.5, 5.1, 5.2, 5.3, 5.4, 5.5
  */
 
+import { type BookingResponse } from "@workspace/api/booking-api";
 import { type BookFlightCommand } from "@workspace/application/booking.commands";
 import { type BookingSummary } from "@workspace/application/read-models";
 import {
   type CabinClass,
+  type CurrencyCode,
   Money,
   type PassengerType,
 } from "@workspace/domain/kernel";
+import { type BookingSegment } from "@workspace/domain/segment";
 import { Effect } from "effect";
 import { v4 as uuidv4 } from "uuid";
 import { assign, fromPromise, setup } from "xstate";
@@ -253,22 +256,24 @@ export const bookingMachine = setup({
       async (): Promise<ReadonlyArray<BookingSummary>> => {
         try {
           const effect = getBookings();
-          const bookings = await Effect.runPromise(effect);
+          const bookings = (await Effect.runPromise(
+            effect,
+          )) as ReadonlyArray<BookingResponse>;
           return bookings.map((b) => ({
             id: b.id,
             pnrCode: b.pnrCode,
             status: b.status,
             passengerCount: 1,
-            totalPrice: b.segments.reduce(
-              (sum, seg: any) => {
-                const acc =
-                  sum instanceof Money
-                    ? sum
-                    : Money.of((sum as any).amount, (sum as any).currency);
+            totalPrice: b.segments.reduce<Money>(
+              (acc, seg: BookingSegment) => {
+                const rawPrice = seg.price as unknown as {
+                  amount: number;
+                  currency: CurrencyCode;
+                };
                 const price =
                   seg.price instanceof Money
                     ? seg.price
-                    : Money.of(seg.price.amount, seg.price.currency);
+                    : Money.of(rawPrice.amount, rawPrice.currency);
                 return acc.add(price);
               },
               Money.zero(b.segments[0]?.price.currency ?? "EUR"),
@@ -689,17 +694,6 @@ export const stateToStep = (state: BookingStateValue): number => {
   };
   return mapping[state];
 };
-
-/** Step labels for the stepper bar (i18n keys) */
-export const STEP_LABELS = [
-  "steps.search",
-  "steps.outbound",
-  "steps.return",
-  "steps.passengers",
-  "steps.payment",
-] as const;
-
-export type StepLabel = (typeof STEP_LABELS)[number];
 
 /** Map machine state to the corresponding route path */
 export const stateToRoute = (

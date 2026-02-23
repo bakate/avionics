@@ -2,12 +2,22 @@
 
 import { Airplane01Icon, Time01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { type CabinClass } from "@workspace/domain/kernel";
+import {
+  type CabinClass,
+  type CurrencyCode,
+  Money,
+} from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@workspace/ui/components/empty";
 import { cn } from "@workspace/ui/lib/utils";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { formatDuration } from "../../../lib/format";
+import { formatDuration, formatMoney, formatTime } from "../../../lib/format";
 import { type FlightResult } from "../machines/booking.machine";
 import { FareDetailPanel } from "./fare-detail-panel";
 
@@ -23,12 +33,7 @@ const calculateTotal = (
   baseAmount: number,
   passengers: { adults: number; children: number; infants: number },
 ) => {
-  return Number(
-    (
-      baseAmount *
-      (passengers.adults * 1.0 + passengers.children * 0.75)
-    ).toFixed(2),
-  );
+  return baseAmount * (passengers.adults * 1.0 + passengers.children * 0.75);
 };
 
 const CABIN_COLORS: Record<
@@ -45,15 +50,6 @@ const CABIN_COLORS: Record<
 };
 
 const CABIN_ORDER: ReadonlyArray<CabinClass> = ["ECONOMY", "BUSINESS", "FIRST"];
-
-const fmtTime = (iso: string) => {
-  const d = new Date(iso);
-  return d.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-};
 
 type CabinPriceCellProps = {
   readonly cabin: CabinClass;
@@ -73,6 +69,8 @@ const CabinPriceCell = ({
   const { t } = useTranslation();
   const colors = CABIN_COLORS[cabin];
   const soldOut = availableSeats === 0;
+  const totalAmount = calculateTotal(price.amount, passengers);
+
   return (
     <button
       type="button"
@@ -91,22 +89,19 @@ const CabinPriceCell = ({
       )}
       aria-label={
         soldOut
-          ? `${t(`select.${cabin}` as any)} — ${t("select.soldOut")}`
-          : `${t(`select.${cabin}` as any)} — ${calculateTotal(price.amount, passengers)} ${price.currency}`
+          ? `${t(`select.${cabin}`)} — ${t("select.soldOut")}`
+          : `${t(`select.${cabin}`)} — ${formatMoney(Money.of(totalAmount, price.currency as CurrencyCode))}`
       }
     >
       <span className="text-[10px] font-semibold uppercase tracking-wider opacity-70">
-        {t(`select.${cabin}` as any)}
+        {t(`select.${cabin}`)}
       </span>
       {soldOut ? (
         <span className="text-xs font-medium">{t("select.soldOut")}</span>
       ) : (
         <>
           <span className="text-base font-bold">
-            {calculateTotal(price.amount, passengers)}
-            <span className="ml-0.5 text-[10px] font-medium opacity-70">
-              {price.currency}
-            </span>
+            {formatMoney(Money.of(totalAmount, price.currency as CurrencyCode))}
           </span>
           {availableSeats <= 5 && (
             <span className="text-[10px] opacity-60">
@@ -148,8 +143,8 @@ const FlightRow = ({
         <td className="px-4 py-4">
           <div className="flex items-center gap-4">
             <div className="text-center">
-              <p className="text-lg font-bold text-gray-900">
-                {fmtTime(flight.departureTime)}
+              <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                {formatTime(new Date(flight.departureTime))}
               </p>
               <p className="text-xs font-medium text-gray-500">
                 {flight.origin}
@@ -170,8 +165,8 @@ const FlightRow = ({
               </span>
             </div>
             <div className="text-center">
-              <p className="text-lg font-bold text-gray-900">
-                {fmtTime(flight.arrivalTime)}
+              <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                {formatTime(new Date(flight.arrivalTime))}
               </p>
               <p className="text-xs font-medium text-gray-500">
                 {flight.destination}
@@ -260,20 +255,20 @@ const FlightMobileCard = ({
       </div>
       <div className="mt-3 flex items-center justify-between">
         <div>
-          <p className="text-lg font-bold text-gray-900">
-            {fmtTime(flight.departureTime)}
+          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            {formatTime(new Date(flight.departureTime))}
           </p>
           <p className="text-xs text-gray-500">{flight.origin}</p>
         </div>
         <div className="mx-4 h-px flex-1 bg-gray-200" />
         <div className="text-right">
-          <p className="text-lg font-bold text-gray-900">
-            {fmtTime(flight.arrivalTime)}
+          <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            {formatTime(new Date(flight.arrivalTime))}
           </p>
           <p className="text-xs text-gray-500">{flight.destination}</p>
         </div>
       </div>
-      <div className="mt-4 flex gap-1 rounded-lg bg-gray-100 p-1">
+      <div className="mt-4 flex gap-1 rounded-lg bg-gray-100 dark:bg-slate-900 p-1">
         {CABIN_ORDER.map((cab) => (
           <button
             key={cab}
@@ -282,11 +277,11 @@ const FlightMobileCard = ({
             className={cn(
               "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all min-h-[44px]",
               activeTab === cab
-                ? "bg-white text-gray-900 shadow-sm"
-                : "text-gray-500 hover:text-gray-700",
+                ? "bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 shadow-sm"
+                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300",
             )}
           >
-            {t(`select.${cab}` as any)}
+            {t(`select.${cab}`)}
           </button>
         ))}
       </div>
@@ -304,14 +299,16 @@ const FlightMobileCard = ({
                   </span>
                 ) : (
                   <>
-                    <span className="text-xl font-bold text-gray-900">
-                      {calculateTotal(cd.price.amount, passengers)}
-                      <span className="ml-1 text-sm font-medium text-gray-400">
-                        {cd.price.currency}
-                      </span>
-                    </span>
+                    <p className="text-lg font-bold">
+                      {formatMoney(
+                        Money.of(
+                          calculateTotal(cd.price.amount, passengers),
+                          cd.price.currency as CurrencyCode,
+                        ),
+                      )}
+                    </p>
                     {cd.availableSeats <= 5 && (
-                      <p className="text-xs text-orange-500">
+                      <p className="text-[10px] text-orange-500 font-semibold">
                         {t("select.seatsLeft_other", {
                           count: cd.availableSeats,
                         })}
@@ -332,7 +329,7 @@ const FlightMobileCard = ({
           );
         })()}
       </div>
-      {isExpanded && pendingSelection.cabin === activeTab && (
+      {isExpanded && pendingSelection?.cabin === activeTab && (
         <div className="mt-4 -mx-4 -mb-4 border-t border-gray-200 dark:border-white/10">
           <FareDetailPanel
             flight={flight}
@@ -354,13 +351,22 @@ export const FlightResultsTable = ({
   onConfirmCabin,
 }: FlightResultsTableProps) => {
   const { t } = useTranslation();
-  if (flights.length === 0) return null;
+  if (flights.length === 0) {
+    return (
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>{t("search.noResultTitle")}</EmptyTitle>
+          <EmptyDescription>{t("search.noResultDescription")}</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
   return (
     <>
       <div className="hidden md:block">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-200 text-left">
+            <tr className="border-b border-gray-200 dark:border-white/10 text-left">
               <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
                 {t("flight.duration")}
               </th>
@@ -372,7 +378,7 @@ export const FlightResultsTable = ({
                   key={cab}
                   className="px-2 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-500"
                 >
-                  {t(`select.${cab}` as any)}
+                  {t(`select.${cab}`)}
                 </th>
               ))}
             </tr>

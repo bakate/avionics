@@ -62,8 +62,8 @@ export const CabinCard = ({
       )}
       aria-label={
         soldOut
-          ? `${t(`select.${cabin}` as any)} — ${t("select.soldOut")}`
-          : `${t(`select.${cabin}` as any)} — ${price.amount} ${price.currency}`
+          ? `${t(`select.${cabin}`)} — ${t("select.soldOut")}`
+          : `${t(`select.${cabin}`)} — ${price.amount} ${price.currency}`
       }
       aria-pressed={isSelected}
     >
@@ -73,7 +73,7 @@ export const CabinCard = ({
           soldOut ? "text-gray-400" : styles.accent,
         )}
       >
-        {t(`select.${cabin}` as any)}
+        {t(`select.${cabin}`)}
       </span>
 
       {soldOut ? (

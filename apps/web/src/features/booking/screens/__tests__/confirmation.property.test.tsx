@@ -36,7 +36,7 @@ describe("ConfirmationScreen Property Tests", () => {
         bookingResultArb,
         (stateStr, bookingResult) => {
           vi.mocked(useBookingMachine).mockReturnValue({
-            is: ((val: unknown) => val === stateStr) as any,
+            is: (val: unknown) => val === stateStr,
             context: {
               bookingResult,
               passengers: [],

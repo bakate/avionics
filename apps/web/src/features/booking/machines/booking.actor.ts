@@ -1,8 +1,18 @@
 import { createActor } from "xstate";
 import { bookingMachine } from "./booking.machine";
+import { loadBookingState, saveBookingState } from "./booking.persistence";
 
 /**
  * Global Singleton Actor for the booking flow.
- * No persistence for now (MVP simplification).
+ * Persistence enabled via sessionStorage.
  */
-export const bookingActor = createActor(bookingMachine).start();
+const persistedState = loadBookingState();
+
+export const bookingActor = createActor(bookingMachine, {
+  snapshot: persistedState,
+}).start();
+
+// Persist on every state change
+bookingActor.subscribe(() => {
+  saveBookingState(bookingActor.getPersistedSnapshot());
+});

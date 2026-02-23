@@ -1,19 +1,19 @@
-import {
-  Airplane01Icon,
-  Calendar01Icon,
-  PassportIcon,
-  UserIcon,
-} from "@hugeicons/core-free-icons";
+import { Airplane01Icon, PassportIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { type CurrencyCode, Money } from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card";
+import { Card, CardContent } from "@workspace/ui/components/card";
+import { Heading } from "@workspace/ui/components/heading";
+import { SectionCard } from "@workspace/ui/components/section-card";
+import { Spinner } from "@workspace/ui/components/spinner";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
+import {
+  formatDate,
+  formatDuration,
+  formatMoney,
+  formatTime,
+} from "../../../lib/format";
 import { ROUTES } from "../../../routes";
 import { useBookingMachine } from "../hooks/use-booking-machine";
 
@@ -44,258 +44,200 @@ export const SummaryScreen = () => {
     (outboundPrice.amount + (returnPrice?.amount || 0)) *
     context.passengers.length;
 
-  const formattedOutboundDate = new Date(
-    outboundFlight.departureTime,
-  ).toLocaleDateString(undefined, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-  const formattedReturnDate = returnFlight
-    ? new Date(returnFlight.departureTime).toLocaleDateString(undefined, {
-        weekday: "short",
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
-    : null;
-
   return (
     <div className="mx-auto max-w-6xl py-12 px-4 sm:px-6 lg:px-8">
-      <div className="mb-10 text-center md:text-left">
-        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl mb-3">
-          {t("payment.title", "Review your journey")}
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-3xl">
-          {t(
-            "payment.subtitle",
-            "Please verify your flight details and passenger information before proceeding to payment.",
-          )}
-        </p>
-      </div>
+      <Heading
+        title={t("payment.title")}
+        description={t("payment.subtitle")}
+        className="mb-10"
+      />
 
       <div className="flex flex-col lg:flex-row gap-10">
         <div className="flex-1 space-y-8">
           {/* Outbound Flight */}
-          <Card className="border-slate-200 shadow-sm overflow-hidden">
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center gap-3">
-              <div className="bg-blue-100 p-2 rounded-full text-blue-700">
-                <HugeiconsIcon
-                  icon={Airplane01Icon}
-                  size={20}
-                  className="rotate-45"
-                />
+          <SectionCard
+            title={t("payment.outboundFlight")}
+            icon={
+              <HugeiconsIcon
+                icon={Airplane01Icon}
+                size={20}
+                className="rotate-45"
+              />
+            }
+          >
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">
+                      {formatTime(new Date(outboundFlight.departureTime))}
+                    </div>
+                    <div className="text-sm font-medium text-muted-foreground">
+                      {outboundFlight.origin}
+                    </div>
+                  </div>
+                  <div className="flex-1 flex flex-col items-center justify-center relative px-4">
+                    <div className="w-full h-px bg-border absolute top-1/2 -translate-y-1/2" />
+                    <div className="bg-background z-10 px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider rounded-full border border-border">
+                      {formatDuration(outboundFlight.durationMinutes)}
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">
+                      {formatTime(new Date(outboundFlight.arrivalTime))}
+                    </div>
+                    <div className="text-sm font-medium text-muted-foreground">
+                      {outboundFlight.destination}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 text-sm text-muted-foreground">
+                  {formatDate(new Date(outboundFlight.departureTime))}
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-lg">
-                  {t("payment.outboundFlight", "Outbound Flight")}
-                </CardTitle>
-                <div className="text-sm text-slate-500 mt-0.5 flex items-center gap-1.5">
-                  <HugeiconsIcon icon={Calendar01Icon} size={14} />
-                  {formattedOutboundDate}
+              <div className="sm:border-l sm:pl-6 flex flex-col sm:items-end w-full sm:w-auto gap-2">
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">
+                    {t("payment.cabin")}
+                  </div>
+                  <div className="font-semibold text-foreground capitalize">
+                    {context.selectedOutbound.cabin.toLowerCase()}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">
+                    {t("payment.flight")}
+                  </div>
+                  <div className="font-semibold text-foreground">
+                    {outboundFlight.flightNumber}
+                  </div>
                 </div>
               </div>
             </div>
-            <CardContent className="p-6">
+          </SectionCard>
+
+          {/* Return Flight */}
+          {returnFlight && (
+            <SectionCard
+              title={t("payment.returnFlight")}
+              icon={
+                <HugeiconsIcon
+                  icon={Airplane01Icon}
+                  size={20}
+                  className="-rotate-135"
+                />
+              }
+            >
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
                 <div className="flex-1">
                   <div className="flex items-center gap-4">
                     <div className="text-center">
                       <div className="text-2xl font-bold">
-                        {new Date(
-                          outboundFlight.departureTime,
-                        ).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatTime(new Date(returnFlight.departureTime))}
                       </div>
-                      <div className="text-sm font-medium text-slate-500">
-                        {outboundFlight.origin}
+                      <div className="text-sm font-medium text-muted-foreground">
+                        {returnFlight.origin}
                       </div>
                     </div>
                     <div className="flex-1 flex flex-col items-center justify-center relative px-4">
-                      <div className="w-full h-px bg-slate-300 absolute top-1/2 -translate-y-1/2"></div>
-                      <div className="bg-white z-10 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider rounded-full border border-slate-200">
-                        {outboundFlight.durationMinutes}m
+                      <div className="w-full h-px bg-border absolute top-1/2 -translate-y-1/2" />
+                      <div className="bg-background z-10 px-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider rounded-full border border-border">
+                        {formatDuration(returnFlight.durationMinutes)}
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold">
-                        {new Date(
-                          outboundFlight.arrivalTime,
-                        ).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {formatTime(new Date(returnFlight.arrivalTime))}
                       </div>
-                      <div className="text-sm font-medium text-slate-500">
-                        {outboundFlight.destination}
+                      <div className="text-sm font-medium text-muted-foreground">
+                        {returnFlight.destination}
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="sm:border-l sm:pl-6 flex flex-col sm:items-end w-full sm:w-auto">
-                  <div className="text-sm text-slate-500 mb-1">
-                    {t("payment.cabin", "Cabin")}
-                  </div>
-                  <div className="font-semibold text-slate-900 capitalize">
-                    {context.selectedOutbound.cabin.toLowerCase()}
-                  </div>
-                  <div className="text-sm text-slate-500 mt-2 mb-1">
-                    {t("payment.flight", "Flight")}
-                  </div>
-                  <div className="font-semibold text-slate-900">
-                    {outboundFlight.flightNumber}
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    {formatDate(new Date(returnFlight.departureTime))}
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Return Flight */}
-          {returnFlight && formattedReturnDate && (
-            <Card className="border-slate-200 shadow-sm overflow-hidden">
-              <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center gap-3">
-                <div className="bg-blue-100 p-2 rounded-full text-blue-700">
-                  <HugeiconsIcon
-                    icon={Airplane01Icon}
-                    size={20}
-                    className="-rotate-135"
-                  />
-                </div>
-                <div>
-                  <CardTitle className="text-lg">
-                    {t("payment.returnFlight", "Return Flight")}
-                  </CardTitle>
-                  <div className="text-sm text-slate-500 mt-0.5 flex items-center gap-1.5">
-                    <HugeiconsIcon icon={Calendar01Icon} size={14} />
-                    {formattedReturnDate}
-                  </div>
-                </div>
-              </div>
-              <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">
-                          {new Date(
-                            returnFlight.departureTime,
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </div>
-                        <div className="text-sm font-medium text-slate-500">
-                          {returnFlight.origin}
-                        </div>
-                      </div>
-                      <div className="flex-1 flex flex-col items-center justify-center relative px-4">
-                        <div className="w-full h-px bg-slate-300 absolute top-1/2 -translate-y-1/2"></div>
-                        <div className="bg-white z-10 px-2 text-xs font-semibold text-slate-400 uppercase tracking-wider rounded-full border border-slate-200">
-                          {returnFlight.durationMinutes}m
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold">
-                          {new Date(
-                            returnFlight.arrivalTime,
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </div>
-                        <div className="text-sm font-medium text-slate-500">
-                          {returnFlight.destination}
-                        </div>
-                      </div>
+                <div className="sm:border-l sm:pl-6 flex flex-col sm:items-end w-full sm:w-auto gap-2">
+                  <div>
+                    <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">
+                      {t("payment.cabin")}
                     </div>
-                  </div>
-                  <div className="sm:border-l sm:pl-6 flex flex-col sm:items-end w-full sm:w-auto">
-                    <div className="text-sm text-slate-500 mb-1">
-                      {t("payment.cabin", "Cabin")}
-                    </div>
-                    <div className="font-semibold text-slate-900 capitalize">
+                    <div className="font-semibold text-foreground capitalize">
                       {context.selectedReturn?.cabin.toLowerCase()}
                     </div>
-                    <div className="text-sm text-slate-500 mt-2 mb-1">
-                      {t("payment.flight", "Flight")}
+                  </div>
+                  <div>
+                    <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">
+                      {t("payment.flight")}
                     </div>
-                    <div className="font-semibold text-slate-900">
+                    <div className="font-semibold text-foreground">
                       {returnFlight.flightNumber}
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </SectionCard>
           )}
 
           {/* Passengers */}
-          <Card className="border-slate-200 shadow-sm overflow-hidden">
-            <div className="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center gap-3">
-              <div className="bg-emerald-100 p-2 rounded-full text-emerald-700">
-                <HugeiconsIcon icon={UserIcon} size={20} />
-              </div>
-              <CardTitle className="text-lg">
-                {t("payment.passengersLabel", "Passengers")}
-              </CardTitle>
-            </div>
-            <CardContent className="p-0">
-              <ul className="divide-y divide-slate-100">
-                {context.passengers.map((p, idx) => (
-                  <li key={idx} className="p-6 flex items-start gap-4">
-                    <div className="bg-slate-100 p-3 rounded-full text-slate-400 mt-1">
-                      <HugeiconsIcon icon={PassportIcon} size={24} />
+          <SectionCard
+            title={t("payment.passengersLabel")}
+            icon={<HugeiconsIcon icon={PassportIcon} size={20} />}
+          >
+            <ul className="divide-y divide-border/40">
+              {context.passengers.map((p, idx) => (
+                <li key={idx} className="py-4 first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-primary/10 p-1.5 rounded-full text-primary">
+                      <HugeiconsIcon icon={PassportIcon} size={16} />
                     </div>
-                    <div>
-                      <div className="font-bold text-lg text-slate-900">
-                        {p.firstName} {p.lastName}
-                      </div>
-                      <div className="text-sm text-slate-500 mt-1 flex flex-wrap gap-x-4 gap-y-2">
-                        <span>
-                          <span className="font-medium text-slate-600">
-                            {t("passengers.gender", "Gender")}:
-                          </span>{" "}
-                          {t(
-                            `passengers.genderTypes.${p.gender.toLowerCase()}`,
-                            p.gender,
-                          )}
-                        </span>
-                        <span>
-                          <span className="font-medium text-slate-600">
-                            {t("passengers.dob", "DOB")}:
-                          </span>{" "}
-                          {new Date(p.dateOfBirth).toLocaleDateString()}
-                        </span>
-                        <span>
-                          <span className="font-medium text-slate-600">
-                            {t("passengers.emailLabel", "Email")}:
-                          </span>{" "}
-                          {p.email}
-                        </span>
-                      </div>
+                    <div className="font-bold text-lg text-foreground">
+                      {p.firstName} {p.lastName}
                     </div>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-          </Card>
+                  </div>
+                  <div className="text-sm text-muted-foreground flex flex-wrap gap-x-6 gap-y-2 ml-10">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-foreground/60">
+                        {t("passengers.gender")}:
+                      </span>
+                      {t(
+                        `passengers.genderTypes.${p.gender.toLowerCase()}`,
+                        p.gender,
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-foreground/60">
+                        {t("passengers.dob")}:
+                      </span>
+                      {formatDate(new Date(p.dateOfBirth))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-foreground/60">
+                        {t("passengers.emailLabel", "Email")}:
+                      </span>
+                      {p.email}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </SectionCard>
         </div>
 
         <div className="w-full lg:w-[380px]">
           <div className="sticky top-8">
-            <Card className="border-slate-200 shadow-md">
-              <CardHeader className="bg-slate-900 text-white rounded-t-xl pb-6">
-                <CardTitle className="text-xl">
+            <Card className="border-border shadow-md overflow-hidden bg-background">
+              <div className="bg-slate-950 px-6 py-6 text-white border-b border-white/5">
+                <h3 className="text-xl font-bold">
                   {t("payment.priceSummary", "Price Summary")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 -mt-2 bg-white rounded-b-xl">
-                <div className="space-y-4 text-sm">
+                </h3>
+              </div>
+              <CardContent className="p-6">
+                <div className="space-y-4 text-sm text-muted-foreground">
                   <div className="flex justify-between items-center text-slate-600">
                     <span>{t("payment.passengersLabel", "Passengers")}</span>
-                    <span className="font-medium">
+                    <span className="font-medium text-foreground">
                       {context.passengers.length} ×
                     </span>
                   </div>
@@ -304,30 +246,42 @@ export const SummaryScreen = () => {
                     <span>
                       {t("payment.outboundFlight", "Outbound Flight")}
                     </span>
-                    <span className="font-medium">
-                      {outboundPrice.amount} {outboundPrice.currency}
+                    <span className="font-medium text-foreground">
+                      {formatMoney(
+                        Money.of(
+                          outboundPrice.amount,
+                          outboundPrice.currency as CurrencyCode,
+                        ),
+                      )}
                     </span>
                   </div>
 
                   {returnFlight && returnPrice && (
                     <div className="flex justify-between items-center text-slate-600">
                       <span>{t("payment.returnFlight", "Return Flight")}</span>
-                      <span className="font-medium">
-                        {returnPrice.amount} {returnPrice.currency}
+                      <span className="font-medium text-foreground">
+                        {formatMoney(
+                          Money.of(
+                            returnPrice.amount,
+                            returnPrice.currency as CurrencyCode,
+                          ),
+                        )}
                       </span>
                     </div>
                   )}
 
                   <div className="pt-4 border-t border-slate-100 mt-4">
                     <div className="flex justify-between items-end">
-                      <span className="text-lg font-bold text-slate-900">
+                      <span className="text-lg font-bold text-foreground">
                         {t("payment.totalPrice", "Total Price")}
                       </span>
-                      <span className="text-3xl font-black text-blue-600 tracking-tight">
-                        {totalAmount}{" "}
-                        <span className="text-xl">
-                          {outboundPrice.currency}
-                        </span>
+                      <span className="text-3xl font-black tracking-tight text-primary">
+                        {formatMoney(
+                          Money.of(
+                            totalAmount,
+                            outboundPrice.currency as CurrencyCode,
+                          ),
+                        )}
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 text-right mt-1">
@@ -342,74 +296,40 @@ export const SummaryScreen = () => {
                 <div className="mt-8 space-y-3">
                   <Button
                     size="lg"
-                    className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20"
+                    className="w-full h-14 text-lg font-bold transition-all relative overflow-hidden group"
                     onClick={handlePayment}
                     disabled={is("paying")}
                   >
                     {is("paying") ? (
-                      <span className="flex items-center gap-2">
-                        <svg
-                          className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          aria-hidden="true"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        {t("payment.processing", "Processing...")}
+                      <span className="flex items-center gap-3">
+                        <Spinner className="size-5" />
+                        {t("payment.processing")}
                       </span>
                     ) : (
-                      t("payment.confirm", "Proceed to Payment")
+                      t("payment.confirm")
                     )}
                   </Button>
                   <Button
-                    variant="outline"
-                    className="w-full h-12"
+                    variant="ghost"
+                    className="w-full h-12 font-medium"
                     type="button"
                     onClick={() => send({ type: "BACK" })}
                     disabled={is("paying")}
                   >
-                    {t("passengers.back", "Go Back")}
+                    {t("passengers.back")}
                   </Button>
                 </div>
 
                 {context.error && (
-                  <div className="mt-6 p-4 rounded-lg bg-red-50 text-red-600 border border-red-100 text-sm flex items-start gap-3">
-                    <svg
-                      className="w-5 h-5 shrink-0 mt-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <div>{context.error}</div>
+                  <div className="mt-6 p-4 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold">
+                    {context.error}
                   </div>
                 )}
 
-                <div className="mt-6 text-center">
-                  <div className="inline-flex items-center gap-2 text-xs text-slate-400 font-medium">
+                <div className="mt-8 pt-6 border-t border-border/50 text-center">
+                  <div className="inline-flex items-center gap-2 text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
                     <svg
-                      className="w-4 h-4"
+                      className="w-3.5 h-3.5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -418,14 +338,11 @@ export const SummaryScreen = () => {
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth="2"
+                        strokeWidth="2.5"
                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                       />
                     </svg>
-                    {t(
-                      "payment.securePayment",
-                      "Secure payment powered by Polar",
-                    )}
+                    {t("payment.securePayment")}
                   </div>
                 </div>
               </CardContent>

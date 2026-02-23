@@ -1,7 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "@workspace/ui/globals.css";
+import { ErrorBoundary } from "react-error-boundary";
 import App from "./app.tsx";
+import { GlobalErrorFallback } from "./components/shared/global-error-fallback.tsx";
 
 const root = document.getElementById("app");
 
@@ -11,6 +13,14 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary
+      FallbackComponent={GlobalErrorFallback}
+      onReset={() => {
+        // Optional: reset logic like clearing localStorage or certain state actors
+        window.location.reload();
+      }}
+    >
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );

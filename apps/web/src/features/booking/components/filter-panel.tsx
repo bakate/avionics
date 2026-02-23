@@ -7,7 +7,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { useTranslation } from "react-i18next";
-import { cabinOptions } from "../../features/search/components/types";
+import { cabinOptions } from "../../../features/search/components/types";
 
 export type FilterState = {
   cabinClass: string;
@@ -106,7 +106,6 @@ export const FilterPanel = ({
           ))}
         </div>
       </div>
-
       {/* Time Range (Simplified for prototype) */}
       <div className="space-y-3">
         <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
