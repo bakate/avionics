@@ -1,5 +1,5 @@
 import { useSelector } from "@xstate/react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { bookingActor } from "../machines/booking.actor.js";
 import {
@@ -19,36 +19,40 @@ export const useBookingMachine = () => {
   const snapshotValue = snapshot.value;
   const context = snapshot.context;
 
+  const lastStateValue = useRef<BookingStateValue>(snapshotValue);
+
   // --- routing sync ---
   useEffect(() => {
-    // If the user manually navigates to the home page (e.g. via logo),
-    // we should reset the machine to idle to avoid being stuck in a flow.
+    const expectedPath = stateToRoute(snapshotValue, context);
+    const isHome = location.pathname === "/";
+    const stateChanged = lastStateValue.current !== snapshotValue;
+
+    // 1. If the machine state value changed (e.g. search finished), ADVANCE the route
+    if (stateChanged) {
+      lastStateValue.current = snapshotValue;
+
+      // Ignore home-bound states for auto-navigation
+      if (
+        snapshotValue !== "idle" &&
+        snapshotValue !== "searching" &&
+        snapshotValue !== "error" &&
+        location.pathname !== expectedPath
+      ) {
+        void navigate(expectedPath, { replace: true });
+        return;
+      }
+    }
+
+    // 2. If the user manualy navigated back to home while in a flow, RESET
     if (
-      location.pathname === "/" &&
+      isHome &&
       snapshotValue !== "idle" &&
       snapshotValue !== "searching" &&
       snapshotValue !== "error"
     ) {
       send({ type: "RESET" });
-      return;
     }
-
-    // We only enforce strict route sync for the linear booking flow states.
-    // idle, searching, and error states are allowed to exist on any page
-    // (Home or Results) to support deep linking and "Search Again" functionality.
-    if (
-      snapshotValue === "idle" ||
-      snapshotValue === "searching" ||
-      snapshotValue === "error"
-    ) {
-      return;
-    }
-
-    const expectedPath = stateToRoute(snapshotValue, context);
-    if (location.pathname !== expectedPath) {
-      void navigate(expectedPath, { replace: true });
-    }
-  }, [snapshotValue, context, location.pathname, navigate]);
+  }, [snapshotValue, context, location.pathname, navigate, send]);
 
   /** Helper to check current state value */
   const is = useCallback(

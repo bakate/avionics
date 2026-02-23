@@ -81,7 +81,7 @@
   },
   "results": {
     "title": "Résultats de recherche",
-    "subtitle": "Liste des vols — à venir",
+    "subtitle": "Liste des vols",
     "empty": "Aucun vol trouvé. Essayez d'autres dates ou destinations.",
     "loading": "Recherche de vols en cours…",
     "error": "Une erreur est survenue lors de la recherche.",
