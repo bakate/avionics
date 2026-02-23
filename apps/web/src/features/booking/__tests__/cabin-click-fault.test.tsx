@@ -88,6 +88,7 @@ describe("Property 1: Fault Condition - Cabin Click Immediately Dispatches Machi
             returnFlights: [],
           } as any,
           send: mockSend,
+          reset: vi.fn(),
           isLoading: false,
           is: vi.fn(),
           tags: new Set(),

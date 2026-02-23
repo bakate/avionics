@@ -49,6 +49,7 @@ describe("PassengersScreen Property Tests", () => {
             passengers: [], // initial empty
           },
           send: vi.fn(),
+          reset: vi.fn(),
         } as any);
 
         render(<PassengersScreen />);
