@@ -1,5 +1,6 @@
 /** biome-ignore-all lint/style/noRestrictedImports: Testing environment needs node:http */
 import { HttpServerRequest } from "@effect/platform";
+import { faker } from "@faker-js/faker";
 import {
   type BookingConfirmation,
   BookingService,
@@ -30,19 +31,23 @@ const buildBooking = (id: string, pnr: string) =>
   Booking.create({
     id: makeBookingId(id),
     pnrCode: makePnrCode(pnr),
-    passenger: new Passenger({
-      id: PassengerId.make("550e8400-e29b-41d4-a716-446655440001"),
-      firstName: "John",
-      lastName: "Doe",
-      email: Schema.decodeSync(EmailSchema)("john@example.com"),
-      dateOfBirth: new Date("1990-01-01"),
-      gender: "MALE",
-      type: PassengerType.ADULT,
-    }),
+    passengers: [
+      new Passenger({
+        id: PassengerId.make(faker.string.uuid()),
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        email: Schema.decodeSync(EmailSchema)(faker.internet.email()),
+        dateOfBirth: faker.date.birthdate(),
+        gender: faker.helpers.arrayElement(["MALE", "FEMALE"]),
+        type: PassengerType.ADULT,
+      }),
+    ],
     segments: [
       new BookingSegment({
-        id: makeSegmentId("550e8400-e29b-41d4-a716-446655440002"),
-        flightId: makeFlightId("AF123"),
+        id: makeSegmentId(faker.string.uuid()),
+        flightId: makeFlightId(
+          faker.string.alphanumeric(2).toUpperCase() + faker.string.numeric(3),
+        ),
         cabin: CabinClass.ECONOMY,
         price: Money.of(100, "EUR"),
         seatNumber: O.none(),
@@ -60,8 +65,11 @@ const MockHttpServerRequest = Layer.succeed(
 describe("Webhook API Handler", () => {
   it("should confirm booking on polar checkout.updated(succeeded) event", async () => {
     // 1. Setup Mocks
-    const bookingId = "550e8400-e29b-41d4-a716-446655440000";
-    const mockBooking = buildBooking(bookingId, "ABC123");
+    const bookingId = faker.string.uuid();
+    const mockBooking = buildBooking(
+      bookingId,
+      faker.string.alphanumeric(6).toUpperCase(),
+    );
 
     const confirmBookingMock = vi.fn((_id: BookingId) =>
       Effect.succeed({
@@ -84,7 +92,7 @@ describe("Webhook API Handler", () => {
     const payload = {
       type: "checkout.updated",
       data: {
-        id: "ch_123",
+        id: `ch_${faker.string.alphanumeric(10)}`,
         status: "succeeded",
         metadata: {
           bookingId,
@@ -140,6 +148,7 @@ describe("Webhook API Handler", () => {
 
   it("should fail with TransientError for infrastructure errors (triggering retry)", async () => {
     // 1. Setup Mocks with transient error
+    const bookingId = faker.string.uuid();
     const MockBookingService = Layer.succeed(
       BookingService,
       BookingService.of({
@@ -159,10 +168,10 @@ describe("Webhook API Handler", () => {
     const payload = {
       type: "checkout.updated",
       data: {
-        id: "ch_123",
+        id: `ch_${faker.string.alphanumeric(10)}`,
         status: "succeeded",
         metadata: {
-          bookingId: "550e8400-e29b-41d4-a716-446655440000",
+          bookingId,
         },
       },
     };
@@ -185,6 +194,7 @@ describe("Webhook API Handler", () => {
 
   it("should swallow business errors and return received: true (preventing useless retries)", async () => {
     // 1. Setup Mocks with business error (NotFoundError)
+    const bookingId = faker.string.uuid();
     const MockBookingService = Layer.succeed(
       BookingService,
       BookingService.of({
@@ -203,10 +213,10 @@ describe("Webhook API Handler", () => {
     const payload = {
       type: "checkout.updated",
       data: {
-        id: "ch_123",
+        id: `ch_${faker.string.alphanumeric(10)}`,
         status: "succeeded",
         metadata: {
-          bookingId: "550e8400-e29b-41d4-a716-446655440000",
+          bookingId,
         },
       },
     };
