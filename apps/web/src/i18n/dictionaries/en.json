@@ -159,34 +159,59 @@
     }
   },
   "passengers": {
-    "title": "Passenger information",
-    "subtitle": "Passenger forms — coming soon",
-    "firstName": "First name",
-    "lastName": "Last name",
-    "email": "Email",
-    "dateOfBirth": "Date of birth",
+    "title": "Passengers",
+    "who_is_traveling": "Who's traveling?",
+    "passenger_number": "Passenger {{count}}",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email Address",
     "gender": "Gender",
-    "genderMale": "Male",
-    "genderFemale": "Female",
-    "passengerN": "Passenger {{n}}",
-    "continue": "Continue"
+    "select_gender": "Select genre",
+    "date_of_birth": "Date of Birth",
+    "pick_a_date": "Pick a date",
+    "genderTypes": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "dob": "Date of Birth",
+    "emailLabel": "Email",
+    "continue": "Continue",
+    "back": "Back"
   },
   "payment": {
-    "title": "Payment",
-    "subtitle": "Summary and payment — coming soon",
-    "summary": "Booking summary",
-    "confirm": "Confirm payment",
-    "processing": "Processing…",
+    "title": "Review your journey",
+    "subtitle": "Please verify your flight details and passenger information before proceeding to payment.",
+    "outboundFlight": "Outbound Flight",
+    "returnFlight": "Return Flight",
+    "cabin": "Cabin",
+    "flight": "Flight",
+    "passengersLabel": "Passengers",
+    "priceSummary": "Price Summary",
+    "totalPrice": "Total Price",
+    "taxesIncluded": "Includes all taxes and fees",
+    "securePayment": "Secure payment powered by Polar",
+    "confirm": "Proceed to Payment",
+    "processing": "Processing...",
     "error": "Payment failed. Please try again.",
     "retry": "Retry",
     "expired": "Your reservation has expired. Please start a new search."
   },
+  "success": {
+    "title": "Payment Successful!",
+    "message": "Thank you for your choice. Your payment has been received and your booking is being finalized.",
+    "pnrLabel": "Booking Reference (PNR)",
+    "viewBooking": "View My Booking",
+    "goHome": "Return to Home",
+    "emailNotice": "A confirmation email will be sent shortly with your e-tickets."
+  },
   "confirmation": {
     "title": "Confirmation",
+    "successTitle": "Booking Confirmed!",
+    "successMessage": "Your flight has been successfully booked. Your Passenger Name Record (PNR) is ready.",
     "pnr": "Booking reference (PNR)",
     "flightDetails": "Flight details",
     "passengerInfo": "Passenger information",
-    "newBooking": "New booking"
+    "newBooking": "Book Another Flight"
   },
   "common": {
     "back": "Back",

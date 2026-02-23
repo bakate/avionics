@@ -8,6 +8,8 @@ export const ROUTES = {
   passengers: "/passengers",
   payment: "/payment",
   confirmation: "/confirmation/:pnr",
+  success: "/success",
+  cancel: "/cancel",
 } as const;
 
 export type RouteName = keyof typeof ROUTES;
@@ -21,4 +23,7 @@ export const buildRoute = {
   payment: () => ROUTES.payment,
   confirmation: (pnr: string) =>
     `/confirmation/${encodeURIComponent(pnr)}` as const,
+  success: (pnr?: string) =>
+    pnr ? `/success?pnr=${encodeURIComponent(pnr)}` : "/success",
+  cancel: () => ROUTES.cancel,
 } as const;

@@ -73,7 +73,8 @@ export const FlightCard = ({
             <div className="relative flex flex-1 flex-col items-center">
               <Badge
                 variant="outline"
-                className="mb-2 flex items-center gap-2 border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-tighter text-slate-500">
+                className="mb-2 flex items-center gap-2 border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-tighter text-slate-500"
+              >
                 <HugeiconsIcon icon={Time01Icon} size={12} />
                 {duration}
               </Badge>
@@ -118,7 +119,8 @@ export const FlightCard = ({
             </div>
             <Button
               onClick={() => onSelect(flight.flightId)}
-              className="mt-2 rounded-xl bg-white text-slate-900 hover:bg-slate-200">
+              className="mt-2 rounded-xl bg-white text-slate-900 hover:bg-slate-200"
+            >
               {t("search.select").toUpperCase()}
             </Button>
           </div>

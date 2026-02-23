@@ -159,34 +159,59 @@
     }
   },
   "passengers": {
-    "title": "Informations passagers",
-    "subtitle": "Formulaires passagers — à venir",
-    "firstName": "Prénom",
-    "lastName": "Nom",
-    "email": "Email",
-    "dateOfBirth": "Date de naissance",
+    "title": "Passagers",
+    "who_is_traveling": "Qui voyage ?",
+    "passenger_number": "Passager {{count}}",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "email": "Adresse de courriel",
     "gender": "Genre",
-    "genderMale": "Homme",
-    "genderFemale": "Femme",
-    "passengerN": "Passager {{n}}",
-    "continue": "Continuer"
+    "select_gender": "Sélectionner le genre",
+    "date_of_birth": "Date de naissance",
+    "pick_a_date": "Choisir une date",
+    "genderTypes": {
+      "male": "Homme",
+      "female": "Femme"
+    },
+    "dob": "Date de naissance",
+    "emailLabel": "Email",
+    "continue": "Continuer",
+    "back": "Retour"
   },
   "payment": {
-    "title": "Paiement",
-    "subtitle": "Récapitulatif et paiement — à venir",
-    "summary": "Récapitulatif de la réservation",
-    "confirm": "Confirmer le paiement",
-    "processing": "Traitement en cours…",
+    "title": "Récapitulatif de votre voyage",
+    "subtitle": "Veuillez vérifier les détails de votre vol et les informations passagers avant de procéder au paiement.",
+    "outboundFlight": "Vol Aller",
+    "returnFlight": "Vol Retour",
+    "cabin": "Cabine",
+    "flight": "Vol",
+    "passengersLabel": "Passagers",
+    "priceSummary": "Récapitulatif du prix",
+    "totalPrice": "Prix Total",
+    "taxesIncluded": "Toutes taxes et frais inclus",
+    "securePayment": "Paiement sécurisé via Polar",
+    "confirm": "Procéder au paiement",
+    "processing": "Traitement en cours...",
     "error": "Le paiement a échoué. Veuillez réessayer.",
     "retry": "Réessayer",
     "expired": "Votre réservation a expiré. Veuillez recommencer la recherche."
   },
+  "success": {
+    "title": "Paiement Réussi !",
+    "message": "Merci de votre confiance. Votre paiement a été reçu et votre réservation est en cours de finalisation.",
+    "pnrLabel": "Référence de réservation (PNR)",
+    "viewBooking": "Voir ma réservation",
+    "goHome": "Retour à l'accueil",
+    "emailNotice": "Un email de confirmation vous sera envoyé prochainement avec vos e-billets."
+  },
   "confirmation": {
     "title": "Confirmation",
+    "successTitle": "Réservation Confirmée !",
+    "successMessage": "Votre vol a été réservé avec succès. Votre dossier passager (PNR) est prêt.",
     "pnr": "Code de réservation (PNR)",
     "flightDetails": "Détails du vol",
     "passengerInfo": "Informations passagers",
-    "newBooking": "Nouvelle réservation"
+    "newBooking": "Réserver un autre vol"
   },
   "common": {
     "back": "Retour",
