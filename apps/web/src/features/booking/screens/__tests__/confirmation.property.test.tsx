@@ -42,6 +42,7 @@ describe("ConfirmationScreen Property Tests", () => {
               passengers: [],
             },
             send: vi.fn(),
+            reset: vi.fn(),
           } as any);
 
           render(<ConfirmationScreen />);
@@ -95,6 +96,7 @@ describe("ConfirmationScreen Property Tests", () => {
               passengers,
             },
             send: vi.fn(),
+            reset: vi.fn(),
           } as any);
 
           render(<ConfirmationScreen />);
