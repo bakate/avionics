@@ -19,7 +19,7 @@ import {
 
 export class SeatBucket extends Schema.Class<SeatBucket>("SeatBucket")({
   available: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
-  capacity: Schema.Number.pipe(Schema.int(), Schema.positive()),
+  capacity: Schema.Number.pipe(Schema.int(), Schema.nonNegative()),
   price: Money,
 }) {}
 

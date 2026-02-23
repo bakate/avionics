@@ -366,20 +366,34 @@ export class BookingService extends Context.Tag("BookingService")<
             // 1. Count seats needed (non-INFANT passengers)
             const numberOfSeats = countSeatsNeeded(command.passengers);
 
-            // 2. Hold seats and get unit price
-            const holdResult = yield* inventoryService.holdSeats({
-              flightId: makeFlightId(command.flightId),
-              cabin: command.cabinClass,
-              numberOfSeats,
-            });
+            // 2. Hold seats and get unit prices for all segments
+            const segments = yield* Effect.forEach(
+              command.segments,
+              (seg) =>
+                Effect.gen(function* () {
+                  const holdResult = yield* inventoryService.holdSeats({
+                    flightId: makeFlightId(seg.flightId),
+                    cabin: seg.cabinClass,
+                    numberOfSeats,
+                  });
 
-            // 3. Compute pricing breakdown for all passengers
-            const pricingBreakdown = computePricingBreakdown(
-              command.passengers,
-              holdResult.unitPrice,
+                  const pricingBreakdown = computePricingBreakdown(
+                    command.passengers,
+                    holdResult.unitPrice,
+                  );
+
+                  return new BookingSegment({
+                    id: makeSegmentId(Crypto.randomUUID()),
+                    flightId: makeFlightId(seg.flightId),
+                    cabin: seg.cabinClass,
+                    price: pricingBreakdown.totalPrice,
+                    seatNumber: seg.seatNumber ?? O.none(),
+                  });
+                }),
+              { concurrency: "unbounded" }, // or sequential
             );
 
-            // 4. Create Passenger entities from command
+            // 3. Create Passenger entities from command
             const passengers = command.passengers.map(
               (p) =>
                 new Passenger({
@@ -393,31 +407,20 @@ export class BookingService extends Context.Tag("BookingService")<
                 }),
             ) as [Passenger, ...Array<Passenger>];
 
-            // 5. Generate PNR
+            // 4. Generate PNR and Booking ID
             const pnr = yield* generateUniquePnr(bookingRepo);
-
-            // 6. Generate Booking ID
             const bookingId = BookingId.make(Crypto.randomUUID());
 
-            // 7. Create Booking Segment with total price from breakdown
-            const segment = new BookingSegment({
-              id: makeSegmentId(Crypto.randomUUID()),
-              flightId: makeFlightId(command.flightId),
-              cabin: command.cabinClass,
-              price: pricingBreakdown.totalPrice,
-              seatNumber: command.seatNumber ?? O.none(),
-            });
-
-            // 8. Create Booking using factory method (emits BookingCreated event)
+            // 5. Create Booking using factory method
             const booking = Booking.create({
               id: bookingId,
               pnrCode: pnr,
               passengers,
-              segments: [segment],
+              segments: segments as [BookingSegment, ...Array<BookingSegment>],
               expiresAt: O.some(new Date(Date.now() + 30 * 60 * 1000)), // 30 min to pay
             });
 
-            // 9. Save Booking with HELD status (within transaction)
+            // 6. Save Booking with HELD status (within transaction)
             const savedBooking = yield* unitOfWork.transaction(
               Effect.all([
                 bookingRepo.save(booking),
@@ -425,18 +428,24 @@ export class BookingService extends Context.Tag("BookingService")<
               ]).pipe(Effect.map(([saved]) => saved)),
             );
 
-            // 10. Create Checkout Session for payment (use first passenger as contact)
+            // 7. Compute Total Price for checkout
+            const totalPrice = segments.reduce(
+              (sum, seg) => sum.add(seg.price),
+              Money.zero(segments[0]?.price.currency ?? "EUR"),
+            );
+
+            // 8. Create Checkout Session for payment (use first passenger as contact)
             const primaryPassenger = command.passengers[0];
             const checkoutSession = yield* paymentGateway
               .createCheckout({
-                amount: pricingBreakdown.totalPrice,
+                amount: totalPrice,
                 customer: {
                   email: primaryPassenger.email,
                   externalId: primaryPassenger.id,
                 },
                 bookingReference: pnr,
                 bookingId: savedBooking.id,
-                successUrl: command.successUrl,
+                successUrl: command.successUrl?.replace("{{PNR}}", pnr) ?? "",
                 ...(command.cancelUrl ? { cancelUrl: command.cancelUrl } : {}),
               })
               .pipe(
@@ -461,13 +470,18 @@ export class BookingService extends Context.Tag("BookingService")<
                     );
 
                     // 2. Release seats (with retry to ensure eventual consistency)
-                    yield* inventoryService
-                      .releaseSeats({
-                        flightId: makeFlightId(command.flightId),
-                        cabin: command.cabinClass,
-                        numberOfSeats,
-                      })
-                      .pipe(Effect.retry(retryPolicy));
+                    yield* Effect.forEach(
+                      command.segments,
+                      (seg) =>
+                        inventoryService
+                          .releaseSeats({
+                            flightId: makeFlightId(seg.flightId),
+                            cabin: seg.cabinClass,
+                            numberOfSeats,
+                          })
+                          .pipe(Effect.retry(retryPolicy)),
+                      { discard: true, concurrency: "unbounded" },
+                    );
                   }).pipe(
                     Effect.catchAll((compensationError) =>
                       Effect.logError("Compensation failed", compensationError),

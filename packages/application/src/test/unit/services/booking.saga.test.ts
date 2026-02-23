@@ -4,13 +4,20 @@ import { type BookingId, EmailSchema, Money } from "@workspace/domain/kernel";
 import { Effect, Exit, Option, Schema } from "effect";
 import { describe, expect, it } from "vitest";
 import { PaymentApiUnavailableError } from "../../../gateways/payment.gateway.js";
-import { BookingService } from "../../../services/booking.service.js";
+import {
+  BookFlightCommand,
+  BookingService,
+} from "../../../services/booking.service.js";
 
 describe("Booking Saga Integration", () => {
   // Shared test command
-  const command = {
-    flightId: `flight_${faker.string.alphanumeric(5)}`,
-    cabinClass: "ECONOMY" as const,
+  const command = new BookFlightCommand({
+    segments: [
+      {
+        flightId: `flight_${faker.string.alphanumeric(5)}`,
+        cabinClass: "ECONOMY" as const,
+      },
+    ],
     passengers: [
       {
         id: faker.string.uuid(),
@@ -24,7 +31,7 @@ describe("Booking Saga Integration", () => {
     ] as const,
     successUrl: faker.internet.url(),
     cancelUrl: faker.internet.url(),
-  };
+  });
 
   it("should successfully create a booking when all services succeed", async () => {
     // Setup: Default Test Layer (Everything succeeds)
