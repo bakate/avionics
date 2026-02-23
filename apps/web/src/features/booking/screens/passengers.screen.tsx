@@ -112,7 +112,7 @@ export const PassengersScreen = () => {
         className="mb-8"
       />
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 mt-4">
         <div className="space-y-6">
           {fields.map((field, index) => (
             <PassengerForm

@@ -49,18 +49,6 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
       >)}
       description={t(titleKey)}
     >
-      {/* <div className="flex flex-col space-y-1.5 p-6 border-b border-border/10 bg-muted/20">
-        <h3 className="font-semibold leading-none tracking-tight flex items-center gap-2">
-          <div className="bg-primary/10 p-1.5 rounded-full text-primary flex items-center justify-center">
-             <HugeiconsIcon icon={UserIcon} size={16} />
-          </div>
-          {t("passengers.passenger_number", { count: index + 1 } as Record<string, unknown>)} •{" "}
-          <span className="text-muted-foreground font-normal text-sm capitalize">
-            {t(titleKey)}
-          </span>
-        </h3>
-      </div> */}
-
       <div className="grid md:grid-cols-2 gap-6">
         <Controller
           control={control}
@@ -118,10 +106,10 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="MALE">
-                    {t("passengers.genderTypes.male", "Male")}
+                    {t("passengers.genderTypes.male")}
                   </SelectItem>
                   <SelectItem value="FEMALE">
-                    {t("passengers.genderTypes.female", "Female")}
+                    {t("passengers.genderTypes.female")}
                   </SelectItem>
                 </SelectContent>
               </Select>

@@ -4,7 +4,6 @@
  * States: idle → searching → selectingOutbound → searchingReturn → selectingReturn
  *   → enteringPassengers → paying → confirmed | error
  *
- * Requirements: 11.1, 11.5, 5.1, 5.2, 5.3, 5.4, 5.5
  */
 
 import { type BookingResponse } from "@workspace/api/booking-api";

@@ -36,8 +36,8 @@ const SortButton = ({
     className={cn(
       "gap-2 font-bold transition-all",
       active
-        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-500 hover:text-white"
-        : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white",
+        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:bg-blue-500"
+        : "bg-white/5 text-slate-400 hover:bg-white/10",
     )}
   >
     {children}
