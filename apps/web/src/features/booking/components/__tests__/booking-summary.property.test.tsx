@@ -4,7 +4,7 @@ import { type BookingSummary } from "@workspace/application/read-models";
 import { type None } from "effect/Option";
 import fc from "fast-check";
 import { describe, expect, it, vi } from "vitest";
-import { BookingSummaryCard } from "../booking-summary.tsx";
+import { BookingSummaryCard } from "@/features/booking/components/booking-summary";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -26,9 +26,14 @@ const bookingSummaryArb = fc.record({
     amount: fc.integer({ min: 1, max: 100000 }),
     currency: fc.constantFrom("USD", "EUR", "GBP"),
   }),
-  createdAt: fc.date({ min: new Date("2020-01-01") }),
+  createdAt: fc
+    .date({ min: new Date("2020-01-01") })
+    .filter((d) => !Number.isNaN(d.getTime())),
   expiresAt: fc
-    .option(fc.date(), { nil: undefined })
+    .option(
+      fc.date().filter((d) => !Number.isNaN(d.getTime())),
+      { nil: undefined },
+    )
     .map(
       (d) => (d ? { _tag: "Some", value: d } : { _tag: "None" }) as None<Date>,
     ),

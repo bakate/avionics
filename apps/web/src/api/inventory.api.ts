@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { makeClient } from "./client";
+import { makeClient } from "@/api/client";
 
 export type DatePrice = {
   readonly date: string;

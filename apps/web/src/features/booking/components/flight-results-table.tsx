@@ -17,8 +17,8 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { formatDuration, formatMoney, formatTime } from "../../../lib/format";
-import { type FlightResult } from "../machines/booking.machine";
+import { type FlightResult } from "@/features/booking/machines/booking.machine";
+import { formatDuration, formatMoney, formatTime } from "@/lib/format";
 import { FareDetailPanel } from "./fare-detail-panel";
 
 export type FlightResultsTableProps = {

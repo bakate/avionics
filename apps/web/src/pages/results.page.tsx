@@ -32,20 +32,20 @@ import { useNavigate, useSearchParams } from "react-router";
 import {
   FilterPanel,
   type FilterState,
-} from "../features/booking/components/filter-panel";
-import { FlightCard } from "../features/booking/components/flight-card";
+} from "@/features/booking/components/filter-panel";
+import { FlightCard } from "@/features/booking/components/flight-card";
 import {
   SortControls,
   type SortField,
   type SortOrder,
-} from "../features/booking/components/sort-controls";
-import { useBookingMachine } from "../features/booking/hooks/use-booking-machine";
-import { useFlightStream } from "../features/booking/hooks/use-flight-stream";
+} from "@/features/booking/components/sort-controls";
+import { useBookingMachine } from "@/features/booking/hooks/use-booking-machine";
+import { useFlightStream } from "@/features/booking/hooks/use-flight-stream";
 import {
   decodeSearchParams,
   type SearchParams,
-} from "../features/booking/schemas/search.schema";
-import { buildRoute } from "../routes";
+} from "@/features/booking/schemas/search.schema";
+import { buildRoute } from "@/routes";
 import { filterFlights, sortFlights } from "./results-logic";
 
 const ResultsPage = () => {

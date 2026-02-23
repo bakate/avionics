@@ -8,7 +8,7 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import { useTranslation } from "react-i18next";
 
-import { SUPPORTED_LOCALES } from "../../i18n/types";
+import { SUPPORTED_LOCALES } from "@/i18n/types";
 
 export function LanguageSelector() {
   const { i18n, t } = useTranslation();

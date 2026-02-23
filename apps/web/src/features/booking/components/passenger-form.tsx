@@ -22,7 +22,7 @@ import { cn } from "@workspace/ui/lib/utils";
 import { enUS, fr } from "react-day-picker/locale";
 import { type Control, Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { formatDate } from "../../../lib/format";
+import { formatDate } from "@/lib/format";
 import { type PassengerInputEncoded } from "../schemas/passenger.schema";
 
 export type PassengerFormProps = {

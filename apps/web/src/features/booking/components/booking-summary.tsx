@@ -9,7 +9,7 @@ import { type BookingSummary } from "@workspace/application/read-models";
 import { Badge } from "@workspace/ui/components/badge";
 import { SectionCard } from "@workspace/ui/components/section-card";
 import { useTranslation } from "react-i18next";
-import { formatDate, formatDateTime, formatMoney } from "../../../lib/format";
+import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 
 interface BookingSummaryCardProps {
   booking: BookingSummary;

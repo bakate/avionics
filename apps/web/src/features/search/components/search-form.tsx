@@ -29,7 +29,7 @@ import { useTransition } from "react";
 import { type DateRange } from "react-day-picker";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { formatDate } from "../../../lib/format";
+import { formatDate } from "@/lib/format";
 import {
   cabinOptions,
   initialFormState,

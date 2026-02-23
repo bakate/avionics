@@ -5,9 +5,9 @@ import { Button } from "@workspace/ui/components/button";
 import { type None } from "effect/Option";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
-import { ROUTES } from "../../../routes";
-import { BookingSummaryCard } from "../components/booking-summary";
-import { useBookingMachine } from "../hooks/use-booking-machine";
+import { BookingSummaryCard } from "@/features/booking/components/booking-summary";
+import { useBookingMachine } from "@/features/booking/hooks/use-booking-machine";
+import { ROUTES } from "@/routes";
 
 export const ConfirmationScreen = () => {
   const { is, send, context } = useBookingMachine();
@@ -40,13 +40,10 @@ export const ConfirmationScreen = () => {
           <HugeiconsIcon icon={Tick01Icon} size={40} />
         </div>
         <h1 className="text-4xl font-bold tracking-tight mb-4">
-          {t("confirmation.successTitle", "Booking Confirmed!")}
+          {t("confirmation.successTitle")}
         </h1>
         <p className="text-muted-foreground text-lg max-w-lg">
-          {t(
-            "confirmation.successMessage",
-            "Your flight has been successfully booked. Your Passenger Name Record (PNR) is ready.",
-          )}
+          {t("confirmation.successMessage")}
         </p>
       </div>
 
@@ -62,7 +59,7 @@ export const ConfirmationScreen = () => {
             void navigate(ROUTES.home);
           }}
         >
-          {t("confirmation.newBooking", "Book Another Flight")}
+          {t("confirmation.newBooking")}
         </Button>
       </div>
     </div>

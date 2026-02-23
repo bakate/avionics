@@ -6,8 +6,8 @@ import {
 import { Button } from "@workspace/ui/components/button";
 import { Heading } from "@workspace/ui/components/heading";
 import { useTranslation } from "react-i18next";
-import { formatMoney } from "../../../lib/format";
-import { type FlightResult } from "../machines/booking.machine";
+import { type FlightResult } from "@/features/booking/machines/booking.machine";
+import { formatMoney } from "@/lib/format";
 
 export type FareDetailPanelProps = {
   readonly flight: FlightResult;

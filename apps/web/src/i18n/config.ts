@@ -1,9 +1,9 @@
 import i18next from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
+import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY } from "@/i18n/types";
 import English from "./dictionaries/en.json";
 import French from "./dictionaries/fr.json";
-import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY } from "./types.ts";
 
 i18next
   .use(LanguageDetector)

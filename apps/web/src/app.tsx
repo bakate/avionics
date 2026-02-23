@@ -1,19 +1,19 @@
 import { ThemeProvider } from "@workspace/ui/components/theme-provider";
 import { I18nextProvider as I18nProvider } from "react-i18next";
 import { createBrowserRouter, RouterProvider } from "react-router";
-import { BaseLayout } from "./components/layout/base-layout.tsx";
-import { GlobalErrorFallback } from "./components/shared/global-error-fallback.tsx";
-import { bookingActor } from "./features/booking/machines/booking.actor.ts";
-import { OutboundScreen } from "./features/booking/screens/outbound.screen.tsx";
-import { ReturnScreen } from "./features/booking/screens/return.screen.tsx";
-import HomePage from "./features/search/screens/home.screen.tsx";
-import NotFoundPage from "./features/search/screens/not-found.screen.tsx";
-import i18n from "./i18n/config.ts";
-import ConfirmationPage from "./pages/confirmation.page.tsx";
-import PassengersPage from "./pages/passengers.page.tsx";
-import PaymentPage from "./pages/payment.page.tsx";
-import SuccessPage from "./pages/success.page.tsx";
-import { ROUTES } from "./routes.ts";
+import { BaseLayout } from "@/components/layout/base-layout";
+import { GlobalErrorFallback } from "@/components/shared/global-error-fallback";
+import { bookingActor } from "@/features/booking/machines/booking.actor";
+import { OutboundScreen } from "@/features/booking/screens/outbound.screen";
+import { ReturnScreen } from "@/features/booking/screens/return.screen";
+import HomePage from "@/features/search/screens/home.screen";
+import NotFoundPage from "@/features/search/screens/not-found.screen";
+import i18n from "@/i18n/config";
+import ConfirmationPage from "@/pages/confirmation.page";
+import PassengersPage from "@/pages/passengers.page";
+import PaymentPage from "@/pages/payment.page";
+import SuccessPage from "@/pages/success.page";
+import { ROUTES } from "@/routes";
 
 const router = createBrowserRouter([
   {

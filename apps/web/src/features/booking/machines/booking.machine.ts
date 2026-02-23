@@ -19,8 +19,8 @@ import { type BookingSegment } from "@workspace/domain/segment";
 import { Effect } from "effect";
 import { v4 as uuidv4 } from "uuid";
 import { assign, fromPromise, setup } from "xstate";
-import { bookFlight, getBookings } from "../../../api/booking.api";
-import { findAvailableFlights } from "../../../api/inventory.api";
+import { bookFlight, getBookings } from "@/api/booking.api";
+import { findAvailableFlights } from "@/api/inventory.api";
 import { type PassengerInput } from "../schemas/passenger.schema";
 import { type SearchParams } from "../schemas/search.schema";
 

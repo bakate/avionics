@@ -1,11 +1,11 @@
 import { useSelector } from "@xstate/react";
 import { useCallback, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { bookingActor } from "../machines/booking.actor.js";
+import { bookingActor } from "@/features/booking/machines/booking.actor";
 import {
   type BookingStateValue,
   stateToRoute,
-} from "../machines/booking.machine.js";
+} from "@/features/booking/machines/booking.machine";
 
 export const useBookingMachine = () => {
   const navigate = useNavigate();

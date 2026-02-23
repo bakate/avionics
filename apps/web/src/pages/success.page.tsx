@@ -3,7 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@workspace/ui/components/button";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
-import { ROUTES } from "../routes";
+import { ROUTES } from "@/routes";
 
 export default function SuccessPage() {
   const { t } = useTranslation();
