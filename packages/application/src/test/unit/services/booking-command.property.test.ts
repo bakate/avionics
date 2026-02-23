@@ -36,10 +36,12 @@ const arbPassenger = fc.record({
   firstName: fc.string({ minLength: 1, maxLength: 50 }),
   lastName: fc.string({ minLength: 1, maxLength: 50 }),
   email: arbEmail,
-  dateOfBirth: fc.date({
-    min: new Date("1920-01-01"),
-    max: new Date("2024-12-31"),
-  }),
+  dateOfBirth: fc
+    .integer({
+      min: new Date("1980-01-01").getTime(),
+      max: new Date("2027-12-31").getTime(),
+    })
+    .map((t) => new Date(t)),
   gender: arbGender,
   type: arbPassengerType,
 });
@@ -73,15 +75,19 @@ describe("BookFlightCommand - Property-Based Tests", () => {
         (flightId, cabinClass, passengers, successUrl) => {
           // Valid multi-passenger command should construct successfully
           const cmd = new BookFlightCommand({
-            flightId,
-            cabinClass,
+            segments: [
+              {
+                flightId,
+                cabinClass,
+              },
+            ],
             passengers,
             successUrl,
           });
 
           expect(cmd.passengers.length).toBe(passengers.length);
-          expect(cmd.flightId).toBe(flightId);
-          expect(cmd.cabinClass).toBe(cabinClass);
+          expect(cmd.segments[0].flightId).toBe(flightId);
+          expect(cmd.segments[0].cabinClass).toBe(cabinClass);
 
           // Each passenger field should be preserved
           for (const [i, p] of passengers.entries()) {
@@ -92,8 +98,12 @@ describe("BookFlightCommand - Property-Based Tests", () => {
           // Empty passengers array should fail schema decoding
           expect(() =>
             Schema.decodeUnknownSync(BookFlightCommand)({
-              flightId,
-              cabinClass,
+              segments: [
+                {
+                  flightId,
+                  cabinClass,
+                },
+              ],
               passengers: [],
               successUrl,
             }),

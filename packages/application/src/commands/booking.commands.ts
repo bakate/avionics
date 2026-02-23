@@ -13,8 +13,13 @@ import { Schema } from "effect";
 export class BookFlightCommand extends Schema.Class<BookFlightCommand>(
   "BookFlightCommand",
 )({
-  flightId: Schema.String,
-  cabinClass: CabinClassSchema,
+  segments: Schema.NonEmptyArray(
+    Schema.Struct({
+      flightId: Schema.String,
+      cabinClass: CabinClassSchema,
+      seatNumber: Schema.OptionFromNullOr(Schema.String).pipe(Schema.optional),
+    }),
+  ),
   passengers: Schema.NonEmptyArray(
     Schema.Struct({
       id: Schema.String,
@@ -26,7 +31,6 @@ export class BookFlightCommand extends Schema.Class<BookFlightCommand>(
       type: PassengerTypeSchema,
     }),
   ),
-  seatNumber: Schema.OptionFromNullOr(Schema.String).pipe(Schema.optional),
   successUrl: Schema.String, // URL for payment redirect success
   cancelUrl: Schema.optional(Schema.String), // Optional cancel URL
 }) {}

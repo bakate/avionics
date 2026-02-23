@@ -192,8 +192,12 @@ describe("BookingService", () => {
     });
 
     const command = new BookFlightCommand({
-      flightId,
-      cabinClass: "ECONOMY",
+      segments: [
+        {
+          flightId,
+          cabinClass: "ECONOMY",
+        },
+      ],
       passengers: makePassengerList(),
       successUrl: "https://example.com/success",
     });
@@ -239,8 +243,12 @@ describe("BookingService", () => {
     });
 
     const command = new BookFlightCommand({
-      flightId,
-      cabinClass: "ECONOMY",
+      segments: [
+        {
+          flightId,
+          cabinClass: "ECONOMY",
+        },
+      ],
       passengers: makePassengerList(),
       successUrl: "https://example.com/success",
     });
@@ -276,8 +284,12 @@ describe("BookingService", () => {
     });
 
     const command = new BookFlightCommand({
-      flightId,
-      cabinClass: "ECONOMY",
+      segments: [
+        {
+          flightId,
+          cabinClass: "ECONOMY",
+        },
+      ],
       passengers: makePassengerList(),
       successUrl: "https://example.com/success",
     });
@@ -385,10 +397,14 @@ describe("BookingService", () => {
         const commands = Array.from({ length: CONCURRENT_USERS }).map(
           (_, i) =>
             new BookFlightCommand({
-              flightId,
-              cabinClass: "ECONOMY",
+              segments: [
+                {
+                  flightId,
+                  cabinClass: "ECONOMY",
+                  seatNumber: Option.some(`1${i}A`),
+                },
+              ],
               passengers: makePassengerList(),
-              seatNumber: Option.some(`1${i}A`),
               successUrl: "https://example.com/success",
             }),
         );
@@ -501,8 +517,12 @@ describe("BookingService", () => {
     const program = Effect.gen(function* () {
       const service = yield* BookingService;
       const command = new BookFlightCommand({
-        flightId: "flight-1",
-        cabinClass: "ECONOMY",
+        segments: [
+          {
+            flightId: "flight-1",
+            cabinClass: "ECONOMY",
+          },
+        ],
         passengers: makePassengerList(),
         successUrl: "https://example.com/success",
       });
