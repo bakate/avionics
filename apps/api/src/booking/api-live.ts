@@ -146,7 +146,7 @@ export const BookingApiLive = HttpApiBuilder.group(
         withBookingService((service) => service.findAll()).pipe(
           Effect.map((bookings) =>
             bookings
-              .filter((b) => b.passenger && b.segments?.length > 0)
+              .filter((b) => b.passengers.length > 0 && b.segments?.length > 0)
               .map(toBookingResponse),
           ),
           ensureContractErrors(),

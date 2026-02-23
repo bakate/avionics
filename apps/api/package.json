@@ -9,7 +9,7 @@
     "./inventory-api": "./src/inventory/api.ts"
   },
   "scripts": {
-    "dev": "NODE_ENV=development tsx watch --env-file=.env src/index.ts",
+    "dev": "NODE_ENV=development tsx watch --env-file=../../.env src/index.ts",
     "typecheck": "tsc --noEmit",
     "build": "pnpm typecheck && tsc",
     "bundle": "pnpm exec esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/index.js --sourcemap --external:pg-native --external:fsevents --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
