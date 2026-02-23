@@ -43,6 +43,13 @@
       "when": 1770620000000,
       "tag": "0005_new_inventory_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771799494830,
+      "tag": "0006_demonic_peter_parker",
+      "breakpoints": true
     }
   ]
 }
