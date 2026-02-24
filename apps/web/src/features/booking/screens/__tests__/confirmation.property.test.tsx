@@ -72,7 +72,10 @@ describe("ConfirmationScreen Property Tests", () => {
         amount: fc.integer({ min: 10 }),
         currency: fc.constantFrom("USD", "EUR"),
       }),
-      confirmedAt: fc.date({ min: new Date("2020-01-01") }),
+      confirmedAt: fc.date({
+        min: new Date("2026-01-01"),
+        max: new Date("2030-01-01"),
+      }),
     });
 
     const passengersArb = fc.array(

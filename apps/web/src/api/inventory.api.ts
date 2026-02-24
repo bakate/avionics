@@ -1,5 +1,6 @@
 import { Effect } from "effect";
 import { makeClient } from "@/api/client";
+import { toISODate } from "@/lib/format";
 
 export type DatePrice = {
   readonly date: string;
@@ -45,7 +46,7 @@ export const findAvailableFlights = (params: {
         urlParams: {
           ...params,
           departureDate: params.departureDate
-            ? params.departureDate.toISOString().split("T")[0]
+            ? toISODate(params.departureDate)
             : undefined,
         },
       }),

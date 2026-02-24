@@ -62,7 +62,7 @@ export const FareDetailPanel = ({
               <div className="flex flex-col gap-0.5 mt-2 text-sm text-slate-500 dark:text-slate-400 border-l-2 border-slate-200 dark:border-white/10 pl-3">
                 {passengers.adults > 0 && (
                   <p>
-                    {passengers.adults}x {t("search.adults")} :{" "}
+                    {t("search.adults", { count: passengers.adults })} :{" "}
                     {formatMoney(
                       Money.of(
                         cabinData.price.amount * passengers.adults,
@@ -73,7 +73,7 @@ export const FareDetailPanel = ({
                 )}
                 {passengers.children > 0 && (
                   <p>
-                    {passengers.children}x {t("search.children")} :{" "}
+                    {t("search.children", { count: passengers.children })} :{" "}
                     {formatMoney(
                       Money.of(
                         cabinData.price.amount * passengers.children * 0.75,
@@ -84,7 +84,7 @@ export const FareDetailPanel = ({
                 )}
                 {passengers.infants > 0 && (
                   <p>
-                    {passengers.infants}x {t("search.infants")} :{" "}
+                    {t("search.infants", { count: passengers.infants })} :{" "}
                     {formatMoney(
                       Money.of(0, cabinData.price.currency as CurrencyCode),
                     )}

@@ -47,7 +47,7 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
         string,
         unknown
       >)}
-      description={t(titleKey)}
+      description={t(titleKey, { count: 1 })}
     >
       <div className="grid md:grid-cols-2 gap-6">
         <Controller

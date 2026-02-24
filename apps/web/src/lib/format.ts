@@ -1,5 +1,5 @@
 import { type CurrencyCode, type Money } from "@workspace/domain/kernel";
-import { DateTime, Duration } from "effect";
+import { DateTime, Duration, Option } from "effect";
 
 // ---------------------------------------------------------------------------
 // Date / Time formatting
@@ -7,25 +7,55 @@ import { DateTime, Duration } from "effect";
 
 /** Format a Date to "HH:mm" (e.g. "14:35") */
 export const formatTime = (date: Date): string =>
-  DateTime.format(DateTime.unsafeMake(date), {
-    locale: "fr-FR",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
+  Option.match(DateTime.makeZoned(date), {
+    onNone: () =>
+      date.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }),
+    onSome: (dt) =>
+      DateTime.format(dt, {
+        locale: "fr-FR",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }),
   });
 
 /** Format a Date to "dd MMM yyyy" (e.g. "15 juin 2026") */
 export const formatDate = (date: Date): string =>
-  DateTime.format(DateTime.unsafeMake(date), {
-    locale: "fr-FR",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
+  Option.match(DateTime.makeZoned(date), {
+    onNone: () =>
+      date.toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }),
+    onSome: (dt) =>
+      DateTime.format(dt, {
+        locale: "fr-FR",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }),
   });
 
 /** Format a Date to "HH:mm · dd MMM yyyy" */
 export const formatDateTime = (date: Date): string =>
   `${formatTime(date)} · ${formatDate(date)}`;
+
+/** Format a Date to "yyyy-MM-dd" using local time to avoid UTC shift */
+export const toISODate = (date: Date): string =>
+  Option.match(DateTime.makeZoned(date), {
+    onNone: () => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    },
+    onSome: (dt) => DateTime.formatIsoDate(dt),
+  });
 
 // ---------------------------------------------------------------------------
 // Duration
@@ -35,11 +65,16 @@ export const formatDateTime = (date: Date): string =>
 export const scheduleDuration = (
   departure: Date,
   arrival: Date,
-): Duration.Duration =>
-  DateTime.distanceDuration(
-    DateTime.unsafeMake(departure),
-    DateTime.unsafeMake(arrival),
-  );
+): Duration.Duration => {
+  const depDt = DateTime.make(departure);
+  const arrDt = DateTime.make(arrival);
+
+  if (Option.isSome(depDt) && Option.isSome(arrDt)) {
+    return DateTime.distanceDuration(depDt.value, arrDt.value);
+  }
+
+  return Duration.millis(arrival.getTime() - departure.getTime());
+};
 
 /** Compute duration in minutes between two Dates */
 export const durationMinutes = (departure: Date, arrival: Date): number =>
