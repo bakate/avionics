@@ -56,8 +56,8 @@ export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
       description={formatDate(new Date(booking.createdAt))}
       className="group relative overflow-hidden border-white/20 bg-white/40 shadow-xl backdrop-blur-md transition-all hover:bg-white/60 hover:shadow-2xl"
     >
-      <div className="mt-2 grid grid-cols-2 gap-4">
-        <div className="flex items-center gap-2 text-sm text-slate-600">
+      <div className="mt-2 grid grid-cols-2 gap-4 text-muted-foreground dark:text-white">
+        <div className="flex items-center gap-2 text-sm">
           <HugeiconsIcon
             icon={UserCircleIcon}
             size={16}
@@ -70,15 +70,9 @@ export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
               : t("common.passengers")}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <HugeiconsIcon
-            icon={CreditCardIcon}
-            size={16}
-            className="text-slate-400"
-          />
-          <span className="font-medium text-slate-900">
-            {formatMoney(booking.totalPrice)}
-          </span>
+        <div className="flex items-center gap-2 text-sm justify-self-end">
+          <HugeiconsIcon icon={CreditCardIcon} size={16} />
+          <span className="font-medium">{formatMoney(booking.totalPrice)}</span>
         </div>
       </div>
 

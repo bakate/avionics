@@ -62,6 +62,8 @@
     "stops": "Stops",
     "departureTime": "Departure time",
     "searching": "Searching for flights...",
+    "airportSearching": "Searching...",
+    "noAirportsFound": "No airports found",
     "noFlights": "No flights found",
     "tryDifferentDates": "Try changing your dates or destinations",
     "modifySearch": "Modify search",

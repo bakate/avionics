@@ -7,17 +7,10 @@ import {
   AlertCircleIcon,
   ArrowLeft01Icon,
   FilterHorizontalIcon,
-  ReloadIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type CabinClass } from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyMedia,
-  EmptyTitle,
-} from "@workspace/ui/components/empty";
 import {
   Sheet,
   SheetContent,
@@ -29,6 +22,7 @@ import { Spinner } from "@workspace/ui/components/spinner";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
+import { EmptyState } from "@/components/shared/empty-state";
 import {
   FilterPanel,
   type FilterState,
@@ -253,27 +247,12 @@ const ResultsPage = () => {
             )}
 
             {/* Empty State */}
-            {isComplete && flights.length === 0 && !error && (
-              <Empty className="rounded-2xl border border-white/10 bg-white/5 p-12 backdrop-blur-sm">
-                <EmptyMedia>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100/10 text-slate-600">
-                    <HugeiconsIcon icon={ReloadIcon} size={32} />
-                  </div>
-                </EmptyMedia>
-                <EmptyTitle className="text-lg font-bold text-white">
-                  {t("search.noFlights")}
-                </EmptyTitle>
-                <EmptyDescription className="text-slate-500">
-                  {t("search.tryDifferentDates")}
-                </EmptyDescription>
-                <Button
-                  onClick={() => navigate(buildRoute.home())}
-                  className="mt-6 rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold text-white transition-all hover:bg-blue-500"
-                >
-                  {t("search.modifySearch")}
-                </Button>
-              </Empty>
-            )}
+            {isComplete && flights.length === 0 && !error ? (
+              <EmptyState
+                title={t("search.noFlights")}
+                description={t("search.tryDifferentDates")}
+              />
+            ) : null}
 
             {/* Flight List */}
             <div className="grid gap-4">
