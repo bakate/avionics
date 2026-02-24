@@ -61,11 +61,16 @@ const STORAGE_KEY = "avionics-booking-session";
 const LAST_EMAIL_KEY = "avionics-last-email";
 
 export const saveLastEmail = (email: string) => {
-  localStorage.setItem(LAST_EMAIL_KEY, email);
+  if (typeof localStorage !== "undefined") {
+    localStorage.setItem(LAST_EMAIL_KEY, email);
+  }
 };
 
 export const loadLastEmail = (): string | null => {
-  return localStorage.getItem(LAST_EMAIL_KEY);
+  if (typeof localStorage !== "undefined") {
+    return localStorage.getItem(LAST_EMAIL_KEY);
+  }
+  return null;
 };
 
 export const saveBookingState = (snapshot: any) => {
@@ -81,7 +86,9 @@ export const saveBookingState = (snapshot: any) => {
       context: encodedContext,
     };
 
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshotToStore));
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshotToStore));
+    }
   } catch (e) {
     console.warn("[Persistence] Failed to save state", e);
   }
@@ -89,7 +96,10 @@ export const saveBookingState = (snapshot: any) => {
 
 export const loadBookingState = (): any => {
   try {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
+    const saved =
+      typeof sessionStorage !== "undefined"
+        ? sessionStorage.getItem(STORAGE_KEY)
+        : null;
     if (!saved) return undefined;
 
     const parsed = JSON.parse(saved);
@@ -105,11 +115,15 @@ export const loadBookingState = (): any => {
     };
   } catch (e) {
     console.error("[Persistence] Failed to load state, clearing storage", e);
-    sessionStorage.removeItem(STORAGE_KEY);
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
     return undefined;
   }
 };
 
 export const clearBookingState = () => {
-  sessionStorage.removeItem(STORAGE_KEY);
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(STORAGE_KEY);
+  }
 };

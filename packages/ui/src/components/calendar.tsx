@@ -28,6 +28,10 @@ function Calendar({
   buttonVariant?: React.ComponentProps<typeof Button>["variant"];
 }) {
   const defaultClassNames = getDefaultClassNames();
+  const [timeZone, setTimeZone] = React.useState<string | undefined>(undefined);
+  React.useEffect(() => {
+    setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  }, []);
 
   return (
     <DayPicker
@@ -40,6 +44,7 @@ function Calendar({
       )}
       captionLayout={captionLayout}
       locale={locale}
+      timeZone={timeZone}
       formatters={{
         formatMonthDropdown: (date) =>
           date.toLocaleString(locale?.code, { month: "short" }),

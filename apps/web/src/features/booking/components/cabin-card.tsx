@@ -96,7 +96,7 @@ export const CabinCard = ({
                 : "text-gray-500",
             )}
           >
-            {t("select.seatsLeft_other", { count: availableSeats })}
+            {t("select.seatsLeft", { count: availableSeats })}
           </span>
         </>
       )}

@@ -26,9 +26,10 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import { useTransition } from "react";
 import { type DateRange } from "react-day-picker";
+import { enUS, fr } from "react-day-picker/locale";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { formatDate } from "@/lib/format";
+import { formatDate, toISODate } from "@/lib/format";
 import { AirportAutocomplete } from "./airport-autocomplete";
 import {
   cabinOptions,
@@ -92,7 +93,7 @@ const PassengerCounter = ({
 };
 
 export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<SearchFormInput, unknown, SearchFormValues>({
@@ -290,12 +291,13 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                             mode="range"
                             defaultMonth={dateRange.from ?? new Date()}
                             selected={dateRange}
+                            locale={i18n.language === "fr" ? fr : enUS}
                             onSelect={(range) => {
                               departureField.onChange(
-                                range?.from?.toISOString().split("T")[0] ?? "",
+                                range?.from ? toISODate(range.from) : "",
                               );
                               returnField.onChange(
-                                range?.to?.toISOString().split("T")[0] ?? "",
+                                range?.to ? toISODate(range.to) : "",
                               );
                             }}
                             numberOfMonths={2}
@@ -349,7 +351,7 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                           selected={selectedDate}
                           onSelect={(date) => {
                             departureField.onChange(
-                              date?.toISOString().split("T")[0] ?? "",
+                              date ? toISODate(date) : "",
                             );
                           }}
                         />
@@ -401,7 +403,9 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                     >
                       <div className="flex flex-col gap-1">
                         <PassengerCounter
-                          label={t("search.adults")}
+                          label={t("search.adults", {
+                            count: field.value.adults,
+                          })}
                           value={field.value.adults}
                           min={1}
                           max={9}
@@ -411,7 +415,9 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                           disabled={busy}
                         />
                         <PassengerCounter
-                          label={t("search.children")}
+                          label={t("search.children", {
+                            count: field.value.children,
+                          })}
                           value={field.value.children}
                           min={0}
                           max={8}
@@ -421,7 +427,9 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                           disabled={busy}
                         />
                         <PassengerCounter
-                          label={t("search.infants")}
+                          label={t("search.infants", {
+                            count: field.value.infants,
+                          })}
                           value={field.value.infants}
                           min={0}
                           max={4}

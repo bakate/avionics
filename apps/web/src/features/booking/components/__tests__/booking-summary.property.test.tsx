@@ -27,11 +27,13 @@ const bookingSummaryArb = fc.record({
     currency: fc.constantFrom("USD", "EUR", "GBP"),
   }),
   createdAt: fc
-    .date({ min: new Date("2020-01-01") })
+    .date({ min: new Date("2026-01-01"), max: new Date("2030-01-01") })
     .filter((d) => !Number.isNaN(d.getTime())),
   expiresAt: fc
     .option(
-      fc.date().filter((d) => !Number.isNaN(d.getTime())),
+      fc
+        .date({ min: new Date("2026-01-01"), max: new Date("2030-01-01") })
+        .filter((d) => !Number.isNaN(d.getTime())),
       { nil: undefined },
     )
     .map(

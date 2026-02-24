@@ -41,6 +41,7 @@ import {
   createFlightSelection,
   type FlightResult,
 } from "@/features/booking/machines/booking.machine";
+import { toISODate } from "@/lib/format";
 import { filterFlights, sortFlights } from "@/pages/results-logic";
 import { buildRoute } from "@/routes";
 
@@ -58,7 +59,7 @@ const buildDateRange = (selectedDate: string): ReadonlyArray<string> => {
   for (let i = -3; i <= 3; i++) {
     const d = new Date(center);
     d.setDate(d.getDate() + i);
-    const iso = d.toISOString().split("T")[0] as string;
+    const iso = toISODate(d);
     days.push(iso);
   }
   return days;
@@ -77,9 +78,8 @@ export const OutboundScreen = () => {
   const flights = context.outboundFlights;
   const selectedDate = searchParams?.departureDate ?? "";
 
-  // --- Date Carousel State ---
   const [referenceDate, setReferenceDate] = useState(
-    () => selectedDate || (new Date().toISOString().split("T")[0] as string),
+    () => selectedDate || toISODate(new Date()),
   );
 
   useEffect(() => {
@@ -97,7 +97,7 @@ export const OutboundScreen = () => {
     setReferenceDate((prev) => {
       const d = new Date(prev);
       d.setDate(d.getDate() - 7);
-      return d.toISOString().split("T")[0] as string;
+      return toISODate(d);
     });
   }, []);
 
@@ -105,7 +105,7 @@ export const OutboundScreen = () => {
     setReferenceDate((prev) => {
       const d = new Date(prev);
       d.setDate(d.getDate() + 7);
-      return d.toISOString().split("T")[0] as string;
+      return toISODate(d);
     });
   }, []);
 
