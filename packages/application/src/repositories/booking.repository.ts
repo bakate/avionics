@@ -54,6 +54,7 @@ export interface BookingRepositoryPort {
 export interface PaginationOptions {
   readonly limit?: number;
   readonly offset?: number;
+  readonly email?: string | undefined;
 }
 
 export class BookingRepository extends Context.Tag("BookingRepository")<

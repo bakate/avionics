@@ -52,6 +52,14 @@ export const useBookingMachine = () => {
     ) {
       send({ type: "RESET" });
     }
+
+    // 3. If on success page, ensure machine is in confirmed state
+    if (
+      location.pathname.startsWith("/success") &&
+      snapshotValue !== "confirmed"
+    ) {
+      send({ type: "COMPLETE" });
+    }
   }, [snapshotValue, context, location.pathname, navigate, send]);
 
   /** Helper to check current state value */

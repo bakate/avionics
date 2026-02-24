@@ -1,3 +1,4 @@
+import { faker } from "@faker-js/faker";
 import { fc, test } from "@fast-check/vitest";
 import { Effect, Ref } from "effect";
 import { describe, expect } from "vitest";
@@ -22,7 +23,10 @@ const eventTypeArb = fc.constantFrom(
 const payloadArb = fc.record({
   _tag: eventTypeArb,
   pnrCode: fc.stringMatching(/^[A-Z0-9]{6}$/).filter((s) => s.length === 6),
-  timestamp: fc.date().map((d) => d.toISOString()),
+  timestamp: fc.integer().map((seed) => {
+    faker.seed(seed);
+    return faker.date.recent().toISOString();
+  }),
 });
 
 interface MockOutboxRow {

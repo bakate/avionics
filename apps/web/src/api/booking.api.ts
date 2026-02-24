@@ -34,8 +34,10 @@ export const cancelBooking = (id: string, reason: string) =>
     ),
   );
 
-export const getBookings = () =>
-  makeClient.pipe(Effect.flatMap((client) => client.bookings.list()));
+export const getBookings = (email?: string) =>
+  makeClient.pipe(
+    Effect.flatMap((client) => client.bookings.list({ urlParams: { email } })),
+  );
 
 /**
  * Get booking summary by PNR

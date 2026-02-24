@@ -23,6 +23,7 @@ import { bookFlight, getBookings } from "@/api/booking.api";
 import { findAvailableFlights } from "@/api/inventory.api";
 import { type PassengerInput } from "../schemas/passenger.schema";
 import { type SearchParams } from "../schemas/search.schema";
+import { loadLastEmail, saveLastEmail } from "./booking.persistence";
 
 const derivePassengerType = (dateOfBirth: Date): PassengerType => {
   const age = new Date().getFullYear() - dateOfBirth.getFullYear();
@@ -88,6 +89,7 @@ export type BookingContext = {
   passengers: ReadonlyArray<PassengerInput>;
   bookingResult: BookingResult | null;
   allBookings: ReadonlyArray<BookingSummary>;
+  userEmail: string | null;
   error: string | null;
 };
 
@@ -107,6 +109,7 @@ export type BookingEvent =
   | { type: "ERROR"; message: string }
   | { type: "RETRY" }
   | { type: "BACK" }
+  | { type: "COMPLETE" }
   | { type: "RESET" };
 
 // ---------------------------------------------------------------------------
@@ -122,6 +125,7 @@ export const initialContext: BookingContext = {
   passengers: [],
   bookingResult: null,
   allBookings: [],
+  userEmail: loadLastEmail(),
   error: null,
 };
 
@@ -252,9 +256,13 @@ export const bookingMachine = setup({
       },
     ),
     fetchBookings: fromPromise(
-      async (): Promise<ReadonlyArray<BookingSummary>> => {
+      async ({
+        input,
+      }: {
+        input?: { email?: string };
+      }): Promise<ReadonlyArray<BookingSummary>> => {
         try {
-          const effect = getBookings();
+          const effect = getBookings(input?.email);
           const bookings = (await Effect.runPromise(
             effect,
           )) as ReadonlyArray<BookingResponse>;
@@ -339,6 +347,23 @@ export const bookingMachine = setup({
       },
     ),
   },
+  actions: {
+    persistEmail: assign({
+      ...initialContext,
+      passengers: ({ context }) => context.passengers,
+      bookingResult: ({ context }) =>
+        context.bookingResult
+          ? { ...context.bookingResult, status: "CONFIRMED" }
+          : null,
+      userEmail: ({ context }) => {
+        const email = context.passengers[0]?.email ?? context.userEmail;
+        if (email) {
+          saveLastEmail(email);
+        }
+        return email;
+      },
+    }),
+  },
   guards: {
     isOneWay,
     isRoundTrip,
@@ -374,6 +399,8 @@ export const bookingMachine = setup({
       tags: ["loading"],
       invoke: {
         src: "fetchBookings",
+        input: ({ context }) =>
+          context.userEmail ? { email: context.userEmail } : {},
         onDone: {
           target: "idle",
           actions: assign({
@@ -627,20 +654,24 @@ export const bookingMachine = setup({
         }
       },
       on: {
+        COMPLETE: "confirmed",
         RESET: { target: "idle", actions: assign(initialContext) },
       },
     },
 
     confirmed: {
-      entry: ({ context }) => {
-        // Only redirect if somehow we already have a checkoutUrl and we are confirmed (unlikely in this flow)
-        if (
-          context.bookingResult?.checkoutUrl &&
-          !window.location.pathname.startsWith("/confirmation")
-        ) {
-          window.location.href = context.bookingResult.checkoutUrl;
-        }
-      },
+      entry: [
+        "persistEmail",
+        ({ context }) => {
+          // Only redirect if somehow we already have a checkoutUrl and we are confirmed (unlikely in this flow)
+          if (
+            context.bookingResult?.checkoutUrl &&
+            !window.location.pathname.startsWith("/confirmation")
+          ) {
+            window.location.href = context.bookingResult.checkoutUrl;
+          }
+        },
+      ],
       on: {
         RESET: { target: "idle", actions: assign(initialContext) },
       },
@@ -731,6 +762,7 @@ export const routeToState = (path: string): BookingStateValue | null => {
   if (path === "/return") return "selectingReturn";
   if (path === "/passengers") return "enteringPassengers";
   if (path === "/payment") return "paying";
+  if (path.startsWith("/success")) return "confirmed";
   if (path.startsWith("/confirmation/")) return "confirmed";
   return null;
 };

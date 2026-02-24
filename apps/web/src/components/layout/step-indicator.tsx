@@ -3,6 +3,7 @@ import {
   AirplaneTakeOff01Icon,
   CreditCardIcon,
   SearchSquareIcon,
+  Tick02Icon,
   UserSquareIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -17,7 +18,10 @@ import {
 } from "@workspace/ui/components/reui/stepper";
 import { useTranslation } from "react-i18next";
 import { useBookingMachine } from "@/features/booking/hooks/use-booking-machine";
-import { stateToStep } from "@/features/booking/machines/booking.machine";
+import {
+  type BookingStateValue,
+  stateToStep,
+} from "@/features/booking/machines/booking.machine";
 
 const STEPS = [
   {
@@ -68,7 +72,7 @@ export const StepIndicator = () => {
   const { t } = useTranslation();
   const { state } = useBookingMachine();
 
-  const activeStep = stateToStep(state) + 1;
+  const activeStep = stateToStep(state as BookingStateValue) + 1;
 
   return (
     <Stepper
@@ -87,7 +91,15 @@ export const StepIndicator = () => {
               asChild
             >
               <StepperIndicator className="data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=completed]:bg-success size-8 border-2 data-[state=completed]:text-white data-[state=inactive]:bg-transparent">
-                {step.icon}
+                {activeStep > index + 1 || state === "confirmed" ? (
+                  <HugeiconsIcon
+                    icon={Tick02Icon}
+                    strokeWidth={2}
+                    className="size-4"
+                  />
+                ) : (
+                  step.icon
+                )}
               </StepperIndicator>
               <StepperTitle>{t(step.title)}</StepperTitle>
             </StepperTrigger>

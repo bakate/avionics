@@ -370,9 +370,20 @@ export const PostgresBookingRepositoryLive = Layer.effect(
         Effect.gen(function* () {
           const limit = Math.min(options?.limit ?? 100, 1000);
           const offset = options?.offset ?? 0;
-          const bookings = yield* sqlPool<BookingRow>`
-            SELECT * FROM bookings ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}
-          `;
+          const email = options?.email;
+
+          const bookings = yield* email
+            ? sqlPool<BookingRow>`
+                SELECT b.*
+                FROM bookings b
+                INNER JOIN passengers p ON p.booking_id = b.id
+                WHERE p.email = ${email}
+                ORDER BY b.created_at DESC
+                LIMIT ${limit} OFFSET ${offset}
+              `
+            : sqlPool<BookingRow>`
+                SELECT * FROM bookings ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}
+              `;
 
           if (bookings.length === 0) {
             return [];

@@ -35,6 +35,7 @@ const MAX_SEARCH_LIMIT = 100;
 export class BookingGroup extends HttpApiGroup.make("bookings")
   .add(
     HttpApiEndpoint.get("list", "/")
+      .setUrlParams(Schema.Struct({ email: Schema.optional(Schema.String) }))
       .addSuccess(Schema.Array(BookingResponse))
       .addError(Errors.BookingPersistenceError, { status: 500 }),
   )
