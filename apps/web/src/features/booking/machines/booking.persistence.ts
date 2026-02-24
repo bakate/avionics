@@ -61,13 +61,19 @@ const STORAGE_KEY = "avionics-booking-session";
 const LAST_EMAIL_KEY = "avionics-last-email";
 
 export const saveLastEmail = (email: string) => {
-  if (typeof localStorage !== "undefined") {
+  if (
+    typeof localStorage !== "undefined" &&
+    typeof localStorage.setItem === "function"
+  ) {
     localStorage.setItem(LAST_EMAIL_KEY, email);
   }
 };
 
 export const loadLastEmail = (): string | null => {
-  if (typeof localStorage !== "undefined") {
+  if (
+    typeof localStorage !== "undefined" &&
+    typeof localStorage.getItem === "function"
+  ) {
     return localStorage.getItem(LAST_EMAIL_KEY);
   }
   return null;
@@ -86,7 +92,10 @@ export const saveBookingState = (snapshot: any) => {
       context: encodedContext,
     };
 
-    if (typeof sessionStorage !== "undefined") {
+    if (
+      typeof sessionStorage !== "undefined" &&
+      typeof sessionStorage.setItem === "function"
+    ) {
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshotToStore));
     }
   } catch (e) {
@@ -97,7 +106,8 @@ export const saveBookingState = (snapshot: any) => {
 export const loadBookingState = (): any => {
   try {
     const saved =
-      typeof sessionStorage !== "undefined"
+      typeof sessionStorage !== "undefined" &&
+      typeof sessionStorage.getItem === "function"
         ? sessionStorage.getItem(STORAGE_KEY)
         : null;
     if (!saved) return undefined;
@@ -115,7 +125,10 @@ export const loadBookingState = (): any => {
     };
   } catch (e) {
     console.error("[Persistence] Failed to load state, clearing storage", e);
-    if (typeof sessionStorage !== "undefined") {
+    if (
+      typeof sessionStorage !== "undefined" &&
+      typeof sessionStorage.removeItem === "function"
+    ) {
       sessionStorage.removeItem(STORAGE_KEY);
     }
     return undefined;
@@ -123,7 +136,10 @@ export const loadBookingState = (): any => {
 };
 
 export const clearBookingState = () => {
-  if (typeof sessionStorage !== "undefined") {
+  if (
+    typeof sessionStorage !== "undefined" &&
+    typeof sessionStorage.removeItem === "function"
+  ) {
     sessionStorage.removeItem(STORAGE_KEY);
   }
 };
