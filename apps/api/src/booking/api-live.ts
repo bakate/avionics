@@ -142,8 +142,10 @@ export const BookingApiLive = HttpApiBuilder.group(
   "bookings",
   (handlers) =>
     handlers
-      .handle("list", () =>
-        withBookingService((service) => service.findAll()).pipe(
+      .handle("list", ({ urlParams }) =>
+        withBookingService((service) =>
+          service.findAll({ email: urlParams.email }),
+        ).pipe(
           Effect.map((bookings) =>
             bookings
               .filter((b) => b.passengers.length > 0 && b.segments?.length > 0)

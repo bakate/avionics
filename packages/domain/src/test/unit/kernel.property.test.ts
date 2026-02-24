@@ -2,6 +2,7 @@
  * Property-Based Tests for Kernel Value Objects
  */
 
+import { faker } from "@faker-js/faker";
 import { fc } from "@fast-check/vitest";
 import { Schema } from "effect";
 import { describe, expect, test } from "vitest";
@@ -158,18 +159,17 @@ describe("Route - Property-Based Tests", () => {
 describe("Schedule - Property-Based Tests", () => {
   test("Property 1: Arrival must be after departure", () => {
     fc.assert(
-      fc.property(
-        fc.date({ min: new Date("2024-01-01"), max: new Date("2025-12-31") }),
-        fc.integer({ min: 1, max: 24 * 60 * 60 * 1000 }), // 1ms to 24 hours
-        (departure, durationMs) => {
-          const arrival = new Date(departure.getTime() + durationMs);
-          const schedule = Schedule.create({ departure, arrival });
+      fc.property(fc.integer(), (seed) => {
+        faker.seed(seed);
+        const departure = faker.date.recent();
+        const arrival = faker.date.future({ refDate: departure });
 
-          expect(schedule.arrival.getTime()).toBeGreaterThan(
-            schedule.departure.getTime(),
-          );
-        },
-      ),
+        const schedule = Schedule.create({ departure, arrival });
+
+        expect(schedule.arrival.getTime()).toBeGreaterThan(
+          schedule.departure.getTime(),
+        );
+      }),
     );
   });
 

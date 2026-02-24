@@ -3,6 +3,7 @@
  * These tests verify state transition properties
  */
 
+import { faker } from "@faker-js/faker";
 import { fc } from "@fast-check/vitest";
 import { Effect, Option as O } from "effect";
 import { describe, expect, test } from "vitest";
@@ -42,10 +43,7 @@ const arbPassenger = fc
     firstName: fc.string({ minLength: 2, maxLength: 20 }),
     lastName: fc.string({ minLength: 2, maxLength: 20 }),
     email: arbEmail,
-    dateOfBirth: fc.date({
-      min: new Date("1950-01-01"),
-      max: new Date("2030-01-01"),
-    }),
+    birthDateSeed: fc.integer(),
     gender: fc.constantFrom("MALE", "FEMALE") as fc.Arbitrary<Gender>,
     type: fc.constantFrom(
       "ADULT",
@@ -55,13 +53,14 @@ const arbPassenger = fc
       "SENIOR",
     ) as fc.Arbitrary<PassengerType>,
   })
-  .map(
-    (props) =>
-      new Passenger({
-        ...props,
-        id: props.id as PassengerId,
-      }),
-  );
+  .map((props) => {
+    faker.seed(props.birthDateSeed);
+    return new Passenger({
+      ...props,
+      id: props.id as PassengerId,
+      dateOfBirth: faker.date.birthdate(),
+    });
+  });
 
 const arbMoney = fc
   .record({

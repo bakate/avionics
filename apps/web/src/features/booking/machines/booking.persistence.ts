@@ -50,13 +50,23 @@ export const BookingContextPersistenceSchema = Schema.Struct({
   passengers: Schema.Array(PassengerInput),
   bookingResult: Schema.NullOr(BookingResultSchema),
   allBookings: Schema.Array(BookingSummary),
+  userEmail: Schema.NullOr(Schema.String),
   error: Schema.NullOr(Schema.String),
 }) as Schema.Schema<any, any, never>;
 
 const decodeContext = Schema.decodeUnknownSync(BookingContextPersistenceSchema);
 const encodeContext = Schema.encodeSync(BookingContextPersistenceSchema);
 
-const STORAGE_KEY = "avionics-booking-v1";
+const STORAGE_KEY = "avionics-booking-session";
+const LAST_EMAIL_KEY = "avionics-last-email";
+
+export const saveLastEmail = (email: string) => {
+  localStorage.setItem(LAST_EMAIL_KEY, email);
+};
+
+export const loadLastEmail = (): string | null => {
+  return localStorage.getItem(LAST_EMAIL_KEY);
+};
 
 export const saveBookingState = (snapshot: any) => {
   try {
@@ -71,7 +81,7 @@ export const saveBookingState = (snapshot: any) => {
       context: encodedContext,
     };
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshotToStore));
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshotToStore));
   } catch (e) {
     console.warn("[Persistence] Failed to save state", e);
   }
@@ -79,7 +89,7 @@ export const saveBookingState = (snapshot: any) => {
 
 export const loadBookingState = (): any => {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = sessionStorage.getItem(STORAGE_KEY);
     if (!saved) return undefined;
 
     const parsed = JSON.parse(saved);
@@ -95,11 +105,11 @@ export const loadBookingState = (): any => {
     };
   } catch (e) {
     console.error("[Persistence] Failed to load state, clearing storage", e);
-    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
     return undefined;
   }
 };
 
 export const clearBookingState = () => {
-  localStorage.removeItem(STORAGE_KEY);
+  sessionStorage.removeItem(STORAGE_KEY);
 };
