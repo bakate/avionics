@@ -11,7 +11,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@workspace/ui/components/button";
 import { Calendar } from "@workspace/ui/components/calendar";
 import { Field, FieldError, FieldLabel } from "@workspace/ui/components/field";
-import { Input } from "@workspace/ui/components/input";
 import {
   Popover,
   PopoverContent,
@@ -30,6 +29,7 @@ import { type DateRange } from "react-day-picker";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "@/lib/format";
+import { AirportAutocomplete } from "./airport-autocomplete";
 import {
   cabinOptions,
   initialFormState,
@@ -184,11 +184,10 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
           render={({ field, fieldState }) => (
             <Field className="flex-1" data-invalid={fieldState.invalid}>
               <FieldLabel>{t("search.origin").toUpperCase()}</FieldLabel>
-              <Input
-                {...field}
-                className="h-12 rounded-xl border-border/60 bg-secondary/50 font-semibold uppercase text-foreground placeholder:text-muted-foreground/50 focus-visible:border-ring focus-visible:bg-card"
+              <AirportAutocomplete
+                value={field.value}
+                onChange={field.onChange}
                 placeholder="CDG"
-                maxLength={3}
                 disabled={busy}
               />
               <FieldError errors={[fieldState.error]} />
@@ -216,11 +215,10 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
           render={({ field, fieldState }) => (
             <Field className="flex-1" data-invalid={fieldState.invalid}>
               <FieldLabel>{t("search.destination").toUpperCase()}</FieldLabel>
-              <Input
-                {...field}
-                className="h-12 rounded-xl border-border/60 bg-secondary/50 font-semibold uppercase text-foreground placeholder:text-muted-foreground/50 focus-visible:border-ring focus-visible:bg-card"
+              <AirportAutocomplete
+                value={field.value}
+                onChange={field.onChange}
                 placeholder="LHR"
-                maxLength={3}
                 disabled={busy}
               />
               <FieldError errors={[fieldState.error]} />

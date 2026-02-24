@@ -20,13 +20,10 @@ export const cabinOptions = [
 
 export const initialFormState: SearchFormInput = {
   tripType: "roundTrip",
-  origin: "CDG",
-  destination: "LHR",
-  departureDate: new Date().toISOString().split("T")[0] ?? "",
-  returnDate:
-    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0] ?? "", // TODO: set to today + 7 days
+  origin: "",
+  destination: "",
+  departureDate: "",
+  returnDate: "",
   passengers: { adults: 1, children: 0, infants: 0 },
   cabinClass: CabinClass.ECONOMY,
 };
