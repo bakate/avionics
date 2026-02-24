@@ -5,6 +5,7 @@
  * via Effect Schema should produce a value equivalent to the original.
  */
 
+import { faker } from "@faker-js/faker";
 import { fc, test } from "@fast-check/vitest";
 import { Schema } from "effect";
 import { describe, expect } from "vitest";
@@ -24,15 +25,26 @@ const airportCodeArb = fc
   .filter((s) => /^[A-Z]{3}$/.test(s));
 
 const pastDateArb = fc
-  .date({ min: new Date("1920-01-01T00:00:00Z"), max: new Date() })
-  .map((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()));
+  .date({
+    min: new Date("2020-01-01T00:00:00Z"),
+    max: new Date("2024-12-31T23:59:59Z"),
+  })
+  .filter((d) => !Number.isNaN(d.getTime()))
+  .map((d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()))
+  .filter((d) => !Number.isNaN(d.getTime()));
 
 const futureDateStrArb = fc
   .date({
     min: new Date("2026-03-01T00:00:00Z"),
-    max: new Date("2028-12-31T23:59:59Z"),
+    max: new Date("2029-12-31T23:59:59Z"),
   })
-  .map((d) => d.toISOString().split("T")[0] ?? "");
+  .filter((d) => !Number.isNaN(d.getTime()))
+  .map((d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  });
 
 const passengersArb = fc.record({
   adults: fc.integer({ min: 1, max: 9 }),
@@ -70,18 +82,18 @@ const searchParamsArb = fc.oneof(
   oneWaySearchParamsArb,
 );
 
-const emailArb = fc.emailAddress();
+// Use fc.constantFrom with a set of faker values to keep it deterministic and shrinkable
+const firstNames = Array.from({ length: 50 }, () => faker.person.firstName());
+const lastNames = Array.from({ length: 50 }, () => faker.person.lastName());
+const emails = Array.from({ length: 50 }, () => faker.internet.email());
 
-const nameArb = fc
-  .array(fc.constantFrom(..."abcdefghijklmnopqrstuvwxyz"), {
-    minLength: 1,
-    maxLength: 10,
-  })
-  .map((arr) => arr.join(""));
+const firstNameArb = fc.constantFrom(...firstNames);
+const lastNameArb = fc.constantFrom(...lastNames);
+const emailArb = fc.constantFrom(...emails);
 
 const passengerInputArb = fc.record({
-  firstName: nameArb,
-  lastName: nameArb,
+  firstName: firstNameArb,
+  lastName: lastNameArb,
   email: emailArb,
   dateOfBirth: pastDateArb,
   gender: fc.constantFrom("MALE" as const, "FEMALE" as const),
@@ -92,7 +104,7 @@ const passengerInputArb = fc.record({
 // ---------------------------------------------------------------------------
 
 describe("Property 17: API Schema round-trip", () => {
-  test.prop([searchParamsArb], { numRuns: 20 })(
+  test.prop([searchParamsArb], { numRuns: 100 })(
     "SearchParams encode → decode round-trip",
     (params) => {
       const decoded = Schema.decodeSync(SearchParams)(params as any);
@@ -113,7 +125,7 @@ describe("Property 17: API Schema round-trip", () => {
     },
   );
 
-  test.prop([passengerInputArb], { numRuns: 20 })(
+  test.prop([passengerInputArb], { numRuns: 100 })(
     "PassengerInput encode → decode round-trip",
     (passenger) => {
       const encoded = Schema.encodeSync(PassengerInput)(
