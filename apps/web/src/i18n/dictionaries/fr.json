@@ -62,6 +62,8 @@
     "stops": "Escales",
     "departureTime": "Heure de départ",
     "searching": "Recherche de vols en cours...",
+    "airportSearching": "Recherche en cours...",
+    "noAirportsFound": "Aucun aéroport trouvé",
     "noFlights": "Aucun vol trouvé",
     "tryDifferentDates": "Essayez de changer vos dates ou destinations",
     "modifySearch": "Modifier la recherche",

@@ -8,15 +8,10 @@ import {
   Money,
 } from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle,
-} from "@workspace/ui/components/empty";
 import { cn } from "@workspace/ui/lib/utils";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { EmptyState } from "@/components/shared/empty-state";
 import { type FlightResult } from "@/features/booking/machines/booking.machine";
 import { formatDuration, formatMoney, formatTime } from "@/lib/format";
 import { FareDetailPanel } from "./fare-detail-panel";
@@ -353,12 +348,10 @@ export const FlightResultsTable = ({
   const { t } = useTranslation();
   if (flights.length === 0) {
     return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyTitle>{t("search.noResultTitle")}</EmptyTitle>
-          <EmptyDescription>{t("search.noResultDescription")}</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <EmptyState
+        title={t("search.noResultTitle")}
+        description={t("search.noResultDescription")}
+      />
     );
   }
   return (

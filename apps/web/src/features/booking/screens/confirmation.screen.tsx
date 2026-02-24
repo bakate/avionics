@@ -2,6 +2,7 @@ import { Tick01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type BookingSummary } from "@workspace/application/read-models";
 import { Button } from "@workspace/ui/components/button";
+import { Heading } from "@workspace/ui/components/heading";
 import { type None } from "effect/Option";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
@@ -39,12 +40,10 @@ export const ConfirmationScreen = () => {
         <div className="flex size-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 mb-6">
           <HugeiconsIcon icon={Tick01Icon} size={40} />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight mb-4">
-          {t("confirmation.successTitle")}
-        </h1>
-        <p className="text-muted-foreground text-lg max-w-lg">
-          {t("confirmation.successMessage")}
-        </p>
+        <Heading
+          title={t("confirmation.successTitle")}
+          description={t("confirmation.successMessage")}
+        />
       </div>
 
       <div className="mb-10">

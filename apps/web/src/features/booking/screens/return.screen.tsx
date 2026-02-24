@@ -5,16 +5,10 @@
  * Back button returns to outbound selection.
  */
 
-import { FilterHorizontalIcon, ReloadIcon } from "@hugeicons/core-free-icons";
+import { FilterHorizontalIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type CabinClass } from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyMedia,
-  EmptyTitle,
-} from "@workspace/ui/components/empty";
 import { SectionCard } from "@workspace/ui/components/section-card";
 import {
   Sheet,
@@ -29,7 +23,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { type DatePrice, getDatePrices } from "@/api/inventory.api";
-import { ErrorDisplay } from "@/components/error-display";
+import { EmptyState } from "@/components/shared/empty-state";
 import { DateCarousel } from "@/features/booking/components/date-carousel";
 import {
   FilterPanel,
@@ -219,6 +213,8 @@ export const ReturnScreen = () => {
     searchParams.passengers.children +
     searchParams.passengers.infants;
 
+  const showControls = flights.length > 0 || isLoading;
+
   return (
     <div className="min-h-screen pb-20">
       {/* Header */}
@@ -233,84 +229,90 @@ export const ReturnScreen = () => {
 
       <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
         {/* Date Carousel */}
-        <div className="mb-6">
-          <DateCarousel
-            selectedDate={selectedDate}
-            prices={datePrices}
-            onDateChange={handleDateChange}
-            onPrevious={handlePreviousDays}
-            onNext={handleNextDays}
-            passengers={searchParams.passengers}
-            isLoading={isLoading}
-          />
-        </div>
+        {showControls ? (
+          <div className="mb-6">
+            <DateCarousel
+              selectedDate={selectedDate}
+              prices={datePrices}
+              onDateChange={handleDateChange}
+              onPrevious={handlePreviousDays}
+              onNext={handleNextDays}
+              passengers={searchParams.passengers}
+              isLoading={isLoading}
+            />
+          </div>
+        ) : null}
 
         <div className="flex flex-col gap-8 lg:flex-row">
           {/* Sidebar filters (desktop) */}
-          <aside className="hidden w-72 shrink-0 lg:block">
-            <SectionCard
-              title={t("search.filters")}
-              icon={<HugeiconsIcon icon={FilterHorizontalIcon} size={18} />}
-              className="sticky top-24"
-            >
-              <FilterPanel
-                filters={filters}
-                onFiltersChange={setFilters}
-                onClear={() =>
-                  setFilters({
-                    cabinClass: "ECONOMY",
-                    maxStops: null,
-                    timeRange: null,
-                  })
-                }
-              />
-            </SectionCard>
-          </aside>
+          {showControls ? (
+            <aside className="hidden w-72 shrink-0 lg:block">
+              <SectionCard
+                title={t("search.filters")}
+                icon={<HugeiconsIcon icon={FilterHorizontalIcon} size={18} />}
+                className="sticky top-24"
+              >
+                <FilterPanel
+                  filters={filters}
+                  onFiltersChange={setFilters}
+                  onClear={() =>
+                    setFilters({
+                      cabinClass: "ECONOMY",
+                      maxStops: null,
+                      timeRange: null,
+                    })
+                  }
+                />
+              </SectionCard>
+            </aside>
+          ) : null}
 
           {/* Main content */}
           <div className="flex-1 space-y-6">
             {/* Sort + mobile filter toggle */}
-            <div className="flex flex-col gap-4 border-b border-white/5 pb-4 sm:flex-row sm:items-center sm:justify-between">
-              <SortControls
-                currentField={sortField}
-                currentOrder={sortOrder}
-                onSortChange={(f, o) => {
-                  setSortField(f);
-                  setSortOrder(o);
-                }}
-              />
-              <Sheet>
-                <SheetTrigger
-                  render={
-                    <Button
-                      variant="outline"
-                      className="flex items-center justify-center gap-2 lg:hidden"
-                    >
-                      <HugeiconsIcon icon={FilterHorizontalIcon} size={16} />
-                      {t("search.filters").toUpperCase()}
-                    </Button>
-                  }
+            {showControls ? (
+              <div className="flex flex-col gap-4 border-b border-white/5 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <SortControls
+                  currentField={sortField}
+                  currentOrder={sortOrder}
+                  onSortChange={(f, o) => {
+                    setSortField(f);
+                    setSortOrder(o);
+                  }}
                 />
-                <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                  <SheetHeader>
-                    <SheetTitle>{t("search.filters")}</SheetTitle>
-                  </SheetHeader>
-                  <div className="mt-6">
-                    <FilterPanel
-                      filters={filters}
-                      onFiltersChange={setFilters}
-                      onClear={() =>
-                        setFilters({
-                          cabinClass: "ECONOMY",
-                          maxStops: null,
-                          timeRange: null,
-                        })
-                      }
-                    />
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
+                <Sheet>
+                  <SheetTrigger
+                    render={
+                      <Button
+                        variant="outline"
+                        className="flex items-center justify-center gap-2 lg:hidden"
+                      >
+                        <HugeiconsIcon icon={FilterHorizontalIcon} size={16} />
+                        {t("search.filters").toUpperCase()}
+                      </Button>
+                    }
+                  />
+                  <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                    <SheetHeader>
+                      <SheetTitle>{t("search.filters")}</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-6">
+                      <FilterPanel
+                        filters={filters}
+                        onFiltersChange={setFilters}
+                        onClear={() =>
+                          setFilters({
+                            cabinClass: "ECONOMY",
+                            maxStops: null,
+                            timeRange: null,
+                          })
+                        }
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
+            ) : null}
 
             {/* Loading state */}
             {isLoading && flights.length === 0 && (
@@ -324,34 +326,25 @@ export const ReturnScreen = () => {
 
             {/* Error state */}
             {context.error && flights.length === 0 && (
-              <ErrorDisplay
+              <EmptyState
+                isError
                 title={t("error.searchFailed")}
-                message={context.error}
-                onRetry={() => send({ type: "RETRY" })}
+                description={context.error}
+                action={
+                  <Button onClick={() => send({ type: "RETRY" })}>
+                    {t("common.retry")}
+                  </Button>
+                }
               />
             )}
 
             {/* Empty state */}
             {!isLoading && flights.length === 0 && !context.error && (
-              <Empty className="rounded-2xl border border-white/10 bg-white/5 p-12 backdrop-blur-sm">
-                <EmptyMedia>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100/10 text-slate-600">
-                    <HugeiconsIcon icon={ReloadIcon} size={32} />
-                  </div>
-                </EmptyMedia>
-                <EmptyTitle className="text-lg font-bold dark:text-white">
-                  {t("search.noFlights")}
-                </EmptyTitle>
-                <EmptyDescription className="text-slate-500 dark:text-slate-400">
-                  {t("search.tryDifferentDates")}
-                </EmptyDescription>
-                <Button
-                  onClick={handleBack}
-                  className="mt-6 rounded-xl bg-blue-600 px-8 py-3 text-sm font-bold dark:text-white transition-all hover:bg-blue-500"
-                >
-                  {t("common.back")}
-                </Button>
-              </Empty>
+              <EmptyState
+                action={
+                  <Button onClick={handleBack}>{t("common.back")}</Button>
+                }
+              />
             )}
 
             {filteredAndSorted.length > 0 && (
