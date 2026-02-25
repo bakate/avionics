@@ -25,22 +25,20 @@ import { useNavigate } from "react-router";
 import { type DatePrice, getDatePrices } from "@/api/inventory.api";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DateCarousel } from "@/features/booking/components/date-carousel";
-import {
-  FilterPanel,
-  type FilterState,
-} from "@/features/booking/components/filter-panel";
+import { FilterPanel } from "@/features/booking/components/filter-panel";
 import { FlightResultsTable } from "@/features/booking/components/flight-results-table";
 import { FlightScreenHeader } from "@/features/booking/components/flight-screen-header";
-import {
-  SortControls,
-  type SortField,
-  type SortOrder,
-} from "@/features/booking/components/sort-controls";
+import { SortControls } from "@/features/booking/components/sort-controls";
 import { useBookingMachine } from "@/features/booking/hooks/use-booking-machine";
 import {
   createFlightSelection,
   type FlightResult,
 } from "@/features/booking/machines/booking.machine";
+import {
+  type FilterState,
+  type SortField,
+  type SortOrder,
+} from "@/features/booking/schemas/ui.schema";
 import { toISODate } from "@/lib/format";
 import { filterFlights, sortFlights } from "@/pages/results-logic";
 import { buildRoute } from "@/routes";

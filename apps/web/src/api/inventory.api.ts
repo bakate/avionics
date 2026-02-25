@@ -1,14 +1,18 @@
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { makeClient } from "@/api/client";
 import { toISODate } from "@/lib/format";
 
-export type DatePrice = {
-  readonly date: string;
-  readonly lowestPrice: {
-    readonly amount: number;
-    readonly currency: string;
-  } | null;
-};
+export const DatePrice = Schema.Struct({
+  date: Schema.String,
+  lowestPrice: Schema.NullOr(
+    Schema.Struct({
+      amount: Schema.Number,
+      currency: Schema.String,
+    }),
+  ),
+});
+
+export type DatePrice = typeof DatePrice.Type;
 
 /**
  * Get flight availability

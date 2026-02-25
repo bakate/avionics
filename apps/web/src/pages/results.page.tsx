@@ -1,6 +1,5 @@
 /**
  * Results page — Displays flight search results with filtering and sorting.
- * Requirements: 1.2, 1.3, 1.5, 1.6, 2.1, 2.2, 2.3, 2.4
  */
 
 import {
@@ -23,22 +22,20 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 import { EmptyState } from "@/components/shared/empty-state";
-import {
-  FilterPanel,
-  type FilterState,
-} from "@/features/booking/components/filter-panel";
+import { FilterPanel } from "@/features/booking/components/filter-panel";
 import { FlightCard } from "@/features/booking/components/flight-card";
-import {
-  SortControls,
-  type SortField,
-  type SortOrder,
-} from "@/features/booking/components/sort-controls";
+import { SortControls } from "@/features/booking/components/sort-controls";
 import { useBookingMachine } from "@/features/booking/hooks/use-booking-machine";
 import { useFlightStream } from "@/features/booking/hooks/use-flight-stream";
 import {
   decodeSearchParams,
   type SearchParams,
 } from "@/features/booking/schemas/search.schema";
+import {
+  type FilterState,
+  type SortField,
+  type SortOrder,
+} from "@/features/booking/schemas/ui.schema";
 import { buildRoute } from "@/routes";
 import { filterFlights, sortFlights } from "./results-logic";
 

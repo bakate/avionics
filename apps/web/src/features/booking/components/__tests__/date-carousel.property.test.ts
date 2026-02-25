@@ -10,8 +10,8 @@
 import { type CabinClass } from "@workspace/domain/kernel";
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
+import { type DatePrice } from "@/api/inventory.api";
 import { type FlightResult } from "../../machines/booking.machine";
-import { type DatePrice } from "../date-carousel";
 
 // ---------------------------------------------------------------------------
 // Pure logic under test: compute lowest price per date from flights

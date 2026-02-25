@@ -8,12 +8,7 @@ import { Button } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { useTranslation } from "react-i18next";
 import { cabinOptions } from "@/features/search/components/types";
-
-export type FilterState = {
-  cabinClass: string;
-  maxStops: number | null;
-  timeRange: [number, number] | null; // [minHour, maxHour]
-};
+import { type FilterState } from "../schemas/ui.schema";
 
 export type FilterPanelProps = {
   readonly filters: FilterState;

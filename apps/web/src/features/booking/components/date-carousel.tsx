@@ -6,13 +6,7 @@ import { cn } from "@workspace/ui/lib/utils";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 
-export type DatePrice = {
-  readonly date: string;
-  readonly lowestPrice: {
-    readonly amount: number;
-    readonly currency: string;
-  } | null;
-};
+import { type DatePrice } from "@/api/inventory.api";
 
 export type DateCarouselProps = {
   readonly selectedDate: string;

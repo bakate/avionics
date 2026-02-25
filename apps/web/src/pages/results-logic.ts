@@ -1,10 +1,10 @@
 import { type CabinClass } from "@workspace/domain/kernel";
-import { type FilterState } from "@/features/booking/components/filter-panel";
+import { type FlightResult } from "@/features/booking/machines/booking.machine";
 import {
+  type FilterState,
   type SortField,
   type SortOrder,
-} from "@/features/booking/components/sort-controls";
-import { type FlightResult } from "@/features/booking/machines/booking.machine";
+} from "@/features/booking/schemas/ui.schema";
 
 /**
  * Pure functions for flight sorting and filtering.

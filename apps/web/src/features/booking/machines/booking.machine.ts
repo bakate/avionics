@@ -11,12 +11,13 @@ import { type BookFlightCommand } from "@workspace/application/booking.commands"
 import { type BookingSummary } from "@workspace/application/read-models";
 import {
   type CabinClass,
+  CabinClassSchema,
   type CurrencyCode,
   Money,
   type PassengerType,
 } from "@workspace/domain/kernel";
 import { type BookingSegment } from "@workspace/domain/segment";
-import { Effect } from "effect";
+import { Effect, Schema } from "effect";
 import { v4 as uuidv4 } from "uuid";
 import { assign, fromPromise, setup } from "xstate";
 import { bookFlight, getBookings } from "@/api/booking.api";
@@ -42,39 +43,48 @@ const derivePassengerType = (dateOfBirth: Date): PassengerType => {
  * Lightweight flight representation stored in machine context.
  * Mirrors the FlightAvailability read model shape.
  */
-export type FlightResult = {
-  readonly flightId: string;
-  readonly flightNumber: string;
-  readonly origin: string;
-  readonly destination: string;
-  readonly departureTime: string;
-  readonly arrivalTime: string;
-  readonly durationMinutes: number;
-  readonly stops: number;
-  readonly aircraft?: string;
-  readonly cabins: ReadonlyArray<{
-    cabin: CabinClass;
-    availableSeats: number;
-    price: { readonly amount: number; readonly currency: string };
-  }>;
-  readonly lastUpdated: string;
-};
+export class FlightResult extends Schema.Class<FlightResult>("FlightResult")({
+  flightId: Schema.String,
+  flightNumber: Schema.String,
+  origin: Schema.String,
+  destination: Schema.String,
+  departureTime: Schema.String,
+  arrivalTime: Schema.String,
+  durationMinutes: Schema.Number,
+  stops: Schema.Number,
+  aircraft: Schema.optional(Schema.String),
+  cabins: Schema.Array(
+    Schema.Struct({
+      cabin: CabinClassSchema,
+      availableSeats: Schema.Number,
+      price: Schema.Struct({ amount: Schema.Number, currency: Schema.String }),
+    }),
+  ),
+  lastUpdated: Schema.String,
+}) {}
 
 /** A user's flight + cabin selection */
-export type FlightSelection = {
-  readonly flight: FlightResult;
-  readonly cabin: CabinClass;
-  readonly price: { readonly amount: number; readonly currency: string };
-};
+export class FlightSelection extends Schema.Class<FlightSelection>(
+  "FlightSelection",
+)({
+  flight: FlightResult,
+  cabin: CabinClassSchema,
+  price: Schema.Struct({ amount: Schema.Number, currency: Schema.String }),
+}) {}
 
-export type BookingResult = {
-  readonly bookingId: string;
-  readonly pnrCode: string;
-  readonly status: string;
-  readonly totalPrice: { readonly amount: number; readonly currency: string };
-  readonly confirmedAt: string;
-  readonly checkoutUrl?: string | undefined;
-};
+export class BookingResult extends Schema.Class<BookingResult>("BookingResult")(
+  {
+    bookingId: Schema.String,
+    pnrCode: Schema.String,
+    status: Schema.String,
+    totalPrice: Schema.Struct({
+      amount: Schema.Number,
+      currency: Schema.String,
+    }),
+    confirmedAt: Schema.String,
+    checkoutUrl: Schema.optional(Schema.String),
+  },
+) {}
 
 // ---------------------------------------------------------------------------
 // Context

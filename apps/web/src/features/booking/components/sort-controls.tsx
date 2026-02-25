@@ -5,9 +5,7 @@ import { ArrowDown01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-
-export type SortField = "price" | "departure" | "duration";
-export type SortOrder = "asc" | "desc";
+import { type SortField, type SortOrder } from "../schemas/ui.schema";
 
 export type SortControlsProps = {
   readonly currentField: SortField;

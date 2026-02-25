@@ -46,8 +46,8 @@ export const FlightScreenHeader = ({
               {destination}
             </h1>
             <p className="text-sm font-medium text-muted-foreground mt-1">
-              {date ? formatDate(new Date(date)) : ""} • {passengersCount}{" "}
-              {t("search.passengers").toLowerCase()}
+              {date ? formatDate(new Date(date)) : ""} •{" "}
+              {t("search.passengersCount", { count: passengersCount })}
             </p>
           </div>
         </div>
