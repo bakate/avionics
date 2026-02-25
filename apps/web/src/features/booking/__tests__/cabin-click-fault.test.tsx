@@ -94,6 +94,11 @@ describe("Property 1: Fault Condition - Cabin Click Immediately Dispatches Machi
           tags: new Set(),
           actorRef: {} as any,
           state: "selectingOutbound",
+          outboundFlights: [flight],
+          returnFlights: [],
+          filters: { cabinClass: "ECONOMY", maxStops: null, timeRange: null },
+          sortField: "price",
+          sortOrder: "asc",
         });
 
         const { unmount } = render(<OutboundScreen />);

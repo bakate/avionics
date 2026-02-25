@@ -1,3 +1,4 @@
+import { type CabinClass } from "@workspace/domain/kernel";
 import { useSelector } from "@xstate/react";
 import { useCallback, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
@@ -6,6 +7,7 @@ import {
   type BookingStateValue,
   stateToRoute,
 } from "@/features/booking/machines/booking.machine";
+import { filterFlights, sortFlights } from "@/pages/results-logic";
 
 export const useBookingMachine = () => {
   const navigate = useNavigate();
@@ -71,6 +73,36 @@ export const useBookingMachine = () => {
   /** Manual reset helper */
   const reset = useCallback(() => send({ type: "RESET" }), [send]);
 
+  const filters = context.filters ?? {
+    cabinClass: "ECONOMY",
+    maxStops: null,
+    timeRange: null,
+  };
+  const sortField = context.sortField ?? "price";
+  const sortOrder = context.sortOrder ?? "asc";
+
+  const filteredAndSortedOutboundFlights = filterFlights(
+    context.outboundFlights,
+    filters,
+  );
+  const outboundFlights = sortFlights(
+    filteredAndSortedOutboundFlights,
+    sortField,
+    sortOrder,
+    filters.cabinClass as CabinClass,
+  );
+
+  const filteredAndSortedReturnFlights = filterFlights(
+    context.returnFlights,
+    filters,
+  );
+  const returnFlights = sortFlights(
+    filteredAndSortedReturnFlights,
+    sortField,
+    sortOrder,
+    filters.cabinClass as CabinClass,
+  );
+
   return {
     state: snapshotValue,
     context,
@@ -80,5 +112,10 @@ export const useBookingMachine = () => {
     is,
     tags: snapshot.tags,
     actorRef: bookingActor,
+    outboundFlights,
+    returnFlights,
+    filters,
+    sortField,
+    sortOrder,
   } as const;
 };

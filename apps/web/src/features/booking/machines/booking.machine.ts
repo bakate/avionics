@@ -24,6 +24,11 @@ import { bookFlight, getBookings } from "@/api/booking.api";
 import { findAvailableFlights } from "@/api/inventory.api";
 import { type PassengerInput } from "../schemas/passenger.schema";
 import { type SearchParams } from "../schemas/search.schema";
+import {
+  type FilterState,
+  type SortField,
+  type SortOrder,
+} from "../schemas/ui.schema";
 import { loadLastEmail, saveLastEmail } from "./booking.persistence";
 
 const derivePassengerType = (dateOfBirth: Date): PassengerType => {
@@ -101,6 +106,11 @@ export type BookingContext = {
   allBookings: ReadonlyArray<BookingSummary>;
   userEmail: string | null;
   error: string | null;
+
+  // UI State
+  filters: FilterState;
+  sortField: SortField;
+  sortOrder: SortOrder;
 };
 
 // ---------------------------------------------------------------------------
@@ -120,7 +130,10 @@ export type BookingEvent =
   | { type: "RETRY" }
   | { type: "BACK" }
   | { type: "COMPLETE" }
-  | { type: "RESET" };
+  | { type: "RESET" }
+  | { type: "UPDATE_FILTERS"; filters: FilterState }
+  | { type: "UPDATE_SORT"; field: SortField; order: SortOrder }
+  | { type: "RESET_FILTERS" };
 
 // ---------------------------------------------------------------------------
 // Initial context
@@ -137,6 +150,9 @@ export const initialContext: BookingContext = {
   allBookings: [],
   userEmail: loadLastEmail(),
   error: null,
+  filters: { cabinClass: "ECONOMY", maxStops: null, timeRange: null },
+  sortField: "price",
+  sortOrder: "asc",
 };
 
 // ---------------------------------------------------------------------------
@@ -382,6 +398,31 @@ export const bookingMachine = setup({
   id: "booking",
   initial: "idle",
   context: initialContext,
+
+  on: {
+    UPDATE_FILTERS: {
+      actions: assign({
+        filters: ({ event }) => event.filters,
+      }),
+    },
+    UPDATE_SORT: {
+      actions: assign({
+        sortField: ({ event }) => event.field,
+        sortOrder: ({ event }) => event.order,
+      }),
+    },
+    RESET_FILTERS: {
+      actions: assign({
+        filters: () => ({
+          cabinClass: "ECONOMY",
+          maxStops: null,
+          timeRange: null,
+        }),
+        sortField: () => "price",
+        sortOrder: () => "asc",
+      }),
+    },
+  },
 
   states: {
     idle: {

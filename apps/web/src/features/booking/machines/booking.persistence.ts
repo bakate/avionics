@@ -3,6 +3,7 @@ import { CabinClassSchema } from "@workspace/domain/kernel";
 import { Schema } from "effect";
 import { PassengerInput } from "../schemas/passenger.schema";
 import { SearchParams } from "../schemas/search.schema";
+import { FilterState, SortField, SortOrder } from "../schemas/ui.schema";
 
 // --- Sub-schemas for the machine context ---
 
@@ -52,6 +53,9 @@ export const BookingContextPersistenceSchema = Schema.Struct({
   allBookings: Schema.Array(BookingSummary),
   userEmail: Schema.NullOr(Schema.String),
   error: Schema.NullOr(Schema.String),
+  filters: Schema.optional(FilterState),
+  sortField: Schema.optional(SortField),
+  sortOrder: Schema.optional(SortOrder),
 }) as Schema.Schema<any, any, never>;
 
 const decodeContext = Schema.decodeUnknownSync(BookingContextPersistenceSchema);

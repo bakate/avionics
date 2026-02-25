@@ -19,7 +19,7 @@ import {
 } from "@workspace/ui/components/sheet";
 import { Spinner } from "@workspace/ui/components/spinner";
 import { Effect } from "effect";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { type DatePrice, getDatePrices } from "@/api/inventory.api";
@@ -34,13 +34,7 @@ import {
   createFlightSelection,
   type FlightResult,
 } from "@/features/booking/machines/booking.machine";
-import {
-  type FilterState,
-  type SortField,
-  type SortOrder,
-} from "@/features/booking/schemas/ui.schema";
 import { toISODate } from "@/lib/format";
-import { filterFlights, sortFlights } from "@/pages/results-logic";
 import { buildRoute } from "@/routes";
 
 // ---------------------------------------------------------------------------
@@ -70,7 +64,15 @@ const buildDateRange = (selectedDate: string): ReadonlyArray<string> => {
 export const OutboundScreen = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { context, send, isLoading } = useBookingMachine();
+  const {
+    context,
+    send,
+    isLoading,
+    outboundFlights: filteredAndSorted,
+    filters,
+    sortField,
+    sortOrder,
+  } = useBookingMachine();
 
   const searchParams = context.searchParams;
   const flights = context.outboundFlights;
@@ -106,36 +108,6 @@ export const OutboundScreen = () => {
       return toISODate(d);
     });
   }, []);
-
-  // --- Local state: sorting & filtering ---
-  const [sortField, setSortField] = useState<SortField>("price");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [filters, setFilters] = useState<FilterState>({
-    cabinClass: searchParams?.cabinClass ?? "ECONOMY",
-    maxStops: null,
-    timeRange: null,
-  });
-
-  // Reset filters when search params change
-  useEffect(() => {
-    if (searchParams?.cabinClass) {
-      setFilters((prev) => ({
-        ...prev,
-        cabinClass: searchParams.cabinClass ?? prev.cabinClass,
-      }));
-    }
-  }, [searchParams?.cabinClass]);
-
-  // --- Derived data ---
-  const filteredAndSorted = useMemo(() => {
-    const filtered = filterFlights(flights, filters);
-    return sortFlights(
-      filtered,
-      sortField,
-      sortOrder,
-      filters.cabinClass as CabinClass,
-    );
-  }, [flights, sortField, sortOrder, filters]);
 
   const [datePrices, setDatePrices] = useState<ReadonlyArray<DatePrice>>([]);
   const [pendingSelection, setPendingSelection] = useState<{
@@ -263,14 +235,10 @@ export const OutboundScreen = () => {
               >
                 <FilterPanel
                   filters={filters}
-                  onFiltersChange={setFilters}
-                  onClear={() =>
-                    setFilters({
-                      cabinClass: "ECONOMY",
-                      maxStops: null,
-                      timeRange: null,
-                    })
+                  onFiltersChange={(f) =>
+                    send({ type: "UPDATE_FILTERS", filters: f })
                   }
+                  onClear={() => send({ type: "RESET_FILTERS" })}
                 />
               </SectionCard>
             </aside>
@@ -284,10 +252,9 @@ export const OutboundScreen = () => {
                 <SortControls
                   currentField={sortField}
                   currentOrder={sortOrder}
-                  onSortChange={(f, o) => {
-                    setSortField(f);
-                    setSortOrder(o);
-                  }}
+                  onSortChange={(f, o) =>
+                    send({ type: "UPDATE_SORT", field: f, order: o })
+                  }
                 />
                 <Sheet>
                   <SheetTrigger
@@ -308,14 +275,10 @@ export const OutboundScreen = () => {
                     <div className="mt-6">
                       <FilterPanel
                         filters={filters}
-                        onFiltersChange={setFilters}
-                        onClear={() =>
-                          setFilters({
-                            cabinClass: "ECONOMY",
-                            maxStops: null,
-                            timeRange: null,
-                          })
+                        onFiltersChange={(f) =>
+                          send({ type: "UPDATE_FILTERS", filters: f })
                         }
+                        onClear={() => send({ type: "RESET_FILTERS" })}
                       />
                     </div>
                   </SheetContent>
