@@ -83,7 +83,9 @@
     "invalidEmail": "Invalid email address",
     "futureDateOfBirth": "Date of birth cannot be in the future",
     "minPassengers": "At least 1 passenger required",
-    "maxPassengers": "Maximum 9 passengers"
+    "maxPassengers": "Maximum 9 passengers",
+    "invalidAirportCode": "Please select a valid airport (e.g. CDG)",
+    "returnDateRequired": "Return date is required for a round-trip flight"
   },
   "results": {
     "title": "Search results",

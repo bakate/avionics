@@ -118,6 +118,28 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
     form.setValue("destination", origin);
   };
 
+  const translateFormError = (message?: string) => {
+    if (!message) return message;
+    if (message.includes("matching the pattern"))
+      return t("validation.invalidAirportCode");
+    if (message.includes("at least 1 character"))
+      return t("validation.required");
+    if (message.includes("Return date is required"))
+      return t("validation.returnDateRequired");
+    return message;
+  };
+
+  const getTranslatedErrors = (
+    errors: Array<{ message?: string } | undefined | null>,
+  ) => {
+    return errors.map((e) => {
+      if (!e) return undefined;
+      const { message, ...rest } = e;
+      const translated = translateFormError(message);
+      return translated ? { ...rest, message: translated } : rest;
+    });
+  };
+
   return (
     <form
       onSubmit={form.handleSubmit(onSubmit)}
@@ -191,7 +213,7 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                 placeholder="CDG"
                 disabled={busy}
               />
-              <FieldError errors={[fieldState.error]} />
+              <FieldError errors={getTranslatedErrors([fieldState.error])} />
             </Field>
           )}
         />
@@ -222,7 +244,7 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                 placeholder="LHR"
                 disabled={busy}
               />
-              <FieldError errors={[fieldState.error]} />
+              <FieldError errors={getTranslatedErrors([fieldState.error])} />
             </Field>
           )}
         />
@@ -303,10 +325,10 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                             numberOfMonths={2}
                           />
                           <FieldError
-                            errors={[
+                            errors={getTranslatedErrors([
                               form.formState.errors.departureDate,
                               form.formState.errors.returnDate,
-                            ]}
+                            ])}
                           />
                         </PopoverContent>
                       </Popover>
@@ -356,7 +378,9 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                           }}
                         />
                         <FieldError
-                          errors={[form.formState.errors.departureDate]}
+                          errors={getTranslatedErrors([
+                            form.formState.errors.departureDate,
+                          ])}
                         />
                       </PopoverContent>
                     </Popover>
@@ -441,7 +465,9 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                       </div>
                     </PopoverContent>
                   </Popover>
-                  <FieldError errors={[fieldState.error]} />
+                  <FieldError
+                    errors={getTranslatedErrors([fieldState.error])}
+                  />
                 </>
               );
             }}
@@ -473,7 +499,7 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                   ))}
                 </SelectContent>
               </Select>
-              <FieldError errors={[fieldState.error]} />
+              <FieldError errors={getTranslatedErrors([fieldState.error])} />
             </Field>
           )}
         />
