@@ -1,22 +1,60 @@
 import {
   AirplaneTakeOff01Icon,
+  ArrowRight01Icon,
   Calendar03Icon,
+  Cancel01Icon,
   CreditCardIcon,
+  Menu01Icon,
   UserCircleIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type BookingSummary } from "@workspace/application/read-models";
 import { Badge } from "@workspace/ui/components/badge";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu";
 import { SectionCard } from "@workspace/ui/components/section-card";
+import { Spinner } from "@workspace/ui/components/spinner";
+import { Effect } from "effect";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
+import { cancelBooking, confirmBooking } from "@/api/booking.api";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
+import { buildRoute } from "@/routes";
 
 interface BookingSummaryCardProps {
   booking: BookingSummary;
+  onUpdate?: () => void;
 }
 
-export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
+export const BookingSummaryCard = ({
+  booking,
+  onUpdate,
+}: BookingSummaryCardProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const handlePay = () => {
+    setIsUpdating(true);
+    Effect.runPromise(confirmBooking(booking.id))
+      .then(() => onUpdate?.())
+      .catch(console.error)
+      .finally(() => setIsUpdating(false));
+  };
+
+  const handleCancel = () => {
+    setIsUpdating(true);
+    Effect.runPromise(cancelBooking(booking.id, "User requested cancellation"))
+      .then(() => onUpdate?.())
+      .catch(console.error)
+      .finally(() => setIsUpdating(false));
+  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -44,14 +82,65 @@ export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
         </div>
       }
       action={
-        <Badge
-          variant="outline"
-          className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${getStatusColor(
-            booking.status,
-          )}`}
-        >
-          {booking.status}
-        </Badge>
+        <div className="flex items-center gap-1">
+          <Badge
+            variant="outline"
+            className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${getStatusColor(
+              booking.status,
+            )}`}
+          >
+            {isUpdating ? <Spinner className="size-3 mr-1" /> : null}
+            {booking.status}
+          </Badge>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              disabled={isUpdating}
+              className="inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus:outline-none transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+            >
+              <HugeiconsIcon icon={Menu01Icon} size={16} />
+              <span className="sr-only">Actions</span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() =>
+                  navigate(buildRoute.bookingDetails(booking.pnrCode))
+                }
+              >
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  size={16}
+                  className="mr-2"
+                />
+                {t("booking.actions.view", "Consulter")}
+              </DropdownMenuItem>
+
+              {booking.status.toLowerCase() === "held" && (
+                <>
+                  <DropdownMenuItem onClick={handlePay}>
+                    <HugeiconsIcon
+                      icon={CreditCardIcon}
+                      size={16}
+                      className="mr-2 text-blue-600"
+                    />
+                    {t("booking.actions.pay", "Payer")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={handleCancel}
+                  >
+                    <HugeiconsIcon
+                      icon={Cancel01Icon}
+                      size={16}
+                      className="mr-2"
+                    />
+                    {t("booking.actions.cancel", "Annuler")}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       }
       description={formatDate(new Date(booking.createdAt))}
       className="group relative overflow-hidden border-white/20 bg-white/40 shadow-xl backdrop-blur-md transition-all hover:bg-white/60 hover:shadow-2xl"

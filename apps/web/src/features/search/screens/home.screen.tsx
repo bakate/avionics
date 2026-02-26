@@ -146,7 +146,10 @@ const HomePage = () => {
                     animationFillMode: "both",
                   }}
                 >
-                  <BookingSummaryCard booking={booking} />
+                  <BookingSummaryCard
+                    booking={booking}
+                    onUpdate={() => send({ type: "FETCH_BOOKINGS" })}
+                  />
                 </div>
               ))}
             </div>

@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router";
 import { BaseLayout } from "@/components/layout/base-layout";
 import { GlobalErrorFallback } from "@/components/shared/global-error-fallback";
 import { bookingActor } from "@/features/booking/machines/booking.actor";
+import { BookingDetailsPage } from "@/features/booking/pages/booking-details.page";
 import { OutboundScreen } from "@/features/booking/screens/outbound.screen";
 import { ReturnScreen } from "@/features/booking/screens/return.screen";
 import HomePage from "@/features/search/screens/home.screen";
@@ -40,6 +41,7 @@ const router = createBrowserRouter([
       { path: ROUTES.success, element: <SuccessPage /> },
       { path: ROUTES.cancel, element: <HomePage /> },
       { path: ROUTES.stressTest, element: <StressTestPage /> },
+      { path: ROUTES.bookingDetails, element: <BookingDetailsPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },
