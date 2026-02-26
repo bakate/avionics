@@ -203,5 +203,10 @@ export const BookingApiLive = HttpApiBuilder.group(
         withBookingQueries((queries) =>
           queries.searchByPassengerName(urlParams.name, urlParams.limit ?? 10),
         ).pipe(ensureContractErrors()),
+      )
+      .handle("getByPnr", ({ path }) =>
+        withBookingService((service) =>
+          service.findByPnr(path.pnr).pipe(Effect.map(toBookingResponse)),
+        ).pipe(ensureContractErrors()),
       ),
 );

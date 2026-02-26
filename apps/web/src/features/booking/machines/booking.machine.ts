@@ -20,7 +20,7 @@ import { type BookingSegment } from "@workspace/domain/segment";
 import { Effect, Schema } from "effect";
 import { v4 as uuidv4 } from "uuid";
 import { assign, fromPromise, setup } from "xstate";
-import { bookFlight, getBookings } from "@/api/booking.api";
+import { bookFlight, getBookingByPnr, getBookings } from "@/api/booking.api";
 import { findAvailableFlights } from "@/api/inventory.api";
 import { type PassengerInput } from "../schemas/passenger.schema";
 import { type SearchParams } from "../schemas/search.schema";
@@ -104,6 +104,8 @@ export type BookingContext = {
   passengers: ReadonlyArray<PassengerInput>;
   bookingResult: BookingResult | null;
   allBookings: ReadonlyArray<BookingSummary>;
+  currentBooking: BookingResponse | null;
+  pnrToFetch: string | null;
   userEmail: string | null;
   error: string | null;
 
@@ -120,6 +122,7 @@ export type BookingContext = {
 export type BookingEvent =
   | { type: "SEARCH"; params: SearchParams }
   | { type: "FETCH_BOOKINGS" }
+  | { type: "FETCH_BOOKING_DETAILS"; pnr: string }
   | { type: "SELECT_OUTBOUND"; selection: FlightSelection }
   | { type: "SELECT_RETURN"; selection: FlightSelection }
   | { type: "SET_PASSENGERS"; passengers: ReadonlyArray<PassengerInput> }
@@ -148,6 +151,8 @@ export const initialContext: BookingContext = {
   passengers: [],
   bookingResult: null,
   allBookings: [],
+  currentBooking: null,
+  pnrToFetch: null,
   userEmail: loadLastEmail(),
   error: null,
   filters: { cabinClass: "ECONOMY", maxStops: null, timeRange: null },
@@ -320,6 +325,15 @@ export const bookingMachine = setup({
         }
       },
     ),
+    fetchBookingDetails: fromPromise(
+      async ({
+        input,
+      }: {
+        input: { pnr: string };
+      }): Promise<BookingResponse> => {
+        return await Effect.runPromise(getBookingByPnr(input.pnr));
+      },
+    ),
     submitBooking: fromPromise(
       async ({
         input,
@@ -443,6 +457,10 @@ export const bookingMachine = setup({
         FETCH_BOOKINGS: {
           target: "fetchingBookings",
         },
+        FETCH_BOOKING_DETAILS: {
+          target: "fetchingBookingDetails",
+          actions: assign({ pnrToFetch: ({ event }) => event.pnr }),
+        },
       },
     },
 
@@ -467,6 +485,40 @@ export const bookingMachine = setup({
                 : "Failed to fetch bookings",
           }),
         },
+      },
+    },
+
+    fetchingBookingDetails: {
+      tags: ["loading"],
+      invoke: {
+        src: "fetchBookingDetails",
+        input: ({ context }) => ({ pnr: context.pnrToFetch ?? "" }),
+        onDone: {
+          target: "viewingBookingDetails",
+          actions: assign({
+            currentBooking: ({ event }) => event.output,
+          }),
+        },
+        onError: {
+          target: "error",
+          actions: assign({
+            error: ({ event }) =>
+              event.error instanceof Error
+                ? event.error.message
+                : "Failed to fetch booking details",
+          }),
+        },
+      },
+    },
+
+    viewingBookingDetails: {
+      on: {
+        BACK: { target: "idle" },
+        FETCH_BOOKING_DETAILS: {
+          target: "fetchingBookingDetails",
+          actions: assign({ pnrToFetch: ({ event }) => event.pnr }),
+        },
+        RESET: { target: "idle", actions: assign(initialContext) },
       },
     },
 
@@ -746,6 +798,8 @@ export const bookingMachine = setup({
 export type BookingStateValue =
   | "idle"
   | "fetchingBookings"
+  | "fetchingBookingDetails"
+  | "viewingBookingDetails"
   | "searching"
   | "selectingOutbound"
   | "searchingReturn"
@@ -762,6 +816,8 @@ export const stateToStep = (state: BookingStateValue): number => {
   const mapping: Record<BookingStateValue, number> = {
     idle: 0,
     fetchingBookings: 0,
+    fetchingBookingDetails: 0,
+    viewingBookingDetails: 0,
     searching: 0,
     selectingOutbound: 1,
     searchingReturn: 1,
@@ -786,6 +842,9 @@ export const stateToRoute = (
     case "fetchingBookings":
     case "searching":
       return "/";
+    case "fetchingBookingDetails":
+    case "viewingBookingDetails":
+      return `/booking/${context.pnrToFetch || "unknown"}`;
     case "selectingOutbound":
       return "/outbound";
     case "searchingReturn":
@@ -809,6 +868,7 @@ export const stateToRoute = (
 /** Map a route path to the expected machine state */
 export const routeToState = (path: string): BookingStateValue | null => {
   if (path === "/") return "idle";
+  if (path.startsWith("/booking/")) return "viewingBookingDetails";
   if (path === "/outbound") return "selectingOutbound";
   if (path === "/return") return "selectingReturn";
   if (path === "/passengers") return "enteringPassengers";

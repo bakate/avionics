@@ -27,6 +27,16 @@
     "noBookingsSub": "Your future journeys will appear here"
   },
   "booking": {
+    "details": {
+      "title": "Booking Details",
+      "subtitle": "Information regarding your trip"
+    },
+    "pnr": "Booking Reference (PNR)",
+    "paymentSummary": "Payment Summary",
+    "totalPrice": "Total Price",
+    "passengers": "Passengers",
+    "dates": "Dates & Deadlines",
+    "createdAt": "Created At",
     "expiresAt": "Expires at"
   },
   "search": {

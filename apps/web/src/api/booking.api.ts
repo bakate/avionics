@@ -45,7 +45,7 @@ export const getBookings = (email?: string) =>
 export const getBookingByPnr = (pnr: string) =>
   makeClient.pipe(
     Effect.flatMap((client) =>
-      client.bookings.getSummaryByPnr({
+      client.bookings.getByPnr({
         path: { pnr: PnrCodeSchema.make(pnr) },
       }),
     ),

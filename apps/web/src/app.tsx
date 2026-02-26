@@ -41,7 +41,27 @@ const router = createBrowserRouter([
       { path: ROUTES.success, element: <SuccessPage /> },
       { path: ROUTES.cancel, element: <HomePage /> },
       { path: ROUTES.stressTest, element: <StressTestPage /> },
-      { path: ROUTES.bookingDetails, element: <BookingDetailsPage /> },
+      {
+        path: ROUTES.bookingDetails,
+        loader: async ({ params }) => {
+          if (params.id) {
+            const state = bookingActor.getSnapshot();
+            // Don't refetch if already fetched/fetching this PNR
+            if (
+              state.context.pnrToFetch !== params.id ||
+              state.matches("idle") ||
+              state.matches("error")
+            ) {
+              bookingActor.send({
+                type: "FETCH_BOOKING_DETAILS",
+                pnr: params.id,
+              });
+            }
+          }
+          return null;
+        },
+        element: <BookingDetailsPage />,
+      },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

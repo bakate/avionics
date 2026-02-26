@@ -120,6 +120,9 @@ export interface BookingServiceImpl {
   findAll: (
     options?: PaginationOptions,
   ) => Effect.Effect<ReadonlyArray<Booking>, BookingPersistenceError>;
+  findByPnr: (
+    pnr: PnrCode,
+  ) => Effect.Effect<Booking, BookingNotFoundError | BookingPersistenceError>;
   /**
    * Confirms a booking after successful payment
    * Validates payment status, updates booking status, issues ticket, and sends notification
@@ -178,6 +181,9 @@ export class BookingService extends Context.Tag("BookingService")<
     Effect.flatMap(BookingService, (svc) =>
       svc.cancelBooking(bookingId, reason),
     );
+
+  static readonly findByPnr = (pnr: PnrCode) =>
+    Effect.flatMap(BookingService, (svc) => svc.findByPnr(pnr));
 
   static readonly Live = Layer.effect(
     BookingService,
@@ -506,6 +512,18 @@ export class BookingService extends Context.Tag("BookingService")<
           }),
 
         findAll: (options) => bookingRepo.findAll(options),
+        findByPnr: (pnr) =>
+          Effect.gen(function* () {
+            const opt = yield* bookingRepo.findByPnr(pnr);
+            return yield* Effect.flatMap(
+              Effect.succeed(opt),
+              O.match({
+                onNone: () =>
+                  Effect.fail(new BookingNotFoundError({ searchkey: pnr })),
+                onSome: (b) => Effect.succeed(b),
+              }),
+            );
+          }),
         confirmBooking,
         cancelBooking,
       } satisfies BookingServiceImpl;

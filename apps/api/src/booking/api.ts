@@ -60,6 +60,13 @@ export class BookingGroup extends HttpApiGroup.make("bookings")
       .addError(PaymentErrors.UnsupportedCurrencyError, { status: 400 }),
   )
   .add(
+    HttpApiEndpoint.get("getByPnr", "/:pnr")
+      .setPath(Schema.Struct({ pnr: PnrCodeSchema }))
+      .addSuccess(BookingResponse)
+      .addError(Errors.BookingNotFoundError, { status: 404 })
+      .addError(Errors.BookingPersistenceError, { status: 500 }),
+  )
+  .add(
     HttpApiEndpoint.post("confirm", "/:id/confirm")
       .setPath(Schema.Struct({ id: BookingId }))
       .addSuccess(BookingResponse)
