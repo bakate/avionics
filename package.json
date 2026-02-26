@@ -7,6 +7,7 @@
     "check-types": "turbo run check-types",
     "clean": "turbo run clean",
     "dev": "turbo run dev",
+    "services:up": "docker compose up -d",
     "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\" --cache --cache-location .cache/.prettiercache",
     "lint": "turbo run lint -- --write",
     "lint-staged": "lint-staged",

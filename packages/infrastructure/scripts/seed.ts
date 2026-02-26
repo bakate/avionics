@@ -17,7 +17,7 @@ import { PostgresInventoryRepositoryLive } from "../src/repositories/postgres-in
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.resolve(__dirname, "../.env.test") });
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 // ---------------------------------------------------------------------------
 // Layer
@@ -384,7 +384,7 @@ const seed = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient;
 
   yield* Effect.logInfo("🗑️  Truncating tables…");
-  yield* sql`TRUNCATE TABLE flight_inventory, event_outbox RESTART IDENTITY CASCADE`;
+  yield* sql`TRUNCATE TABLE flight_inventory, event_outbox, bookings RESTART IDENTITY CASCADE`;
 
   yield* Effect.logInfo(
     `✈️  Seeding ${flightsToSeed.length} flights across ${routes.length} routes…`,
