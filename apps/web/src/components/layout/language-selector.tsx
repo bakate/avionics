@@ -1,4 +1,3 @@
-import { Button } from "@workspace/ui/components/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -27,23 +26,17 @@ export function LanguageSelector() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-6 p-0 hover:bg-accent"
-        >
-          {currentLanguage && (
-            <img
-              src={`https://flagcdn.com/${currentLanguage.flag}.svg`}
-              alt={`Flag of ${currentLanguage.name}`}
-              width={20}
-              height={20}
-              className="size-6 object-contain"
-            />
-          )}
-          <span className="sr-only">{t("language.switch")}</span>
-        </Button>
+      <DropdownMenuTrigger className="hover:cursor-pointer">
+        {currentLanguage && (
+          <img
+            src={`https://flagcdn.com/${currentLanguage.flag}.svg`}
+            alt={`Flag of ${currentLanguage.name}`}
+            width={20}
+            height={20}
+            className="size-6 object-contain"
+          />
+        )}
+        <span className="sr-only">{t("language.switch")}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[100px]">
         {languages.map((lang) => (

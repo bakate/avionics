@@ -79,6 +79,8 @@ export const InventoryApiLive = HttpApiBuilder.group(
             queries.findAvailableFlights({
               cabin: urlParams.cabin,
               minSeats: urlParams.minSeats ?? 1,
+              ...(urlParams.limit ? { limit: urlParams.limit } : {}),
+              ...(urlParams.sortBy ? { sortBy: urlParams.sortBy } : {}),
               ...(urlParams.departureDate
                 ? { departureDate: new Date(urlParams.departureDate) }
                 : {}),

@@ -10,6 +10,7 @@ export const ROUTES = {
   confirmation: "/confirmation/:pnr",
   success: "/success",
   cancel: "/cancel",
+  stressTest: "/stress-test",
 } as const;
 
 export type RouteName = keyof typeof ROUTES;
@@ -26,4 +27,5 @@ export const buildRoute = {
   success: (pnr?: string) =>
     pnr ? `/success?pnr=${encodeURIComponent(pnr)}` : "/success",
   cancel: () => ROUTES.cancel,
+  stressTest: () => ROUTES.stressTest,
 } as const;

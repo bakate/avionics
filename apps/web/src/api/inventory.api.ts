@@ -43,6 +43,8 @@ export const findAvailableFlights = (params: {
   departureDate?: Date;
   origin?: string;
   destination?: string;
+  limit?: number;
+  sortBy?: string;
 }) =>
   makeClient.pipe(
     Effect.flatMap((client) =>

@@ -255,5 +255,39 @@
     "notice": "Nos ingénieurs ont été notifiés de l'incident.",
     "reset": "Réinitialiser l'application",
     "backHome": "Retourner à l'accueil"
+  },
+  "demo": {
+    "stressTest": {
+      "title": "Test de Charge (Concurrence)",
+      "description": "Lancez des requêtes massives en simultané pour démontrer le verrouillage optimiste et la concurrence des Fibers Effect qui rejettent les surréservations en toute sécurité.",
+      "targetFlightId": "ID du vol ciblé",
+      "targetFlightIdPlaceholder": "ex: flight-123",
+      "targetFlightIdHelp": "Choisissez un ID de vol existant",
+      "requestCount": "Requêtes simultanées (N)",
+      "requestCountHelp": "Nombre de commandes de réservation identiques à envoyer en même temps",
+      "reset": "Réinitialiser",
+      "runTest": "Lancer le Test",
+      "running": "En cours...",
+      "error": "Erreur",
+      "resultsAnalysis": "Analyse des Résultats",
+      "totalFired": "Total Envoyées",
+      "successful": "Succès 2xx",
+      "optLocking": "Verrou Optimiste",
+      "flightFull": "Vol Complet",
+      "whatDoesThisMean": "Comment ça fonctionne ?",
+      "explanationIntro": "Lorsque des dizaines d'utilisateurs tentent de réserver les derniers sièges en même temps, le test montre comment notre système traite tout ça simultanément :",
+      "explanationPoint1": "Seuls les premiers arrivés réussissent à obtenir un siège (Successful), sans jamais dépasser la capacité de l'avion.",
+      "explanationPoint2": "Les autres sont proprement refusés soit parce que deux personnes ont cliqué exactement au même moment sur un même siège (Verrou Optimiste), soit parce que l'avion est déclaré plein (Vol Complet).",
+      "explanationPoint3": "Bilan : Zéro plantage, zéro surréservation, la base de données reste saine !",
+      "otherErrors": "Note: {{count}} requêtes ont échoué pour d'autres raisons techniques.",
+      "otherErrors_other": "Note: {{count}} requêtes ont échoué pour d'autres raisons techniques.",
+      "availableFlights": "Vols Disponibles",
+      "availableFlightsHelp": "Cliquez sur un vol pour le cibler dans le test de charge",
+      "fetchingFlights": "Récupération des vols disponibles...",
+      "noFlights": "Aucun vol trouvé.",
+      "flightInfo": "{{origin}} vers {{destination}}",
+      "seatsLeft": "{{count}} place restante",
+      "seatsLeft_other": "{{count}} places restantes"
+    }
   }
 }

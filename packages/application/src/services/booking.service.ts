@@ -422,11 +422,20 @@ export class BookingService extends Context.Tag("BookingService")<
 
             // 6. Save Booking with HELD status (within transaction)
             const savedBooking = yield* unitOfWork.transaction(
-              Effect.all([
-                bookingRepo.save(booking),
-                outboxRepo.persist(booking.domainEvents),
-              ]).pipe(Effect.map(([saved]) => saved)),
+              command.simulate === true
+                ? bookingRepo.save(booking)
+                : Effect.all([
+                    bookingRepo.save(booking),
+                    outboxRepo.persist(booking.domainEvents),
+                  ]).pipe(Effect.map(([saved]) => saved)),
             );
+
+            // If simulating, return immediately without initiating checkout
+            if (command.simulate === true) {
+              return {
+                booking: savedBooking,
+              } satisfies BookingResult;
+            }
 
             // 7. Compute Total Price for checkout
             const totalPrice = segments.reduce(

@@ -34,6 +34,8 @@ export class InventoryGroup extends HttpApiGroup.make("inventory")
           departureDate: Schema.optional(Schema.String),
           origin: Schema.optional(Schema.String),
           destination: Schema.optional(Schema.String),
+          limit: Schema.optional(Schema.NumberFromString),
+          sortBy: Schema.optional(Schema.String),
         }),
       )
       .addSuccess(Schema.Array(FlightAvailability))

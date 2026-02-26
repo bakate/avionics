@@ -2,7 +2,6 @@ import { PnrStatus } from "@workspace/domain/booking";
 import { Context, Duration, Effect, Layer, Schedule } from "effect";
 import { UnitOfWork } from "../ports/unit-of-work.js";
 import { BookingRepository } from "../repositories/booking.repository.js";
-import { InventoryService } from "./inventory.service.js";
 
 export interface CancellationServiceSignature {
   readonly processExpirations: () => Effect.Effect<void, never>;
@@ -17,7 +16,6 @@ export class CancellationService extends Context.Tag("CancellationService")<
     CancellationService,
     Effect.gen(function* () {
       const bookingRepo = yield* BookingRepository;
-      const inventoryService = yield* InventoryService;
       const unitOfWork = yield* UnitOfWork;
 
       const processExpirations = () =>
@@ -45,20 +43,8 @@ export class CancellationService extends Context.Tag("CancellationService")<
                     // 1. Mark booking as expired
                     const updatedBooking = booking.markExpired();
 
-                    // 2. Save updated booking
+                    // 2. Save updated booking (emits BookingExpired to outbox)
                     yield* bookingRepo.save(updatedBooking);
-
-                    // 3. Release all seats for all segments
-                    yield* Effect.forEach(
-                      booking.segments,
-                      (segment) =>
-                        inventoryService.releaseSeats({
-                          flightId: segment.flightId,
-                          cabin: segment.cabin,
-                          numberOfSeats: 1,
-                        }),
-                      { discard: true },
-                    );
                   }),
                 );
 
@@ -73,7 +59,7 @@ export class CancellationService extends Context.Tag("CancellationService")<
                   ),
                 ),
               ),
-            { concurrency: "inherit" },
+            { concurrency: 5 },
           );
         }).pipe(
           Effect.catchAllCause((cause) =>

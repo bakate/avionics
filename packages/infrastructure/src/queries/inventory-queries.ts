@@ -245,6 +245,13 @@ export const PostgresInventoryQueriesLive = Layer.effect(
             return [];
           }
 
+          const orderBySql =
+            params.sortBy === "availableSeatsAsc"
+              ? sql`ORDER BY ${sql(columns.available)} ASC, flight_id ASC`
+              : sql`ORDER BY flight_id ASC`;
+
+          const limitSql = params.limit ? sql`LIMIT ${params.limit}` : sql``;
+
           const rows = yield* sql<FlightAvailabilityRow>`
             SELECT
               flight_id,
@@ -270,7 +277,8 @@ export const PostgresInventoryQueriesLive = Layer.effect(
               AND (${params.route === undefined || params.route === null} OR origin = ${params.route?.origin})
               AND (${params.route === undefined || params.route === null} OR destination = ${params.route?.destination})
               AND (${params.departureDate === undefined || params.departureDate === null} OR DATE(departure_time) = DATE(${params.departureDate}))
-            ORDER BY flight_id
+            ${orderBySql}
+            ${limitSql}
           `;
 
           return yield* Effect.all(

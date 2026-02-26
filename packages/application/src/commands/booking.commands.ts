@@ -33,4 +33,5 @@ export class BookFlightCommand extends Schema.Class<BookFlightCommand>(
   ),
   successUrl: Schema.String, // URL for payment redirect success
   cancelUrl: Schema.optional(Schema.String), // Optional cancel URL
+  simulate: Schema.optional(Schema.Boolean), // Flag to bypass Saga/Checkout for testing
 }) {}

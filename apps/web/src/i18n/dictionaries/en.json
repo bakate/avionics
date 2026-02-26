@@ -255,5 +255,39 @@
     "notice": "Our engineers have been notified of the incident.",
     "reset": "Reset Application",
     "backHome": "Back to Home"
+  },
+  "demo": {
+    "stressTest": {
+      "title": "Concurrency Stress Test",
+      "description": "Launch massive concurrent requests to demonstrate Effect's optimistic locking and fiber concurrency safely rejecting overbookings.",
+      "targetFlightId": "Target Flight ID",
+      "targetFlightIdPlaceholder": "e.g. flight-123",
+      "targetFlightIdHelp": "Pick a flight ID (you can find one via the regular search)",
+      "requestCount": "Concurrent Requests (N)",
+      "requestCountHelp": "Number of identical booking commands to fire simultaneously",
+      "reset": "Reset",
+      "runTest": "Run Test",
+      "running": "Running...",
+      "error": "Error",
+      "resultsAnalysis": "Results Analysis",
+      "totalFired": "Total Fired",
+      "successful": "Successful 2xx",
+      "optLocking": "Opt. Locking",
+      "flightFull": "Flight Full",
+      "whatDoesThisMean": "How does it work?",
+      "explanationIntro": "When dozens of travelers try to book exactly the same seat at the same time, this test shows how our system processes them simultaneously:",
+      "explanationPoint1": "Only the first to arrive get a seat (Successful), without ever exceeding the plane's capacity.",
+      "explanationPoint2": "The others are cleanly rejected. Either because two people clicked at the exact same moment on the same seat (Opt. Locking), or because the plane is truly full (Flight Full).",
+      "explanationPoint3": "Result: Zero crashes, zero accidental overbookings, your database stays perfectly healthy!",
+      "otherErrors": "Notice: {{count}} requests failed for other technical reasons.",
+      "otherErrors_other": "Notice: {{count}} requests failed for other technical reasons.",
+      "availableFlights": "Available Flights",
+      "availableFlightsHelp": "Click a flight below to target it for the stress test",
+      "fetchingFlights": "Fetching available flights...",
+      "noFlights": "No available flights found.",
+      "flightInfo": "{{origin}} to {{destination}}",
+      "seatsLeft": "{{count}} seat left",
+      "seatsLeft_other": "{{count}} seats left"
+    }
   }
 }

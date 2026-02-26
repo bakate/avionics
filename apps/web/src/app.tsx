@@ -14,6 +14,7 @@ import PassengersPage from "@/pages/passengers.page";
 import PaymentPage from "@/pages/payment.page";
 import SuccessPage from "@/pages/success.page";
 import { ROUTES } from "@/routes";
+import { StressTestPage } from "./features/demo/pages/stress-test.page";
 
 const router = createBrowserRouter([
   {
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
       { path: ROUTES.confirmation, element: <ConfirmationPage /> },
       { path: ROUTES.success, element: <SuccessPage /> },
       { path: ROUTES.cancel, element: <HomePage /> },
+      { path: ROUTES.stressTest, element: <StressTestPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

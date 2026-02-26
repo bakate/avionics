@@ -1,6 +1,6 @@
 import { faker } from "@faker-js/faker";
 import { Booking, PnrStatus } from "@workspace/domain/booking";
-import { InventoryPersistenceError } from "@workspace/domain/errors";
+import { BookingPersistenceError } from "@workspace/domain/errors";
 import {
   BookingId,
   EmailSchema,
@@ -13,11 +13,9 @@ import { Passenger, PassengerId } from "@workspace/domain/passenger";
 import { BookingSegment } from "@workspace/domain/segment";
 import { Effect, Layer, Option as O, Schema } from "effect";
 import { describe, expect, it } from "vitest";
-import { ReleaseSeatsResult } from "../../../models/results.js";
 import { UnitOfWork } from "../../../ports/unit-of-work.js";
 import { BookingRepository } from "../../../repositories/booking.repository.js";
 import { CancellationService } from "../../../services/cancellation.service.js";
-import { InventoryService } from "../../../services/inventory.service.js";
 
 const makeExpiredBooking = (pnr: string, flightId = "FL-123") => {
   const _passenger = new Passenger({
@@ -51,20 +49,7 @@ const makeExpiredBooking = (pnr: string, flightId = "FL-123") => {
 describe("CancellationService", () => {
   it("should process expired bookings and release seats", async () => {
     const expiredBooking = makeExpiredBooking("EXP001");
-    let releaseSeatsCalled = false;
     let bookingSaved = false;
-
-    const MockInventoryService = InventoryService.Test({
-      releaseSeats: (params) => {
-        releaseSeatsCalled = true;
-        return Effect.succeed(
-          new ReleaseSeatsResult({
-            inventory: {}, // Mock inventory
-            seatsReleased: params.numberOfSeats,
-          }),
-        );
-      },
-    });
 
     const MockBookingRepo = Layer.succeed(
       BookingRepository,
@@ -94,14 +79,12 @@ describe("CancellationService", () => {
       yield* service.processExpirations();
     }).pipe(
       Effect.provide(CancellationService.Live),
-      Effect.provide(MockInventoryService),
       Effect.provide(MockBookingRepo),
       Effect.provide(MockUnitOfWork),
     );
 
     await Effect.runPromise(program);
 
-    expect(releaseSeatsCalled).toBe(true);
     expect(bookingSaved).toBe(true);
   });
 
@@ -110,30 +93,19 @@ describe("CancellationService", () => {
     const booking2 = makeExpiredBooking("EXP002", "FL-2");
     const processedPnrs: Array<string> = [];
 
-    const MockInventoryService = InventoryService.Test({
-      releaseSeats: (params) => {
-        if (params.flightId === booking1.segments[0].flightId) {
-          return Effect.fail(
-            new InventoryPersistenceError({
-              flightId: params.flightId,
-              reason: "Inventory Error",
-            }),
-          );
-        }
-        return Effect.succeed(
-          new ReleaseSeatsResult({
-            inventory: {}, // Mock inventory
-            seatsReleased: params.numberOfSeats,
-          }),
-        );
-      },
-    });
-
     const MockBookingRepo = Layer.succeed(
       BookingRepository,
       BookingRepository.of({
         findExpired: () => Effect.succeed([booking1, booking2]),
         save: (b) => {
+          if (b.pnrCode === "EXP001") {
+            return Effect.fail(
+              new BookingPersistenceError({
+                bookingId: b.id,
+                reason: "Database error",
+              }),
+            );
+          }
           processedPnrs.push(b.pnrCode);
           return Effect.succeed(b);
         },
@@ -166,7 +138,6 @@ describe("CancellationService", () => {
       yield* service.processExpirations();
     }).pipe(
       Effect.provide(CancellationService.Live),
-      Effect.provide(MockInventoryService),
       Effect.provide(MockBookingRepo),
       Effect.provide(MockUnitOfWork),
     );
@@ -182,25 +153,16 @@ describe("CancellationService", () => {
     const booking1 = makeExpiredBooking("EXP001");
     const alreadyExpired = booking1.markExpired(); // This sets status to EXPIRED
 
-    let releaseSeatsCalled = false;
-
-    const MockInventoryService = InventoryService.Test({
-      releaseSeats: () => {
-        releaseSeatsCalled = true;
-        return Effect.succeed(
-          new ReleaseSeatsResult({
-            inventory: {},
-            seatsReleased: 1,
-          }),
-        );
-      },
-    });
+    let bookingSaved = false;
 
     const MockBookingRepo = Layer.succeed(
       BookingRepository,
       BookingRepository.of({
         findExpired: () => Effect.succeed([alreadyExpired]),
-        save: (b) => Effect.succeed(b),
+        save: (b) => {
+          bookingSaved = true;
+          return Effect.succeed(b);
+        },
         findById: () => Effect.die("Not implemented"),
         findByPnr: () => Effect.die("Not implemented"),
         findByPassengerId: () => Effect.die("Not implemented"),
@@ -220,13 +182,12 @@ describe("CancellationService", () => {
       yield* service.processExpirations();
     }).pipe(
       Effect.provide(CancellationService.Live),
-      Effect.provide(MockInventoryService),
       Effect.provide(MockBookingRepo),
       Effect.provide(MockUnitOfWork),
     );
 
     await Effect.runPromise(program);
 
-    expect(releaseSeatsCalled).toBe(false);
+    expect(bookingSaved).toBe(false);
   });
 });

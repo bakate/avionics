@@ -46,6 +46,8 @@ export interface InventoryQueriesPort {
     minSeats: number;
     departureDate?: Date;
     route?: { origin: string; destination: string };
+    limit?: number;
+    sortBy?: string;
   }): Effect.Effect<ReadonlyArray<FlightAvailability>, InvalidAmountError>;
 
   /**
