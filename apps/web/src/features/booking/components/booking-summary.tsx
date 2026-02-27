@@ -39,20 +39,29 @@ export const BookingSummaryCard = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handlePay = () => {
     setIsUpdating(true);
+    setErrorMessage(null);
     Effect.runPromise(confirmBooking(booking.id))
       .then(() => onUpdate?.())
-      .catch(console.error)
+      .catch((error) => {
+        console.error("Payment failed", error);
+        setErrorMessage(error instanceof Error ? error.message : String(error));
+      })
       .finally(() => setIsUpdating(false));
   };
 
   const handleCancel = () => {
     setIsUpdating(true);
+    setErrorMessage(null);
     Effect.runPromise(cancelBooking(booking.id, "User requested cancellation"))
       .then(() => onUpdate?.())
-      .catch(console.error)
+      .catch((error) => {
+        console.error("Cancellation failed", error);
+        setErrorMessage(error instanceof Error ? error.message : String(error));
+      })
       .finally(() => setIsUpdating(false));
   };
 
@@ -145,6 +154,11 @@ export const BookingSummaryCard = ({
       description={formatDate(new Date(booking.createdAt))}
       className="group relative overflow-hidden border-white/20 bg-white/40 shadow-xl backdrop-blur-md transition-all hover:bg-white/60 hover:shadow-2xl"
     >
+      {errorMessage && (
+        <div className="mb-4 rounded-md bg-destructive/15 p-3 text-sm font-medium text-destructive dark:bg-destructive/10 dark:text-red-400">
+          {errorMessage}
+        </div>
+      )}
       <div className="mt-2 grid grid-cols-2 gap-4 text-muted-foreground dark:text-white">
         <div className="flex items-center gap-2 text-sm">
           <HugeiconsIcon
