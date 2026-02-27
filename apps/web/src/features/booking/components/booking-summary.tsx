@@ -1,31 +1,14 @@
-import {
-  AirplaneTakeOff01Icon,
-  ArrowRight01Icon,
-  Calendar03Icon,
-  Cancel01Icon,
-  CreditCardIcon,
-  Menu01Icon,
-  UserCircleIcon,
-} from "@hugeicons/core-free-icons";
+import { Calendar03Icon, UserCircleIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type BookingSummary } from "@workspace/application/read-models";
-import { Badge } from "@workspace/ui/components/badge";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import { SectionCard } from "@workspace/ui/components/section-card";
-import { Spinner } from "@workspace/ui/components/spinner";
 import { Effect } from "effect";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { cancelBooking, confirmBooking } from "@/api/booking.api";
+import { confirmBooking } from "@/api/booking.api";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 import { buildRoute } from "@/routes";
+import { BookingStatusBadge } from "./booking-status-badge";
 
 interface BookingSummaryCardProps {
   booking: BookingSummary;
@@ -43,10 +26,11 @@ export const BookingSummaryCard = ({
 
   const status = booking.status?.toLowerCase();
 
-  const handlePay = () => {
+  const handlePay = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsUpdating(true);
     setErrorMessage(null);
-    Effect.runPromise(confirmBooking(booking.id))
+    void Effect.runPromise(confirmBooking(booking.id))
       .then(() => onUpdate?.())
       .catch((error) => {
         console.error("Payment failed", error);
@@ -55,139 +39,145 @@ export const BookingSummaryCard = ({
       .finally(() => setIsUpdating(false));
   };
 
-  const handleCancel = () => {
-    setIsUpdating(true);
-    setErrorMessage(null);
-    Effect.runPromise(cancelBooking(booking.id, "User requested cancellation"))
-      .then(() => onUpdate?.())
-      .catch((error) => {
-        console.error("Cancellation failed", error);
-        setErrorMessage(error instanceof Error ? error.message : String(error));
-      })
-      .finally(() => setIsUpdating(false));
-  };
-
-  const getStatusColor = () => {
-    switch (status) {
-      case "held":
-        return "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100/80";
-      case "confirmed":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80";
-      case "ticketed":
-        return "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100/80";
-      case "cancelled":
-        return "bg-rose-100 text-rose-700 border-rose-200 hover:bg-rose-100/80";
-      case "expired":
-        return "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-100/80";
-      default:
-        return "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-100/80";
-    }
-  };
-
   return (
-    <SectionCard
-      title={booking.pnrCode}
-      icon={
-        <div className="flex size-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-200">
-          <HugeiconsIcon icon={AirplaneTakeOff01Icon} size={20} />
-        </div>
-      }
-      action={
-        <div className="flex items-center gap-1">
-          <Badge
-            variant="outline"
-            className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${getStatusColor()}`}
-          >
-            {isUpdating ? <Spinner className="size-3 mr-1" /> : null}
-            {booking.status}
-          </Badge>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              disabled={isUpdating}
-              className="inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus:outline-none transition-colors cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
-            >
-              <HugeiconsIcon icon={Menu01Icon} size={16} />
-              <span className="sr-only">Actions</span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem
-                onClick={() =>
-                  navigate(buildRoute.bookingDetails(booking.pnrCode))
-                }
-              >
-                <HugeiconsIcon
-                  icon={ArrowRight01Icon}
-                  size={16}
-                  className="mr-2"
-                />
-                {t("booking.actions.view", "Consulter")}
-              </DropdownMenuItem>
-
-              {status === "held" && (
-                <>
-                  <DropdownMenuItem onClick={handlePay}>
-                    <HugeiconsIcon
-                      icon={CreditCardIcon}
-                      size={16}
-                      className="mr-2 text-blue-600"
-                    />
-                    {t("booking.actions.pay", "Payer")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={handleCancel}
-                  >
-                    <HugeiconsIcon
-                      icon={Cancel01Icon}
-                      size={16}
-                      className="mr-2"
-                    />
-                    {t("booking.actions.cancel", "Annuler")}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      }
-      description={formatDate(new Date(booking.createdAt))}
-      className="group relative overflow-hidden border-white/20 bg-white/40 shadow-xl backdrop-blur-md transition-all hover:bg-white/60 hover:shadow-2xl"
+    // biome-ignore lint/a11y/useSemanticElements: <>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => {
+        void navigate(buildRoute.bookingDetails(booking.pnrCode));
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          void navigate(buildRoute.bookingDetails(booking.pnrCode));
+        }
+      }}
+      className={`group relative cursor-pointer overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-900/10 dark:border-slate-800 dark:bg-slate-950 dark:hover:shadow-blue-500/5 ${
+        isUpdating ? "opacity-70 pointer-events-none" : ""
+      }`}
     >
-      {errorMessage && (
-        <div className="mb-4 rounded-md bg-destructive/15 p-3 text-sm font-medium text-destructive dark:bg-destructive/10 dark:text-red-400">
-          {errorMessage}
-        </div>
-      )}
-      <div className="mt-2 grid grid-cols-2 gap-4 text-muted-foreground dark:text-white">
-        <div className="flex items-center gap-2 text-sm">
-          <HugeiconsIcon
-            icon={UserCircleIcon}
-            size={16}
-            className="text-slate-400"
-          />
-          <span>
-            {booking.passengerCount}{" "}
-            {booking.passengerCount === 1
-              ? t("common.passenger")
-              : t("common.passengers")}
+      {/* Subtle top accent based on status */}
+      <div
+        className={`absolute inset-x-0 top-0 h-1.5 ${
+          status === "confirmed" || status === "ticketed"
+            ? "bg-emerald-500"
+            : status === "held"
+              ? "bg-amber-500"
+              : status === "cancelled" || status === "expired"
+                ? "bg-rose-500"
+                : "bg-slate-300"
+        }`}
+      />
+
+      <div className="flex flex-col gap-6">
+        {/* Header: PNR & Status */}
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+            {t("booking.pnr") || "Booking Ref"}
           </span>
+          <h3 className="text-2xl font-black tracking-tight text-slate-900 transition-colors group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-400">
+            {booking.pnrCode}
+          </h3>
         </div>
-        <div className="flex items-center gap-2 text-sm justify-self-end">
-          <HugeiconsIcon icon={CreditCardIcon} size={16} />
-          <span className="font-medium">{formatMoney(booking.totalPrice)}</span>
+
+        <div className="flex items-center gap-2">
+          <BookingStatusBadge
+            status={booking.status}
+            isUpdating={isUpdating}
+            className="px-3 py-1 text-[10px] shadow-sm transition-colors"
+          />
         </div>
       </div>
 
-      {booking.expiresAt._tag === "Some" && status === "held" && (
-        <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50/50 p-2 text-xs text-amber-700">
-          <HugeiconsIcon icon={Calendar03Icon} size={14} />
-          <span>
-            {t("booking.expiresAt")}:{" "}
-            {formatDateTime(new Date(booking.expiresAt.value))}
-          </span>
+      {/* Error message */}
+      {errorMessage && (
+        <div className="rounded-xl bg-red-50 p-3 text-xs font-semibold text-red-600 ring-1 ring-red-100 animate-in fade-in zoom-in-95 dark:bg-red-900/20 dark:text-red-400 dark:ring-red-900/30">
+          {errorMessage}
         </div>
       )}
-    </SectionCard>
+
+      {/* Content: Date & Passengers */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-500 dark:ring-slate-800">
+              <HugeiconsIcon icon={Calendar03Icon} size={20} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {t("booking.date") || "Date"}
+              </span>
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                {formatDate(new Date(booking.createdAt))}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-500 dark:ring-slate-800">
+              <HugeiconsIcon icon={UserCircleIcon} size={20} />
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {t("booking.passengers") || "Travelers"}
+              </span>
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                {booking.passengerCount}{" "}
+                {booking.passengerCount === 1
+                  ? t("common.passenger")
+                  : t("common.passengers")}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer: Price & Expiry */}
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {t("booking.totalPrice") || "Total Amount"}
+            </span>
+            <span className="text-xl font-black text-blue-600 dark:text-blue-400">
+              {formatMoney(booking.totalPrice)}
+            </span>
+          </div>
+
+          {booking.expiresAt._tag === "Some" && status === "held" && (
+            <div className="flex flex-col items-end rounded-xl bg-amber-50 px-3 py-1.5 ring-1 ring-amber-100/50 dark:bg-amber-900/20 dark:ring-amber-900/30">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                {t("booking.expiresAt") || "Expires in"}
+              </span>
+              <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
+                {formatDateTime(new Date(booking.expiresAt.value))}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Primary Action Button */}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              void navigate(buildRoute.bookingDetails(booking.pnrCode));
+            }}
+            className="mt-2 flex-1 rounded-2xl bg-slate-50 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-blue-600 hover:text-white active:scale-[0.98] dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-blue-600 dark:hover:text-white"
+          >
+            {t("booking.actions.view", "Consulter la réservation")}
+          </button>
+
+          {status === "held" && (
+            <button
+              type="button"
+              onClick={handlePay}
+              className="mt-2 flex-1 rounded-2xl bg-blue-600 py-3 text-sm font-bold text-white transition-all hover:bg-blue-700 active:scale-[0.98] shadow-lg shadow-blue-600/20"
+            >
+              {t("booking.actions.payNow", "Payer")}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };

@@ -29,7 +29,10 @@
   "booking": {
     "details": {
       "title": "Détails de la réservation",
-      "subtitle": "Informations concernant votre voyage"
+      "subtitle": "Informations concernant votre voyage",
+      "manage": "Gérer ma réservation",
+      "flights": "Vos Vols",
+      "preparing": "Nous récupérons tous les détails pour vous."
     },
     "pnr": "Référence de réservation (PNR)",
     "paymentSummary": "Résumé du paiement",
@@ -37,7 +40,20 @@
     "passengers": "Passagers",
     "dates": "Dates & Délais",
     "createdAt": "Date de création",
-    "expiresAt": "Expire le"
+    "expiresAt": "Expire le",
+    "fare": "Tarif de base",
+    "taxes": "Taxes & Frais",
+    "info": "Informations de réservation",
+    "date": "Date de réservation",
+    "confirmed": "Confirmé",
+    "actions": {
+      "view": "Consulter la réservation",
+      "pay": "Payer",
+      "cancel": "Annuler",
+      "payNow": "Régler maintenant",
+      "itinerary": "Itinéraire",
+      "checkin": "Enregistrement"
+    }
   },
   "search": {
     "origin": "Origine",
@@ -115,7 +131,8 @@
   "flight": {
     "duration": "Durée",
     "perPassenger": "par passager",
-    "select": "Sélectionner"
+    "select": "Sélectionner",
+    "nonstop": "Direct"
   },
   "select": {
     "title": "Sélection de cabine",

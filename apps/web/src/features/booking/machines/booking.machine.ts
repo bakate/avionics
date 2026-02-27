@@ -518,7 +518,6 @@ export const bookingMachine = setup({
           target: "fetchingBookingDetails",
           actions: assign({ pnrToFetch: ({ event }) => event.pnr }),
         },
-        RESET: { target: "idle", actions: assign(initialContext) },
       },
     },
 

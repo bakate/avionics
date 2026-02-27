@@ -29,7 +29,10 @@
   "booking": {
     "details": {
       "title": "Booking Details",
-      "subtitle": "Information regarding your trip"
+      "subtitle": "Information regarding your trip",
+      "manage": "Manage Booking",
+      "flights": "Your Flights",
+      "preparing": "We're fetching all details for you."
     },
     "pnr": "Booking Reference (PNR)",
     "paymentSummary": "Payment Summary",
@@ -37,7 +40,20 @@
     "passengers": "Passengers",
     "dates": "Dates & Deadlines",
     "createdAt": "Created At",
-    "expiresAt": "Expires at"
+    "expiresAt": "Expires at",
+    "fare": "Base Fare",
+    "taxes": "Taxes & Fees",
+    "info": "Booking Info",
+    "date": "Booking Date",
+    "confirmed": "Confirmed",
+    "actions": {
+      "view": "View Booking",
+      "pay": "Pay",
+      "cancel": "Cancel",
+      "payNow": "Pay Now",
+      "itinerary": "Itinerary",
+      "checkin": "Check-in"
+    }
   },
   "search": {
     "origin": "Origin",
@@ -115,7 +131,8 @@
   "flight": {
     "duration": "Duration",
     "perPassenger": "per passenger",
-    "select": "Select"
+    "select": "Select",
+    "nonstop": "Non-stop"
   },
   "select": {
     "title": "Cabin selection",
