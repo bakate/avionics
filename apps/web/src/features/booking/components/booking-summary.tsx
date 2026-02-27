@@ -41,6 +41,8 @@ export const BookingSummaryCard = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const status = booking.status?.toLowerCase();
+
   const handlePay = () => {
     setIsUpdating(true);
     setErrorMessage(null);
@@ -65,8 +67,8 @@ export const BookingSummaryCard = ({
       .finally(() => setIsUpdating(false));
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+  const getStatusColor = () => {
+    switch (status) {
       case "held":
         return "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-100/80";
       case "confirmed":
@@ -94,9 +96,7 @@ export const BookingSummaryCard = ({
         <div className="flex items-center gap-1">
           <Badge
             variant="outline"
-            className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${getStatusColor(
-              booking.status,
-            )}`}
+            className={`rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${getStatusColor()}`}
           >
             {isUpdating ? <Spinner className="size-3 mr-1" /> : null}
             {booking.status}
@@ -124,7 +124,7 @@ export const BookingSummaryCard = ({
                 {t("booking.actions.view", "Consulter")}
               </DropdownMenuItem>
 
-              {booking.status.toLowerCase() === "held" && (
+              {status === "held" && (
                 <>
                   <DropdownMenuItem onClick={handlePay}>
                     <HugeiconsIcon
@@ -179,7 +179,7 @@ export const BookingSummaryCard = ({
         </div>
       </div>
 
-      {booking.expiresAt._tag === "Some" && booking.status === "Held" && (
+      {booking.expiresAt._tag === "Some" && status === "held" && (
         <div className="mt-4 flex items-center gap-2 rounded-lg bg-amber-50/50 p-2 text-xs text-amber-700">
           <HugeiconsIcon icon={Calendar03Icon} size={14} />
           <span>

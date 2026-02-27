@@ -10,6 +10,10 @@ vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+vi.mock("react-router", () => ({
+  useNavigate: () => vi.fn(),
+}));
+
 // Create arbitraries for BookingSummary
 const bookingSummaryArb = fc.record({
   id: fc.uuid(),
