@@ -9,6 +9,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type FlightAvailability } from "@workspace/application/read-models";
+import { PnrStatus } from "@workspace/domain/booking";
 import { type CurrencyCode, Money } from "@workspace/domain/kernel";
 import { type BookingSegment } from "@workspace/domain/segment";
 import { Badge } from "@workspace/ui/components/badge";
@@ -37,7 +38,7 @@ const FlightSegment = ({
   status,
 }: {
   segment: typeof BookingSegment.Type;
-  status?: string;
+  status?: PnrStatus;
 }) => {
   const { t } = useTranslation();
   const [flightInfo, setFlightInfo] = useState<
@@ -106,7 +107,7 @@ const FlightSegment = ({
           </div>
         </div>
         <BookingStatusBadge
-          status={status || "CONFIRMED"}
+          status={status || PnrStatus.CONFIRMED}
           className="px-4 py-1.5 text-xs"
         />
       </div>
