@@ -19,6 +19,7 @@
     "lint": "biome lint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "openapi": "tsx --env-file=../../.env scripts/generate-openapi.ts",
     "kill": "lsof -ti:3000 | xargs kill -9"
   },
   "dependencies": {

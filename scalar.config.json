@@ -1,0 +1,18 @@
+{
+  "$schema": "https://registry.scalar.com/@scalar/schemas/config",
+  "scalar": "2.0.0",
+  "info": {
+    "title": "avionics",
+    "description": "Avionics API Documentation"
+  },
+  "baseUrl": "https://avionics.onrender.com",
+  "navigation": {
+    "routes": {
+      "/": {
+        "type": "openapi",
+        "title": "API Reference",
+        "url": "https://avionics.onrender.com/api/openapi.json"
+      }
+    }
+  }
+}

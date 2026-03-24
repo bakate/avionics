@@ -1,4 +1,4 @@
-import { HttpApiEndpoint, HttpApiGroup } from "@effect/platform";
+import { HttpApiEndpoint, HttpApiGroup, OpenApi } from "@effect/platform";
 import { BookFlightCommand } from "@workspace/application/booking.commands";
 import * as PaymentErrors from "@workspace/application/payment.gateway";
 import {
@@ -66,7 +66,46 @@ export class BookingGroup extends HttpApiGroup.make("bookings")
       .addError(PaymentErrors.PaymentDeclinedError, { status: 402 })
       .addError(PaymentErrors.PaymentApiUnavailableError, { status: 503 })
       .addError(PaymentErrors.CheckoutNotFoundError, { status: 404 })
-      .addError(PaymentErrors.UnsupportedCurrencyError, { status: 400 }),
+      .addError(PaymentErrors.UnsupportedCurrencyError, { status: 400 })
+      .annotate(OpenApi.Override, {
+        requestBody: {
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/BookFlightCommand" },
+              examples: {
+                standard: {
+                  summary: "Standard Booking Simulation",
+                  description:
+                    "Simulate a booking for a passenger in Economy class with the simulation flag enabled.",
+                  value: {
+                    segments: [
+                      {
+                        flightId: "CDG-DSS-d161s0",
+                        cabinClass: "ECONOMY",
+                        seatNumber: "{{$randomInt}}A",
+                      },
+                    ],
+                    passengers: [
+                      {
+                        id: "{{$guid}}",
+                        firstName: "{{$randomFirstName}}",
+                        lastName: "{{$randomLastName}}",
+                        email: "{{$randomEmail}}",
+                        dateOfBirth: "{{$randomDatePast}}",
+                        gender: "MALE",
+                        type: "ADULT",
+                      },
+                    ],
+                    successUrl: "https://avionics.com/success?pnr={{PNR}}",
+                    cancelUrl: "https://avionics.com/cancel",
+                    simulate: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
   )
   .add(
     HttpApiEndpoint.get("getByPnr", "/:pnr")
