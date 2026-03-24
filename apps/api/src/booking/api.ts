@@ -8,9 +8,18 @@ import {
 import { BookingStatusSchema } from "@workspace/domain/booking";
 import * as Errors from "@workspace/domain/errors";
 import { BookingId, PnrCodeSchema } from "@workspace/domain/kernel";
-import { Passenger } from "@workspace/domain/passenger";
 import { BookingSegment } from "@workspace/domain/segment";
 import { Schema } from "effect";
+
+export const PublicPassenger = Schema.Struct({
+  id: Schema.String,
+  firstName: Schema.String,
+  lastName: Schema.String,
+  gender: Schema.String,
+  type: Schema.String,
+}).annotations({ identifier: "PublicPassenger" });
+
+export type PublicPassenger = typeof PublicPassenger.Type;
 
 export class BookingResponse extends Schema.Class<BookingResponse>(
   "BookingResponse",
@@ -18,7 +27,7 @@ export class BookingResponse extends Schema.Class<BookingResponse>(
   id: BookingId,
   pnrCode: PnrCodeSchema,
   status: BookingStatusSchema,
-  passengers: Schema.NonEmptyArray(Passenger),
+  passengers: Schema.NonEmptyArray(PublicPassenger),
   segments: Schema.NonEmptyArray(BookingSegment),
   expiresAt: Schema.Option(Schema.Date),
   createdAt: Schema.Date,

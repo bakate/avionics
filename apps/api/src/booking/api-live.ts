@@ -5,7 +5,7 @@ import * as Errors from "@workspace/domain/errors";
 import { Effect } from "effect";
 import { Api } from "../api.js";
 import * as Utils from "../lib/api-utils.js";
-import { BookingResponse } from "./api.js";
+import { BookingResponse, type PublicPassenger } from "./api.js";
 
 // ============================================================================
 // Helpers
@@ -47,7 +47,13 @@ const toBookingResponse = (booking: any): BookingResponse =>
     id: booking.id,
     pnrCode: booking.pnrCode,
     status: booking.status,
-    passengers: booking.passengers,
+    passengers: booking.passengers.map((p: PublicPassenger) => ({
+      id: p.id,
+      firstName: p.firstName,
+      lastName: p.lastName,
+      gender: p.gender,
+      type: p.type,
+    })),
     segments: booking.segments,
     expiresAt: booking.expiresAt,
     createdAt: booking.createdAt,
@@ -65,6 +71,12 @@ export const BookingApiLive = HttpApiBuilder.group(
       .handle("list", ({ urlParams }) =>
         Effect.gen(function* () {
           const service = yield* BookingService;
+
+          // Prevent global PII leak: only list if email is provided
+          if (!urlParams.email) {
+            return [];
+          }
+
           const bookings = yield* service.findAll({ email: urlParams.email });
           return bookings
             .filter((b) => b.passengers.length > 0 && b.segments?.length > 0)

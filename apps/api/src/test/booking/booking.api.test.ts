@@ -352,7 +352,9 @@ describe("Booking API Integration (Multi-Passenger)", () => {
         baseUrl: `http://localhost:${port}`,
       });
 
-      const bookings = yield* client.bookings.list({ urlParams: {} });
+      const bookings = yield* client.bookings.list({
+        urlParams: { email: booking.passengers[0].email },
+      });
 
       expect(bookings.length).toBeGreaterThanOrEqual(1);
       const found = bookings.find((b) => b.id === bookingId);

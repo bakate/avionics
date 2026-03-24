@@ -8,6 +8,7 @@ import { BookingSummaryCard } from "@/features/booking/components/booking-summar
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  initReactI18next: { type: "3rdParty", init: vi.fn() },
 }));
 
 vi.mock("react-router", () => ({

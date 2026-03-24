@@ -11,6 +11,7 @@ import { OutboundScreen } from "../screens/outbound.screen";
 vi.mock("../hooks/use-booking-machine");
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  initReactI18next: { type: "3rdParty", init: vi.fn() },
 }));
 vi.mock("react-router", () => ({
   useNavigate: () => vi.fn(),

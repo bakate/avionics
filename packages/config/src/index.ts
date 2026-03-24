@@ -237,6 +237,9 @@ export const ApiConfig = Config.all({
     }),
     Config.redacted,
   ),
+  apiUrl: Config.string("VITE_API_URL").pipe(
+    Config.withDefault(`http://localhost:${process.env.PORT ?? 3000}`),
+  ),
 });
 
 export type ApiConfig = Config.Config.Success<typeof ApiConfig>;

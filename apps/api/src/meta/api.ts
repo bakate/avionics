@@ -1,4 +1,4 @@
-import { HttpApiEndpoint, HttpApiGroup } from "@effect/platform";
+import { HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "@effect/platform";
 import { Schema } from "effect";
 
 export class MetaGroup extends HttpApiGroup.make("meta")
@@ -8,6 +8,12 @@ export class MetaGroup extends HttpApiGroup.make("meta")
         version: Schema.String,
         startedAt: Schema.DateTimeUtc,
       }),
+    ),
+  )
+  .add(HttpApiEndpoint.get("openApi", "/openapi.json").addSuccess(Schema.Any))
+  .add(
+    HttpApiEndpoint.get("docs", "/docs").addSuccess(
+      HttpApiSchema.Text({ contentType: "text/html" }),
     ),
   )
   .prefix("/") {}

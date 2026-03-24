@@ -298,9 +298,6 @@ export const BookingDetailsPage = () => {
                       <p className="font-bold text-slate-900 dark:text-slate-100">
                         {passenger.firstName} {passenger.lastName}
                       </p>
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        {passenger.email}
-                      </p>
                       <Badge
                         variant="outline"
                         className="mt-1 w-fit border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[9px] font-bold uppercase text-slate-500 dark:text-slate-400"

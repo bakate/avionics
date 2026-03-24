@@ -8,6 +8,7 @@ import { PassengersScreen } from "../passengers.screen";
 vi.mock("../../hooks/use-booking-machine");
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
+  initReactI18next: { type: "3rdParty", init: vi.fn() },
 }));
 
 // We mock PassengerForm to isolate rendering logic of the screen itself
