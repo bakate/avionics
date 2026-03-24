@@ -6,7 +6,6 @@ export { EventBus };
 
 /**
  * Live Layer — Simple In-Memory Event Bus with background worker.
- * Real implementation would involve Redis/Kafka.
  */
 export const EventBusLive = Layer.scoped(
   EventBus,
@@ -21,7 +20,6 @@ export const EventBusLive = Layer.scoped(
     yield* Stream.fromQueue(queue).pipe(
       Stream.runForEach((event) =>
         Effect.gen(function* () {
-          // Safe cast for routing
           const tag = (event as unknown as { _tag: string })._tag;
           const handlers = subscribers.get(tag) || [];
           yield* Effect.all(
@@ -59,12 +57,22 @@ export const EventBusLive = Layer.scoped(
           const list = subscribers.get(type) || [];
           const safeHandler = (e: DomainEventType) => handler(e);
           subscribers.set(type, [...list, safeHandler]);
+
+          // Return the unsubscribe effect
+          return Effect.sync(() => {
+            const currentList = subscribers.get(type) || [];
+            const newList = currentList.filter((h) => h !== safeHandler);
+            if (newList.length === 0) {
+              subscribers.delete(type);
+            } else {
+              subscribers.set(type, newList);
+            }
+          });
         }),
     };
   }),
 );
 
-// Helper type guard
 function hasTag(u: unknown): u is { _tag: string } {
   return typeof u === "object" && u !== null && "_tag" in u;
 }

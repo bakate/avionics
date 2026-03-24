@@ -5,7 +5,7 @@ export interface EventBusPort {
   readonly subscribe: (
     eventType: string,
     handler: (event: unknown) => Effect.Effect<void>,
-  ) => Effect.Effect<void>;
+  ) => Effect.Effect<Effect.Effect<void>>;
 }
 
 export class EventBus extends Context.Tag("EventBus")<
