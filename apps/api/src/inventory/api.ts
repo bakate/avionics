@@ -5,7 +5,7 @@ import {
   InventoryStats,
 } from "@workspace/application/read-models";
 import * as Errors from "@workspace/domain/errors";
-import { CabinClassSchema } from "@workspace/domain/kernel";
+import { AirportCodeSchema, CabinClassSchema } from "@workspace/domain/kernel";
 import { Schema } from "effect";
 
 export class InventoryGroup extends HttpApiGroup.make("inventory")
@@ -36,9 +36,9 @@ export class InventoryGroup extends HttpApiGroup.make("inventory")
           minSeats: Schema.optional(
             Schema.NumberFromString.pipe(Schema.int(), Schema.positive()),
           ),
-          departureDate: Schema.optional(Schema.Date),
-          origin: Schema.optional(Schema.String),
-          destination: Schema.optional(Schema.String),
+          departureDate: Schema.optional(Schema.DateFromString),
+          origin: Schema.optional(AirportCodeSchema),
+          destination: Schema.optional(AirportCodeSchema),
           limit: Schema.optional(
             Schema.NumberFromString.pipe(Schema.int(), Schema.positive()),
           ),

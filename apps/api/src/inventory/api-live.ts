@@ -46,7 +46,6 @@ export const InventoryApiLive = HttpApiBuilder.group(
       )
       .handle("findAvailableFlights", ({ urlParams }) =>
         Effect.gen(function* () {
-          yield* Effect.logInfo("Searching flights", { urlParams });
           const queries = yield* InventoryQueries;
           return yield* queries.findAvailableFlights({
             cabin: urlParams.cabinClass,
@@ -56,7 +55,8 @@ export const InventoryApiLive = HttpApiBuilder.group(
             ...(urlParams.departureDate
               ? { departureDate: urlParams.departureDate }
               : {}),
-            ...(urlParams.origin && urlParams.destination
+            ...(urlParams.origin !== undefined &&
+            urlParams.destination !== undefined
               ? {
                   route: {
                     origin: urlParams.origin,

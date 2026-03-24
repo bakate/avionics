@@ -1,6 +1,6 @@
+import { type AirportCode, type CabinClass } from "@workspace/domain/kernel";
 import { Effect, Schema } from "effect";
 import { makeClient } from "@/api/client";
-import { toISODate } from "@/lib/format";
 
 export const DatePrice = Schema.Struct({
   date: Schema.String,
@@ -27,7 +27,7 @@ export const getFlightAvailability = (flightId: string) =>
 /**
  * Get cabin availability
  */
-export const getCabinAvailability = (flightId: string, cabin: string) =>
+export const getCabinAvailability = (flightId: string, cabin: CabinClass) =>
   makeClient.pipe(
     Effect.flatMap((client) =>
       client.inventory.getCabinAvailability({ path: { flightId, cabin } }),
@@ -38,11 +38,11 @@ export const getCabinAvailability = (flightId: string, cabin: string) =>
  * Search flights
  */
 export const findAvailableFlights = (params: {
-  cabin: string;
+  cabin: CabinClass;
   minSeats?: number;
   departureDate?: Date;
-  origin?: string;
-  destination?: string;
+  origin?: AirportCode;
+  destination?: AirportCode;
   limit?: number;
   sortBy?: string;
 }) =>
@@ -50,10 +50,13 @@ export const findAvailableFlights = (params: {
     Effect.flatMap((client) =>
       client.inventory.findAvailableFlights({
         urlParams: {
-          ...params,
-          departureDate: params.departureDate
-            ? toISODate(params.departureDate)
-            : undefined,
+          cabinClass: params.cabin,
+          minSeats: params.minSeats,
+          departureDate: params.departureDate,
+          origin: params.origin,
+          destination: params.destination,
+          limit: params.limit,
+          sortBy: params.sortBy,
         },
       }),
     ),
@@ -74,8 +77,8 @@ export const getInventoryStats = () =>
  *
  */
 export const getDatePrices = (params: {
-  origin: string;
-  destination: string;
+  origin: AirportCode;
+  destination: AirportCode;
   dates: ReadonlyArray<string>;
 }): Effect.Effect<ReadonlyArray<DatePrice>, never, never> =>
   Effect.gen(function* () {

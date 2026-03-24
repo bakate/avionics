@@ -1,11 +1,10 @@
 import { Calendar03Icon, UserCircleIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type BookingSummary } from "@workspace/application/read-models";
-import { Effect } from "effect";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { confirmBooking } from "@/api/booking.api";
+import { useAction } from "@/lib/effect-hooks";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 import { buildRoute } from "@/routes";
 import { BookingStatusBadge } from "./booking-status-badge";
@@ -21,22 +20,20 @@ export const BookingSummaryCard = ({
 }: BookingSummaryCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const {
+    execute: handlePayAction,
+    isLoading: isUpdating,
+    error: errorMessage,
+  } = useAction(() => confirmBooking(booking.id), {
+    onSuccess: () => onUpdate?.(),
+  });
 
   const status = booking.status?.toLowerCase();
 
   const handlePay = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsUpdating(true);
-    setErrorMessage(null);
-    void Effect.runPromise(confirmBooking(booking.id))
-      .then(() => onUpdate?.())
-      .catch((error) => {
-        console.error("Payment failed", error);
-        setErrorMessage(error instanceof Error ? error.message : String(error));
-      })
-      .finally(() => setIsUpdating(false));
+    handlePayAction();
   };
 
   return (

@@ -8,36 +8,13 @@
  * Requirements: 1.2, 1.3
  */
 
-import { FetchHttpClient } from "@effect/platform";
 import { type FlightAvailability } from "@workspace/application/read-models";
 import { type CabinClass } from "@workspace/domain/kernel";
 import { Effect } from "effect";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { findAvailableFlights } from "@/api/inventory.api";
 import { type FlightResult } from "@/features/booking/machines/booking.machine";
 import { type SearchParams } from "@/features/booking/schemas/search.schema";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-type FlightStreamState = {
-  /** Flights received so far */
-  flights: ReadonlyArray<FlightResult>;
-  /** Whether the stream is still active */
-  isLoading: boolean;
-  /** Error message if the stream failed */
-  error: string | null;
-  /** Whether the stream completed (no more results) */
-  isComplete: boolean;
-};
-
-const initialState: FlightStreamState = {
-  flights: [],
-  isLoading: false,
-  error: null,
-  isComplete: false,
-};
+import { useAction } from "@/lib/effect-hooks";
 
 // ---------------------------------------------------------------------------
 // Adapter: API response → FlightResult
@@ -96,59 +73,32 @@ const toFlightResult = (raw: FlightAvailability): FlightResult => ({
 // ---------------------------------------------------------------------------
 
 export const useFlightStream = () => {
-  const [state, setState] = useState<FlightStreamState>(initialState);
-  const abortRef = useRef<AbortController | null>(null);
-
-  const search = useCallback((params: SearchParams) => {
-    // Cancel any in-flight request
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    setState({ flights: [], isLoading: true, error: null, isComplete: false });
-
-    const cabin = params.cabinClass ?? "ECONOMY";
+  const {
+    execute: searchAction,
+    data,
+    isLoading,
+    error,
+  } = useAction((params: SearchParams) => {
+    const cabin = params.cabinClass ?? ("ECONOMY" as CabinClass);
     const totalPassengers =
       params.passengers.adults +
       params.passengers.children +
       params.passengers.infants;
 
-    const program = findAvailableFlights({
+    return findAvailableFlights({
       cabin,
       minSeats: totalPassengers,
       departureDate: new Date(params.departureDate),
       origin: params.origin,
       destination: params.destination,
-    }).pipe(
-      Effect.map((results) => results.map(toFlightResult)),
-      Effect.provide(FetchHttpClient.layer),
-    );
+    }).pipe(Effect.map((results) => results.map(toFlightResult)));
+  });
 
-    Effect.runPromise(program)
-      .then((flights) => {
-        if (controller.signal.aborted) return;
-        setState({ flights, isLoading: false, error: null, isComplete: true });
-      })
-      .catch((err) => {
-        if (controller.signal.aborted) return;
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          error:
-            err && typeof err === "object" && "message" in err
-              ? String(err.message)
-              : "An error occurred while searching.",
-          isComplete: true,
-        }));
-      });
-  }, []);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      abortRef.current?.abort();
-    };
-  }, []);
-
-  return { ...state, search } as const;
+  return {
+    flights: data ?? [],
+    isLoading,
+    error,
+    isComplete: !isLoading && data !== null,
+    search: searchAction,
+  } as const;
 };

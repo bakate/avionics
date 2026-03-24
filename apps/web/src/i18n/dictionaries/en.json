@@ -318,5 +318,25 @@
       "seatsLeft": "{{count}} seat left",
       "seatsLeft_other": "{{count}} seats left"
     }
+  },
+  "errors": {
+    "unexpected": "An unexpected error occurred.",
+    "FlightFullError": "This flight is now full in the {{cabin}} cabin. Please select another one.",
+    "FlightNotFoundError": "The requested flight could not be found.",
+    "BookingNotFoundError": "We couldn't find your booking. Please check your PNR code.",
+    "BookingExpiredError": "This booking session has expired. Please start over.",
+    "BookingStatusError": "This booking is in an invalid state for this action.",
+    "OptimisticLockingError": "The data was updated by another user. Please refresh and try again.",
+    "ValidationError": "Validation failed: {{reason}}",
+    "InvalidAmountError": "The payment amount is invalid.",
+    "InventoryOvercapacityError": "Not enough seats available for the selected cabin.",
+    "PaymentDeclinedError": "Payment declined: {{reason}}",
+    "PaymentApiUnavailableError": "The payment service is currently unavailable. Please try again later.",
+    "CheckoutNotFoundError": "The checkout session was not found.",
+    "UnsupportedCurrencyError": "The selected currency is not supported.",
+    "RequestTimeoutError": "The request timed out. Please check your connection.",
+    "ResponseError": "The server returned an error response.",
+    "RequestError": "Failed to send the request. Please check your connection.",
+    "ParseError": "Failed to parse the server response."
   }
 }

@@ -57,8 +57,10 @@ describe("BookingSummaryCard Property Tests", () => {
           // Verify PNR is displayed
           expect(screen.getByText(booking.pnrCode as string)).toBeDefined();
 
-          // Verify Status is displayed
-          expect(screen.getByText(booking.status)).toBeDefined();
+          // Verify Status is displayed (case-insensitive or matching translation key)
+          expect(
+            screen.getByText(`booking.${booking.status.toLowerCase()}`),
+          ).toBeDefined();
 
           // Verify Passenger count is displayed - note the translation fallback rendering
           // Use a custom matcher to avoid matching dates or amount numbers

@@ -4,5 +4,7 @@
       "mode": "auto"
     }
   ],
-  "typescript.autoClosingTags": false
+  "typescript.autoClosingTags": false,
+  "workbench.editor.restoreViewState": true,
+  "workbench.editor.revealIfOpen": false
 }
