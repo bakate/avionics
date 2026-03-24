@@ -22,11 +22,21 @@ export const InventoryReleaseListenerLive = Layer.effectDiscard(
           yield* Effect.forEach(
             event.segments,
             (segment) =>
-              inventoryService.releaseSeats({
-                flightId: segment.flightId,
-                cabin: segment.cabin,
-                numberOfSeats: segment.quantity,
-              }),
+              inventoryService
+                .releaseSeats({
+                  flightId: segment.flightId,
+                  cabin: segment.cabin,
+                  numberOfSeats: segment.quantity,
+                })
+                .pipe(
+                  Effect.catchAll((err) =>
+                    Effect.logWarning("Could not release segment in listener", {
+                      bookingId: event.bookingId,
+                      segment,
+                      error: err,
+                    }),
+                  ),
+                ),
             { discard: true },
           );
 
