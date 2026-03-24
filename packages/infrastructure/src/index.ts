@@ -1,8 +1,7 @@
 import { Layer } from "effect";
 import { ConnectionPoolLive } from "./db/connection.js";
-import { EventBus } from "./events/event-bus.js";
+import { EventBusLive } from "./events/event-bus.js";
 import { OutboxProcessorLive } from "./events/outbox-processor.js";
-import { TransactionalOutboxLive } from "./events/transactional-outbox.js";
 import { HttpCurrencyConverterGatewayLive } from "./gateways/currency-converter.gateway.js";
 import { ResendNotificationGatewayLive } from "./gateways/notification-gateway.js";
 import { PolarPaymentGatewayLive } from "./gateways/payment-gateway.js";
@@ -22,7 +21,7 @@ export { PostgresInventoryQueriesLive } from "./queries/inventory-queries.js";
 
 // --- 1. Infrastructure Foundation ---
 // These provide the base tags: SqlClient and EventBus
-const CoreLive = Layer.merge(ConnectionPoolLive, EventBus.Live);
+const CoreLive = Layer.merge(ConnectionPoolLive, EventBusLive);
 
 // --- 2. Base Infrastructure Services ---
 // These depend on Core (Database) and provide: AuditLogger, HealthCheck, ShutdownManager
@@ -46,11 +45,9 @@ export const CoreAdaptersLive = Layer.mergeAll(
   PolarPaymentGatewayLive,
 ).pipe(Layer.provideMerge(ServicesLive));
 
-// --- 4. Background Workers (Processes that consume the domain) ---
-export const BackgroundWorkersLive = Layer.mergeAll(
-  OutboxProcessorLive,
-  TransactionalOutboxLive,
-).pipe(Layer.provideMerge(CoreAdaptersLive));
+export const BackgroundWorkersLive = OutboxProcessorLive.pipe(
+  Layer.provideMerge(CoreAdaptersLive),
+);
 
 // --- 5. Final Unified Layer ---
 export const InfrastructureLive = Layer.merge(

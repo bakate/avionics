@@ -72,7 +72,7 @@ export class CancellationService extends Context.Tag("CancellationService")<
 
       const start = () =>
         processExpirations().pipe(
-          Effect.repeat(Schedule.spaced(Duration.minutes(1))),
+          Effect.repeat(Schedule.spaced(Duration.minutes(15))),
           Effect.zipRight(Effect.never),
           Effect.interruptible,
         );

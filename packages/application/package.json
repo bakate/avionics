@@ -19,7 +19,8 @@
     "./booking-queries": "./src/queries/booking-queries.ts",
     "./inventory-queries": "./src/queries/inventory-queries.ts",
     "./cancellation.service": "./src/services/cancellation.service.ts",
-    "./jobs/outbox-processor": "./src/jobs/outbox-processor.ts"
+    "./ports/event-bus": "./src/ports/event-bus.ts",
+    "./jobs/inventory-release": "./src/jobs/inventory-release.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

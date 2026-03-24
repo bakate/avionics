@@ -8,7 +8,7 @@ import {
 import { BookingService } from "@workspace/application/booking.service";
 import { CancellationService } from "@workspace/application/cancellation.service";
 import { InventoryService } from "@workspace/application/inventory.service";
-import { OutboxProcessorLive } from "@workspace/application/jobs/outbox-processor";
+import { InventoryReleaseListenerLive } from "@workspace/application/jobs/inventory-release";
 import { ApiConfig } from "@workspace/config";
 import {
   BackgroundWorkersLive,
@@ -109,7 +109,7 @@ const ServerLive = Layer.unwrapEffect(
 
 const WorkersLive = Layer.mergeAll(
   BackgroundWorkersLive,
-  OutboxProcessorLive,
+  InventoryReleaseListenerLive,
   Layer.scopedDiscard(
     Effect.gen(function* () {
       const cancellation = yield* CancellationService;
@@ -135,4 +135,4 @@ const program = Effect.scoped(Layer.launch(MainLive)).pipe(
 
 // We use runMain to execute the program.
 // We cast requirements to 'never' as MainLive is self-contained.
-NodeRuntime.runMain(program as Effect.Effect<void, any, never>);
+NodeRuntime.runMain(program as Effect.Effect<void, unknown, never>);

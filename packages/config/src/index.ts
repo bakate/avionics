@@ -174,7 +174,7 @@ export type ResendConfig = Config.Config.Success<typeof ResendConfig>;
 
 export const OutboxConfig = Config.all({
   pollingInterval: Config.number("OUTBOX_POLLING_INTERVAL").pipe(
-    Config.withDefault(5),
+    Config.withDefault(30),
   ),
   batchSize: Config.number("OUTBOX_BATCH_SIZE").pipe(Config.withDefault(100)),
   maxRetries: Config.number("OUTBOX_MAX_RETRIES").pipe(Config.withDefault(3)),
