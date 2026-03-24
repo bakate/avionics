@@ -113,7 +113,7 @@ export class BookingGroup extends HttpApiGroup.make("bookings")
     HttpApiEndpoint.get("searchByPassengerName", "/search")
       .setUrlParams(
         Schema.Struct({
-          name: Schema.String,
+          name: Schema.String.pipe(Schema.minLength(2)),
           limit: Schema.optional(
             Schema.NumberFromString.pipe(
               Schema.int(),

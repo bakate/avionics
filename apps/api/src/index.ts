@@ -19,6 +19,7 @@ import { Api } from "./api.js";
 import { BookingApiLive } from "./booking/api-live.js";
 import { HealthApiLive } from "./health/api-live.js";
 import { InventoryApiLive } from "./inventory/api-live.js";
+import * as Utils from "./lib/api-utils.js";
 import { MetaApiLive } from "./meta/api-live.js";
 import { WebhookApiLive } from "./webhook/api-live.js";
 
@@ -85,10 +86,18 @@ const ServerLive = Layer.unwrapEffect(
         allowedOrigins:
           config.corsOrigins.length > 0 ? config.corsOrigins : () => true,
         allowedMethods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-        allowedHeaders: ["Content-Type", "Authorization", "B3", "traceparent"],
+        allowedHeaders: [
+          "Content-Type",
+          "Authorization",
+          "B3",
+          "traceparent",
+          "x-request-id",
+        ],
       }),
     ).pipe(
       Layer.provide(ApiLive),
+      Layer.provide(HttpApiBuilder.middleware(Utils.logger)),
+      Layer.provide(HttpApiBuilder.middleware(Utils.requestTracking)),
       Layer.provide(NodeHttpServer.layer(createServer, { port: config.port })),
     );
   }),
@@ -121,7 +130,9 @@ const program = Effect.scoped(Layer.launch(MainLive)).pipe(
     ),
   ),
   Effect.onInterrupt(() => Effect.logInfo("🛑 Shutting down backend...")),
+  Effect.asVoid,
 );
 
-// We use runMain to execute the program. The type is explicitlynever for success and requirements.
-NodeRuntime.runMain(program as Effect.Effect<never, any, never>);
+// We use runMain to execute the program.
+// We cast requirements to 'never' as MainLive is self-contained.
+NodeRuntime.runMain(program as Effect.Effect<void, any, never>);
