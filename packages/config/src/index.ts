@@ -238,6 +238,7 @@ export const ApiConfig = Config.all({
     Config.redacted,
   ),
   apiUrl: Config.string("VITE_API_URL").pipe(
+    Config.orElse(() => Config.string("RENDER_EXTERNAL_URL")),
     Config.withDefault(`http://localhost:${process.env.PORT ?? 3000}`),
   ),
 });
