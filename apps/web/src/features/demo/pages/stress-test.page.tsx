@@ -162,7 +162,7 @@ export function StressTestPage() {
   const { flights, flightId, requestCount, status, results, error } =
     state.context;
 
-  const selectedFlight = flights.find((f) => f.flightId === flightId);
+  const selectedFlight = flights.find((flight) => flight.flightId === flightId);
   const flightDisplay = selectedFlight
     ? `${selectedFlight.flightNumber} - ${selectedFlight.origin} → ${selectedFlight.destination}`
     : flightId;

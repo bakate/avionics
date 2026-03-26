@@ -33,7 +33,11 @@ export const PassengersScreen = () => {
     const defaultValues: PassengersFormValues["passengers"] = [];
 
     // Adults
-    for (let i = 0; i < searchParams.passengers.adults; i++) {
+    for (
+      let adultIndex = 0;
+      adultIndex < searchParams.passengers.adults;
+      adultIndex++
+    ) {
       defaultValues.push({
         firstName: "",
         lastName: "",
@@ -44,7 +48,11 @@ export const PassengersScreen = () => {
     }
 
     // Children
-    for (let i = 0; i < searchParams.passengers.children; i++) {
+    for (
+      let childIndex = 0;
+      childIndex < searchParams.passengers.children;
+      childIndex++
+    ) {
       defaultValues.push({
         firstName: "",
         lastName: "",
@@ -55,7 +63,11 @@ export const PassengersScreen = () => {
     }
 
     // Infants
-    for (let i = 0; i < searchParams.passengers.infants; i++) {
+    for (
+      let infantIndex = 0;
+      infantIndex < searchParams.passengers.infants;
+      infantIndex++
+    ) {
       defaultValues.push({
         firstName: "",
         lastName: "",

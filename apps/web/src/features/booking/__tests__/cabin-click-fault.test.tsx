@@ -1,10 +1,14 @@
 // @vitest-environment jsdom
 import { fireEvent, render, screen } from "@testing-library/react";
-import { type AirportCode, type CabinClass } from "@workspace/domain/kernel";
+import {
+  type AirportCode,
+  type CabinClass,
+  FlightId,
+} from "@workspace/domain/kernel";
 import fc from "fast-check";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useBookingMachine } from "../hooks/use-booking-machine";
-import { type FlightResult } from "../machines/booking.machine";
+import { FlightResult } from "../machines/booking.machine";
 import { OutboundScreen } from "../screens/outbound.screen";
 
 // Mock the hook and translation
@@ -44,18 +48,19 @@ const flightResultArb = fc
     ),
   )
   .map(
-    ([id, cabins]): FlightResult => ({
-      flightId: `FL-${id}`,
-      flightNumber: "AF123",
-      origin: "CDG",
-      destination: "JFK",
-      departureTime: new Date().toISOString(),
-      arrivalTime: new Date().toISOString(),
-      durationMinutes: 120,
-      stops: 0,
-      cabins,
-      lastUpdated: new Date().toISOString(),
-    }),
+    ([id, cabins]): FlightResult =>
+      new FlightResult({
+        flightId: FlightId.make(`FL-${id}`),
+        flightNumber: "AF123",
+        origin: "CDG",
+        destination: "JFK",
+        departureTime: new Date().toISOString(),
+        arrivalTime: new Date().toISOString(),
+        durationMinutes: 120,
+        stops: 0,
+        cabins,
+        lastUpdated: new Date().toISOString(),
+      }),
   );
 
 describe("Property 1: Fault Condition - Cabin Click Immediately Dispatches Machine Event Without Fare Panel", () => {
@@ -98,6 +103,8 @@ describe("Property 1: Fault Condition - Cabin Click Immediately Dispatches Machi
           outboundFlights: [flight],
           returnFlights: [],
           filters: { cabinClass: "ECONOMY", maxStops: null, timeRange: null },
+          activeAction: null,
+          error: null,
           sortField: "price",
           sortOrder: "asc",
         });

@@ -136,10 +136,7 @@ const HomePage = () => {
                     animationDelay: `${index * 150}ms`,
                   }}
                 >
-                  <BookingSummaryCard
-                    booking={booking}
-                    onUpdate={() => send({ type: "FETCH_BOOKINGS" })}
-                  />
+                  <BookingSummaryCard booking={booking} />
                 </div>
               ))}
             </div>

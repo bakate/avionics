@@ -6,10 +6,10 @@
  * availableSeats === 0 as unavailable.
  */
 
-import { type CabinClass } from "@workspace/domain/kernel";
+import { type CabinClass, FlightId } from "@workspace/domain/kernel";
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
-import { type FlightResult } from "../../machines/booking.machine";
+import { FlightResult } from "../../machines/booking.machine";
 
 // ---------------------------------------------------------------------------
 // Pure logic under test: classify cabins as selectable or sold-out
@@ -62,18 +62,19 @@ const flightResultArb = fc
     }),
   )
   .map(
-    ([id, num, cabins]): FlightResult => ({
-      flightId: id,
-      flightNumber: `AF${num}`,
-      origin: "CDG",
-      destination: "JFK",
-      departureTime: new Date().toISOString(),
-      arrivalTime: new Date().toISOString(),
-      durationMinutes: 480,
-      stops: 0,
-      cabins,
-      lastUpdated: new Date().toISOString(),
-    }),
+    ([id, num, cabins]): FlightResult =>
+      new FlightResult({
+        flightId: FlightId.make(id),
+        flightNumber: `AF${num}`,
+        origin: "CDG",
+        destination: "JFK",
+        departureTime: new Date().toISOString(),
+        arrivalTime: new Date().toISOString(),
+        durationMinutes: 480,
+        stops: 0,
+        cabins,
+        lastUpdated: new Date().toISOString(),
+      }),
   );
 
 // ---------------------------------------------------------------------------
@@ -125,22 +126,26 @@ describe("Property 7: Cabin card shows correct availability", () => {
         moneyArb,
       )
       .map(
-        ([id, cabinClasses, price]): FlightResult => ({
-          flightId: id,
-          flightNumber: "AF000",
-          origin: "CDG",
-          destination: "JFK",
-          departureTime: new Date().toISOString(),
-          arrivalTime: new Date().toISOString(),
-          durationMinutes: 480,
-          stops: 0,
-          cabins: cabinClasses.map((cabin) => ({
-            cabin,
-            availableSeats: 0,
-            price,
-          })),
-          lastUpdated: new Date().toISOString(),
-        }),
+        ([id, cabinClasses, price]): FlightResult =>
+          new FlightResult({
+            flightId: FlightId.make(id),
+            flightNumber: "AF000",
+            origin: "CDG",
+            destination: "JFK",
+            departureTime: new Date().toISOString(),
+            arrivalTime: new Date().toISOString(),
+            durationMinutes: 480,
+            stops: 0,
+            cabins: cabinClasses.map((cabin) => ({
+              cabin,
+              availableSeats: 0,
+              price: {
+                amount: price.amount,
+                currency: price.currency as any,
+              },
+            })),
+            lastUpdated: new Date().toISOString(),
+          }),
       );
 
     fc.assert(

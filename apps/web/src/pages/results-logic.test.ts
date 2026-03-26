@@ -1,7 +1,7 @@
-import { type CabinClass } from "@workspace/domain/kernel";
+import { type CabinClass, FlightId } from "@workspace/domain/kernel";
 import * as fc from "fast-check";
 import { describe, it } from "vitest";
-import { type FlightResult } from "@/features/booking/machines/booking.machine";
+import { FlightResult } from "@/features/booking/machines/booking.machine";
 import { filterFlights, sortFlights } from "./results-logic";
 
 // Arbitraries
@@ -24,22 +24,24 @@ const cabinArb = (cabin: CabinClass) =>
     price: moneyArb,
   });
 
-const flightArbitrary: fc.Arbitrary<FlightResult> = fc.record({
-  flightId: fc.uuid(),
-  flightNumber: fc.stringMatching(/^[A-Z]{2}\d{4}$/),
-  origin: fc.constant("CDG"),
-  destination: fc.constant("JFK"),
-  departureTime: safeDateStr,
-  arrivalTime: safeDateStr,
-  durationMinutes: fc.integer({ min: 30, max: 1500 }),
-  stops: fc.integer({ min: 0, max: 2 }),
-  cabins: fc.tuple(
-    cabinArb("ECONOMY"),
-    cabinArb("BUSINESS"),
-    cabinArb("FIRST"),
-  ),
-  lastUpdated: safeDateStr,
-});
+const flightArbitrary: fc.Arbitrary<FlightResult> = fc
+  .record({
+    flightId: fc.uuid().map((id) => FlightId.make(id)),
+    flightNumber: fc.stringMatching(/^[A-Z]{2}\d{4}$/),
+    origin: fc.constant("CDG"),
+    destination: fc.constant("JFK"),
+    departureTime: safeDateStr,
+    arrivalTime: safeDateStr,
+    durationMinutes: fc.integer({ min: 30, max: 1500 }),
+    stops: fc.integer({ min: 0, max: 2 }),
+    cabins: fc.tuple(
+      cabinArb("ECONOMY"),
+      cabinArb("BUSINESS"),
+      cabinArb("FIRST"),
+    ),
+    lastUpdated: safeDateStr,
+  })
+  .map((props) => new FlightResult(props as any));
 
 /** Helper to get price for a cabin from a FlightResult */
 const getCabinPrice = (f: FlightResult, cabin: CabinClass): number => {

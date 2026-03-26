@@ -3,37 +3,33 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { type BookingSummary } from "@workspace/application/read-models";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { confirmBooking } from "@/api/booking.api";
-import { useAction } from "@/lib/effect-hooks";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
 import { buildRoute } from "@/routes";
+import { useBookingMachine } from "../hooks/use-booking-machine";
 import { BookingStatusBadge } from "./booking-status-badge";
 
 interface BookingSummaryCardProps {
   booking: BookingSummary;
-  onUpdate?: () => void;
 }
 
-export const BookingSummaryCard = ({
-  booking,
-  onUpdate,
-}: BookingSummaryCardProps) => {
+export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
   const {
-    execute: handlePayAction,
-    isLoading: isUpdating,
-    error: errorMessage,
-  } = useAction(() => confirmBooking(booking.id), {
-    onSuccess: () => onUpdate?.(),
-  });
+    send,
+    isLoading: isMachineLoading,
+    activeAction,
+    error: machineError,
+  } = useBookingMachine();
+
+  const isUpdating = isMachineLoading && activeAction?.id === booking.id;
+  const errorMessage = activeAction?.id === booking.id ? machineError : null;
 
   const status = booking.status?.toLowerCase();
 
   const handlePay = (e: React.MouseEvent) => {
     e.stopPropagation();
-    handlePayAction();
+    send({ type: "CONFIRM_BOOKING_ACTION", id: booking.id });
   };
 
   return (

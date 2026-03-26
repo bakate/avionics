@@ -1,7 +1,33 @@
 import { type BookFlightCommand } from "@workspace/application/booking.commands";
 import { BookingId, PnrCodeSchema } from "@workspace/domain/kernel";
-import { Effect } from "effect";
-import { makeClient } from "./client";
+import { Effect, Request, RequestResolver } from "effect";
+import { makeClient } from "@/api/client";
+
+/**
+ * Request identity for fetching a single booking by PNR
+ */
+export interface GetBookingByPnrRequest extends Request.Request<any, any> {
+  readonly _tag: "GetBookingByPnrRequest";
+  readonly pnr: string;
+}
+
+export const GetBookingByPnrRequest = Request.tagged<GetBookingByPnrRequest>(
+  "GetBookingByPnrRequest",
+);
+
+/**
+ * Resolver for PNR details calls (Booking API)
+ */
+const GetBookingByPnrResolver = RequestResolver.fromEffect(
+  (req: GetBookingByPnrRequest) =>
+    makeClient.pipe(
+      Effect.flatMap((client) =>
+        client.bookings.getByPnr({
+          path: { pnr: PnrCodeSchema.make(req.pnr) },
+        }),
+      ),
+    ),
+);
 
 /**
  * Book a flight
@@ -34,21 +60,20 @@ export const cancelBooking = (id: string, reason: string) =>
     ),
   );
 
+/**
+ * Fetch all bookings for a user
+ */
 export const getBookings = (email?: string) =>
   makeClient.pipe(
     Effect.flatMap((client) => client.bookings.list({ urlParams: { email } })),
   );
 
 /**
- * Get booking summary by PNR
+ * Get booking summary by PNR (Cached & Deduplicated)
  */
 export const getBookingByPnr = (pnr: string) =>
-  makeClient.pipe(
-    Effect.flatMap((client) =>
-      client.bookings.getByPnr({
-        path: { pnr: PnrCodeSchema.make(pnr) },
-      }),
-    ),
+  Effect.request(GetBookingByPnrRequest({ pnr }), GetBookingByPnrResolver).pipe(
+    Effect.withRequestCaching(true),
   );
 
 /**

@@ -6,15 +6,18 @@
  * (selectedOutbound or selectedReturn) and transition to the next expected state.
  */
 
-import { type CabinClass } from "@workspace/domain/kernel";
+import { type CabinClass, FlightId } from "@workspace/domain/kernel";
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
 import { createActor, fromPromise, waitFor } from "xstate";
+import { type PassengerInput } from "../../schemas/passenger.schema";
 import { type SearchParams } from "../../schemas/search.schema";
 import {
+  type BookingResponse,
   type BookingResult,
+  type BookingSummary,
   bookingMachine,
-  type FlightResult,
+  FlightResult,
   type FlightSelection,
 } from "../booking.machine";
 
@@ -56,18 +59,19 @@ const flightResultArb = fc
     }),
   )
   .map(
-    ([id, flightNum, origin, dest, duration, stops, cabins]): FlightResult => ({
-      flightId: id,
-      flightNumber: `AF${flightNum}`,
-      origin,
-      destination: dest,
-      departureTime: new Date().toISOString(),
-      arrivalTime: new Date().toISOString(),
-      durationMinutes: duration,
-      stops,
-      cabins,
-      lastUpdated: new Date().toISOString(),
-    }),
+    ([id, flightNum, origin, dest, duration, stops, cabins]): FlightResult =>
+      new FlightResult({
+        flightId: FlightId.make(id),
+        flightNumber: `AF${flightNum}`,
+        origin,
+        destination: dest,
+        departureTime: new Date().toISOString(),
+        arrivalTime: new Date().toISOString(),
+        durationMinutes: duration,
+        stops,
+        cabins,
+        lastUpdated: new Date().toISOString(),
+      }),
   );
 
 const flightSelectionArb = flightResultArb.chain((flight) =>
@@ -108,14 +112,34 @@ describe("Property 23: Flight selection stores and transitions correctly", () =>
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [selection.flight],
+              async () => [selection.flight] as Array<FlightResult>,
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [],
+              async () => [] as Array<FlightResult>,
             ),
-            submitBooking: fromPromise(async (): Promise<BookingResult> => {
+            submitBooking: fromPromise<
+              BookingResult,
+              {
+                segments: Array<{ flightId: string; cabinClass: CabinClass }>;
+                passengers: ReadonlyArray<PassengerInput>;
+              }
+            >(async () => {
               throw new Error("Not implemented");
             }),
+            fetchBookings: fromPromise<
+              Array<BookingSummary>,
+              { email?: string } | undefined
+            >(async () => []),
+            fetchBookingDetails: fromPromise<BookingResponse, { pnr: string }>(
+              async () => ({}) as BookingResponse,
+            ),
+            confirmBooking: fromPromise<BookingResponse, { id: string }>(
+              async () => ({}) as BookingResponse,
+            ),
+            cancelBooking: fromPromise<
+              BookingResponse,
+              { id: string; reason: string }
+            >(async () => ({}) as BookingResponse),
           },
         });
 
@@ -147,14 +171,34 @@ describe("Property 23: Flight selection stores and transitions correctly", () =>
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [selection.flight],
+              async () => [selection.flight] as Array<FlightResult>,
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [],
+              async () => [] as Array<FlightResult>,
             ),
-            submitBooking: fromPromise(async (): Promise<BookingResult> => {
+            submitBooking: fromPromise<
+              BookingResult,
+              {
+                segments: Array<{ flightId: string; cabinClass: CabinClass }>;
+                passengers: ReadonlyArray<PassengerInput>;
+              }
+            >(async () => {
               throw new Error("Not implemented");
             }),
+            fetchBookings: fromPromise<
+              Array<BookingSummary>,
+              { email?: string } | undefined
+            >(async () => []),
+            fetchBookingDetails: fromPromise<BookingResponse, { pnr: string }>(
+              async () => ({}) as BookingResponse,
+            ),
+            confirmBooking: fromPromise<BookingResponse, { id: string }>(
+              async () => ({}) as BookingResponse,
+            ),
+            cancelBooking: fromPromise<
+              BookingResponse,
+              { id: string; reason: string }
+            >(async () => ({}) as BookingResponse),
           },
         });
 

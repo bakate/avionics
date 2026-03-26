@@ -56,13 +56,17 @@ export const BookingContextPersistenceSchema = Schema.Struct({
   filters: Schema.optional(FilterState),
   sortField: Schema.optional(SortField),
   sortOrder: Schema.optional(SortOrder),
-}) as Schema.Schema<any, any, never>;
+});
+
+export type BookingContextPersistence = Schema.Schema.Type<
+  typeof BookingContextPersistenceSchema
+>;
 
 const decodeContext = Schema.decodeUnknownSync(BookingContextPersistenceSchema);
 const encodeContext = Schema.encodeSync(BookingContextPersistenceSchema);
 
 const STORAGE_KEY = "avionics-booking-session";
-const LAST_EMAIL_KEY = "avionics-last-email";
+export const LAST_EMAIL_KEY = "avionics-last-email";
 
 export const saveLastEmail = (email: string) => {
   if (
@@ -107,7 +111,7 @@ export const saveBookingState = (snapshot: any) => {
   }
 };
 
-export const loadBookingState = (): any => {
+export const loadBookingState = (): any | undefined => {
   try {
     const saved =
       typeof sessionStorage !== "undefined" &&

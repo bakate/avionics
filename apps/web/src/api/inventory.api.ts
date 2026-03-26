@@ -1,5 +1,6 @@
+import { type FlightAvailability } from "@workspace/application/read-models";
 import { type AirportCode, type CabinClass } from "@workspace/domain/kernel";
-import { Effect, Schema } from "effect";
+import { Effect, Request, RequestResolver, Schema } from "effect";
 import { makeClient } from "@/api/client";
 
 export const DatePrice = Schema.Struct({
@@ -15,14 +16,41 @@ export const DatePrice = Schema.Struct({
 export type DatePrice = typeof DatePrice.Type;
 
 /**
- * Get flight availability
+ * Request identity for individual flight availability calls
+ */
+export interface GetFlightAvailabilityRequest extends Request.Request<
+  FlightAvailability,
+  any
+> {
+  readonly _tag: "GetFlightAvailabilityRequest";
+  readonly flightId: string;
+}
+
+export const GetFlightAvailabilityRequest =
+  Request.tagged<GetFlightAvailabilityRequest>("GetFlightAvailabilityRequest");
+
+/**
+ * Resolver for individual flight availability calls (Inventory API)
+ */
+const GetFlightAvailabilityResolver = RequestResolver.fromEffect(
+  (req: GetFlightAvailabilityRequest) =>
+    makeClient.pipe(
+      Effect.flatMap((client) =>
+        client.inventory.getFlightAvailability({
+          path: { flightId: req.flightId },
+        }),
+      ),
+    ),
+);
+
+/**
+ * Get flight availability (Cached & Deduplicated)
  */
 export const getFlightAvailability = (flightId: string) =>
-  makeClient.pipe(
-    Effect.flatMap((client) =>
-      client.inventory.getFlightAvailability({ path: { flightId } }),
-    ),
-  );
+  Effect.request(
+    GetFlightAvailabilityRequest({ flightId }),
+    GetFlightAvailabilityResolver,
+  ).pipe(Effect.withRequestCaching(true));
 
 /**
  * Get cabin availability
@@ -74,7 +102,6 @@ export const getInventoryStats = () =>
  * Get lowest prices per day for a date range.
  * Calls findAvailableFlights for each date and extracts the minimum cabin price.
  * Used by the Date_Carousel component.
- *
  */
 export const getDatePrices = (params: {
   origin: AirportCode;

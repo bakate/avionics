@@ -7,47 +7,54 @@
  * context data (search params, selected outbound, selected return, passengers).
  */
 
-import { type CabinClass, type Email } from "@workspace/domain/kernel";
+import {
+  type CabinClass,
+  type Email,
+  FlightId,
+} from "@workspace/domain/kernel";
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
 import { createActor, fromPromise, waitFor } from "xstate";
 import { type PassengerInput } from "../../schemas/passenger.schema";
 import { type SearchParams } from "../../schemas/search.schema";
 import {
+  type BookingResponse,
   type BookingResult,
+  type BookingSummary,
   bookingMachine,
-  type FlightResult,
+  FlightResult,
   type FlightSelection,
 } from "../booking.machine";
 
-const makeFlight = (id: string): FlightResult => ({
-  flightId: id,
-  flightNumber: `AF${id}`,
-  origin: "CDG",
-  destination: "JFK",
-  departureTime: new Date().toISOString(),
-  arrivalTime: new Date().toISOString(),
-  durationMinutes: 120,
-  stops: 0,
-  cabins: [
-    {
-      cabin: "ECONOMY" as CabinClass,
-      availableSeats: 100,
-      price: { amount: 200, currency: "EUR" },
-    },
-    {
-      cabin: "BUSINESS" as CabinClass,
-      availableSeats: 20,
-      price: { amount: 800, currency: "EUR" },
-    },
-    {
-      cabin: "FIRST" as CabinClass,
-      availableSeats: 5,
-      price: { amount: 2000, currency: "EUR" },
-    },
-  ],
-  lastUpdated: new Date().toISOString(),
-});
+const makeFlight = (id: string): FlightResult =>
+  new FlightResult({
+    flightId: FlightId.make(id),
+    flightNumber: `AF${id}`,
+    origin: "CDG",
+    destination: "JFK",
+    departureTime: new Date().toISOString(),
+    arrivalTime: new Date().toISOString(),
+    durationMinutes: 120,
+    stops: 0,
+    cabins: [
+      {
+        cabin: "ECONOMY" as CabinClass,
+        availableSeats: 100,
+        price: { amount: 200, currency: "EUR" },
+      },
+      {
+        cabin: "BUSINESS" as CabinClass,
+        availableSeats: 20,
+        price: { amount: 800, currency: "EUR" },
+      },
+      {
+        cabin: "FIRST" as CabinClass,
+        availableSeats: 5,
+        price: { amount: 2000, currency: "EUR" },
+      },
+    ],
+    lastUpdated: new Date().toISOString(),
+  });
 
 const makeSelection = (
   flight: FlightResult,
@@ -87,14 +94,34 @@ describe("Property 14: Back navigation preserves context", () => {
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [flight],
+              async () => [flight] as Array<FlightResult>,
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [],
+              async () => [] as Array<FlightResult>,
             ),
-            submitBooking: fromPromise(async (): Promise<BookingResult> => {
+            submitBooking: fromPromise<
+              BookingResult,
+              {
+                segments: Array<{ flightId: string; cabinClass: CabinClass }>;
+                passengers: ReadonlyArray<PassengerInput>;
+              }
+            >(async () => {
               throw new Error("Not implemented");
             }),
+            fetchBookings: fromPromise<
+              Array<BookingSummary>,
+              { email?: string } | undefined
+            >(async () => []),
+            fetchBookingDetails: fromPromise<BookingResponse, { pnr: string }>(
+              async () => ({}) as BookingResponse,
+            ),
+            confirmBooking: fromPromise<BookingResponse, { id: string }>(
+              async () => ({}) as BookingResponse,
+            ),
+            cancelBooking: fromPromise<
+              BookingResponse,
+              { id: string; reason: string }
+            >(async () => ({}) as BookingResponse),
           },
         });
 
@@ -205,14 +232,34 @@ describe("Property 14: Back navigation preserves context", () => {
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [flight],
+              async () => [flight] as Array<FlightResult>,
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [],
+              async () => [] as Array<FlightResult>,
             ),
-            submitBooking: fromPromise(async (): Promise<BookingResult> => {
+            submitBooking: fromPromise<
+              BookingResult,
+              {
+                segments: Array<{ flightId: string; cabinClass: CabinClass }>;
+                passengers: ReadonlyArray<PassengerInput>;
+              }
+            >(async () => {
               throw new Error("Not implemented");
             }),
+            fetchBookings: fromPromise<
+              Array<BookingSummary>,
+              { email?: string } | undefined
+            >(async () => []),
+            fetchBookingDetails: fromPromise<BookingResponse, { pnr: string }>(
+              async () => ({}) as BookingResponse,
+            ),
+            confirmBooking: fromPromise<BookingResponse, { id: string }>(
+              async () => ({}) as BookingResponse,
+            ),
+            cancelBooking: fromPromise<
+              BookingResponse,
+              { id: string; reason: string }
+            >(async () => ({}) as BookingResponse),
           },
         });
 

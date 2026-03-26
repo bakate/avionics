@@ -1,9 +1,17 @@
 import { FetchHttpClient, HttpApiClient } from "@effect/platform";
 import { Api } from "@workspace/api/api";
-import { Config, Context, Effect, Layer, ManagedRuntime } from "effect";
+import {
+  Config,
+  Context,
+  Effect,
+  Layer,
+  ManagedRuntime,
+  Request,
+} from "effect";
 
 /**
- * API Client Configuration
+ *
+ * Global API Client Configuration
  */
 const getBaseUrl = () => {
   if (import.meta.env?.VITE_API_URL) return import.meta.env.VITE_API_URL;
@@ -26,8 +34,17 @@ export type Client = Effect.Effect.Success<typeof makeClientEffect>;
 
 export class ApiClient extends Context.Tag("ApiClient")<ApiClient, Client>() {}
 
+/**
+ * Global Request Cache for API calls (Deduplication & TTL)
+ */
+const apiRequestCache = Effect.runSync(
+  Request.makeCache({ capacity: 500, timeToLive: "2 minutes" }),
+);
+
 export const ClientLive = Layer.effect(ApiClient, makeClientEffect).pipe(
   Layer.provide(FetchHttpClient.layer),
+  // Inject the global request cache into the environment
+  Layer.provideMerge(Layer.setRequestCache(apiRequestCache)),
 );
 
 export const ApiRuntime = ManagedRuntime.make(ClientLive);

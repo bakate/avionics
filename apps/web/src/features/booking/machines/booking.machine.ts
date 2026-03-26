@@ -7,21 +7,37 @@
  */
 
 import { type BookingResponse } from "@workspace/api/booking-api";
+export type { BookingResponse };
+
 import { type BookFlightCommand } from "@workspace/application/booking.commands";
 import { type BookingSummary } from "@workspace/application/read-models";
+export type { BookingSummary };
+
+import { BookingStatusSchema, PnrStatus } from "@workspace/domain/booking";
 import {
+  BookingId,
   type CabinClass,
   CabinClassSchema,
   type CurrencyCode,
+  CurrencyCodeSchema,
+  FlightId,
   Money,
   type PassengerType,
+  PnrCodeSchema,
 } from "@workspace/domain/kernel";
 import { type BookingSegment } from "@workspace/domain/segment";
 import { Effect, Schema } from "effect";
 import { v4 as uuidv4 } from "uuid";
-import { assign, fromPromise, setup } from "xstate";
-import { bookFlight, getBookingByPnr, getBookings } from "@/api/booking.api";
+import { assign, setup } from "xstate";
+import {
+  bookFlight,
+  cancelBooking,
+  confirmBooking,
+  getBookingByPnr,
+  getBookings,
+} from "@/api/booking.api";
 import { findAvailableFlights } from "@/api/inventory.api";
+import { fromEffect } from "@/lib/xstate-effect";
 import { type PassengerInput } from "../schemas/passenger.schema";
 import { type SearchParams } from "../schemas/search.schema";
 import {
@@ -49,7 +65,7 @@ const derivePassengerType = (dateOfBirth: Date): PassengerType => {
  * Mirrors the FlightAvailability read model shape.
  */
 export class FlightResult extends Schema.Class<FlightResult>("FlightResult")({
-  flightId: Schema.String,
+  flightId: FlightId,
   flightNumber: Schema.String,
   origin: Schema.String,
   destination: Schema.String,
@@ -62,7 +78,10 @@ export class FlightResult extends Schema.Class<FlightResult>("FlightResult")({
     Schema.Struct({
       cabin: CabinClassSchema,
       availableSeats: Schema.Number,
-      price: Schema.Struct({ amount: Schema.Number, currency: Schema.String }),
+      price: Schema.Struct({
+        amount: Schema.Number,
+        currency: CurrencyCodeSchema,
+      }),
     }),
   ),
   lastUpdated: Schema.String,
@@ -79,15 +98,15 @@ export class FlightSelection extends Schema.Class<FlightSelection>(
 
 export class BookingResult extends Schema.Class<BookingResult>("BookingResult")(
   {
-    bookingId: Schema.String,
-    pnrCode: Schema.String,
-    status: Schema.String,
+    bookingId: BookingId,
+    pnrCode: PnrCodeSchema,
+    status: BookingStatusSchema,
     totalPrice: Schema.Struct({
       amount: Schema.Number,
-      currency: Schema.String,
+      currency: CurrencyCodeSchema,
     }),
     confirmedAt: Schema.String,
-    checkoutUrl: Schema.optional(Schema.String),
+    checkoutUrl: Schema.Union(Schema.String, Schema.Undefined),
   },
 ) {}
 
@@ -113,6 +132,11 @@ export type BookingContext = {
   filters: FilterState;
   sortField: SortField;
   sortOrder: SortOrder;
+
+  activeAction: {
+    id: string;
+    type: "confirm" | "cancel";
+  } | null;
 };
 
 // ---------------------------------------------------------------------------
@@ -121,12 +145,14 @@ export type BookingContext = {
 
 export type BookingEvent =
   | { type: "SEARCH"; params: SearchParams }
-  | { type: "FETCH_BOOKINGS" }
+  | { type: "FETCH_BOOKINGS"; email?: string | undefined }
   | { type: "FETCH_BOOKING_DETAILS"; pnr: string }
   | { type: "SELECT_OUTBOUND"; selection: FlightSelection }
   | { type: "SELECT_RETURN"; selection: FlightSelection }
   | { type: "SET_PASSENGERS"; passengers: ReadonlyArray<PassengerInput> }
   | { type: "CONFIRM_PAYMENT" }
+  | { type: "CONFIRM_BOOKING_ACTION"; id: string }
+  | { type: "CANCEL_BOOKING_ACTION"; id: string; reason: string }
   | { type: "CHANGE_OUTBOUND_DATE"; date: string }
   | { type: "CHANGE_RETURN_DATE"; date: string }
   | { type: "ERROR"; message: string }
@@ -155,6 +181,7 @@ export const initialContext: BookingContext = {
   pnrToFetch: null,
   userEmail: loadLastEmail(),
   error: null,
+  activeAction: null,
   filters: { cabinClass: "ECONOMY", maxStops: null, timeRange: null },
   sortField: "price",
   sortOrder: "asc",
@@ -174,241 +201,264 @@ const isRoundTrip = ({ context }: { context: BookingContext }) =>
 // Machine
 // ---------------------------------------------------------------------------
 
-export const bookingMachine = setup({
+const machineSetup = setup({
   types: {
     context: {} as BookingContext,
     events: {} as BookingEvent,
   },
   actors: {
-    searchFlights: fromPromise(
-      async ({
-        input,
-      }: {
-        input: SearchParams;
-      }): Promise<Array<FlightResult>> => {
-        const effect = findAvailableFlights({
+    searchFlights: fromEffect((input: SearchParams) =>
+      Effect.gen(function* () {
+        const flights = yield* findAvailableFlights({
           cabin: "ECONOMY",
           origin: input.origin,
           destination: input.destination,
           departureDate: new Date(input.departureDate),
         });
-        const flights = await Effect.runPromise(effect);
-        return flights.map((f) => ({
-          flightId: f.flightId.valueOf() ?? "",
-          flightNumber: f.flightNumber.valueOf() ?? "",
-          origin: f.origin.valueOf() ?? input.origin,
-          destination: f.destination.valueOf() ?? input.destination,
-          departureTime:
-            f.departureTime instanceof Date
-              ? f.departureTime.toISOString()
-              : String(f.departureTime),
-          arrivalTime:
-            f.arrivalTime instanceof Date
-              ? f.arrivalTime.toISOString()
-              : String(f.arrivalTime),
-          durationMinutes: f.durationMinutes,
-          stops: f.stops,
-          cabins: [
-            {
-              cabin: "ECONOMY" as CabinClass,
-              availableSeats: f.economyAvailable,
-              price: f.economyPrice,
-            },
-            {
-              cabin: "BUSINESS" as CabinClass,
-              availableSeats: f.businessAvailable,
-              price: f.businessPrice,
-            },
-            {
-              cabin: "FIRST" as CabinClass,
-              availableSeats: f.firstAvailable,
-              price: f.firstPrice,
-            },
-          ],
-          lastUpdated:
-            f.lastUpdated instanceof Date
-              ? f.lastUpdated.toISOString()
-              : String(f.lastUpdated),
-        }));
-      },
+
+        return flights.map(
+          (flight) =>
+            new FlightResult({
+              flightId: FlightId.make(flight.flightId.valueOf() ?? ""),
+              flightNumber: flight.flightNumber.valueOf() ?? "",
+              origin: flight.origin.valueOf() ?? input.origin,
+              destination: flight.destination.valueOf() ?? input.destination,
+              departureTime:
+                flight.departureTime instanceof Date
+                  ? flight.departureTime.toISOString()
+                  : String(flight.departureTime),
+              arrivalTime:
+                flight.arrivalTime instanceof Date
+                  ? flight.arrivalTime.toISOString()
+                  : String(flight.arrivalTime),
+              durationMinutes: flight.durationMinutes,
+              stops: flight.stops,
+              cabins: [
+                {
+                  cabin: "ECONOMY" as CabinClass,
+                  availableSeats: flight.economyAvailable,
+                  price: {
+                    amount: flight.economyPrice.amount,
+                    currency: flight.economyPrice.currency as CurrencyCode,
+                  },
+                },
+                {
+                  cabin: "BUSINESS" as CabinClass,
+                  availableSeats: flight.businessAvailable,
+                  price: {
+                    amount: flight.businessPrice.amount,
+                    currency: flight.businessPrice.currency as CurrencyCode,
+                  },
+                },
+                {
+                  cabin: "FIRST" as CabinClass,
+                  availableSeats: flight.firstAvailable,
+                  price: {
+                    amount: flight.firstPrice.amount,
+                    currency: flight.firstPrice.currency as CurrencyCode,
+                  },
+                },
+              ],
+              lastUpdated:
+                flight.lastUpdated instanceof Date
+                  ? flight.lastUpdated.toISOString()
+                  : String(flight.lastUpdated),
+            }),
+        );
+      }),
     ),
-    searchReturnFlights: fromPromise(
-      async ({
-        input,
-      }: {
-        input: SearchParams;
-      }): Promise<Array<FlightResult>> => {
+    searchReturnFlights: fromEffect((input: SearchParams) =>
+      Effect.gen(function* () {
         const returnDate = input.returnDate;
         if (!returnDate) return [];
-        const effect = findAvailableFlights({
+
+        const flights = yield* findAvailableFlights({
           cabin: "ECONOMY",
           origin: input.destination,
           destination: input.origin,
           departureDate: new Date(returnDate),
         });
-        const flights = await Effect.runPromise(effect);
-        return flights.map((f) => ({
-          flightId: f.flightId.valueOf() ?? "",
-          flightNumber: f.flightNumber.valueOf() ?? "",
-          origin: f.origin.valueOf() ?? input.destination,
-          destination: f.destination.valueOf() ?? input.origin,
-          departureTime:
-            f.departureTime instanceof Date
-              ? f.departureTime.toISOString()
-              : String(f.departureTime),
-          arrivalTime:
-            f.arrivalTime instanceof Date
-              ? f.arrivalTime.toISOString()
-              : String(f.arrivalTime),
-          durationMinutes: f.durationMinutes,
-          stops: f.stops,
-          cabins: [
-            {
-              cabin: "ECONOMY" as CabinClass,
-              availableSeats: f.economyAvailable,
-              price: f.economyPrice,
-            },
-            {
-              cabin: "BUSINESS" as CabinClass,
-              availableSeats: f.businessAvailable,
-              price: f.businessPrice,
-            },
-            {
-              cabin: "FIRST" as CabinClass,
-              availableSeats: f.firstAvailable,
-              price: f.firstPrice,
-            },
-          ],
-          lastUpdated:
-            f.lastUpdated instanceof Date
-              ? f.lastUpdated.toISOString()
-              : String(f.lastUpdated),
-        }));
-      },
-    ),
-    fetchBookings: fromPromise(
-      async ({
-        input,
-      }: {
-        input?: { email?: string };
-      }): Promise<ReadonlyArray<BookingSummary>> => {
-        try {
-          const effect = getBookings(input?.email);
-          const bookings = (await Effect.runPromise(
-            effect,
-          )) as ReadonlyArray<BookingResponse>;
-          return bookings.map((b) => ({
-            id: b.id,
-            pnrCode: b.pnrCode,
-            status: b.status,
-            passengerCount: 1,
-            totalPrice: b.segments.reduce<Money>(
-              (acc, seg: BookingSegment) => {
-                const rawPrice = seg.price as unknown as {
-                  amount: number;
-                  currency: CurrencyCode;
-                };
-                const price =
-                  seg.price instanceof Money
-                    ? seg.price
-                    : Money.of(rawPrice.amount, rawPrice.currency);
-                return acc.add(price);
-              },
-              Money.zero(b.segments[0]?.price.currency ?? "EUR"),
-            ),
-            createdAt: b.createdAt,
-            expiresAt: b.expiresAt,
-          }));
-        } catch (error) {
-          console.error("Failed to fetch bookings:", error);
-          throw error;
-        }
-      },
-    ),
-    fetchBookingDetails: fromPromise(
-      async ({
-        input,
-      }: {
-        input: { pnr: string };
-      }): Promise<BookingResponse> => {
-        return await Effect.runPromise(getBookingByPnr(input.pnr));
-      },
-    ),
-    submitBooking: fromPromise(
-      async ({
-        input,
-      }: {
-        input: {
-          segments: Array<{ flightId: string; cabinClass: CabinClass }>;
-          passengers: ReadonlyArray<PassengerInput>;
-        };
-      }): Promise<BookingResult> => {
-        if (input.passengers.length === 0) {
-          throw new Error("No passengers provided");
-        }
 
-        const mappedPassengers = input.passengers.map((p) => ({
-          id: uuidv4(),
-          firstName: p.firstName,
-          lastName: p.lastName,
-          email: p.email,
-          dateOfBirth: p.dateOfBirth,
-          gender: p.gender,
-          type: derivePassengerType(p.dateOfBirth),
-        }));
-
-        const command: BookFlightCommand = {
-          segments: input.segments as unknown as BookFlightCommand["segments"],
-          passengers:
-            mappedPassengers as unknown as BookFlightCommand["passengers"],
-          successUrl: `${window.location.origin}/success?pnr={{PNR}}`,
-          cancelUrl: `${window.location.origin}/cancel`,
-        };
-
-        const effect = bookFlight(command);
-        const response = await Effect.runPromise(Effect.scoped(effect));
-
-        const totalPrice = response.booking.segments.reduce(
-          (sum, seg) => sum.add(seg.price),
-          Money.zero(response.booking.segments[0]?.price.currency ?? "EUR"),
+        return flights.map(
+          (flight) =>
+            new FlightResult({
+              flightId: FlightId.make(flight.flightId.valueOf() ?? ""),
+              flightNumber: flight.flightNumber.valueOf() ?? "",
+              origin: flight.origin.valueOf() ?? input.destination,
+              destination: flight.destination.valueOf() ?? input.origin,
+              departureTime:
+                flight.departureTime instanceof Date
+                  ? flight.departureTime.toISOString()
+                  : String(flight.departureTime),
+              arrivalTime:
+                flight.arrivalTime instanceof Date
+                  ? flight.arrivalTime.toISOString()
+                  : String(flight.arrivalTime),
+              durationMinutes: flight.durationMinutes,
+              stops: flight.stops,
+              cabins: [
+                {
+                  cabin: "ECONOMY" as CabinClass,
+                  availableSeats: flight.economyAvailable,
+                  price: {
+                    amount: flight.economyPrice.amount,
+                    currency: flight.economyPrice.currency as CurrencyCode,
+                  },
+                },
+                {
+                  cabin: "BUSINESS" as CabinClass,
+                  availableSeats: flight.businessAvailable,
+                  price: {
+                    amount: flight.businessPrice.amount,
+                    currency: flight.businessPrice.currency as CurrencyCode,
+                  },
+                },
+                {
+                  cabin: "FIRST" as CabinClass,
+                  availableSeats: flight.firstAvailable,
+                  price: {
+                    amount: flight.firstPrice.amount,
+                    currency: flight.firstPrice.currency as CurrencyCode,
+                  },
+                },
+              ],
+              lastUpdated:
+                flight.lastUpdated instanceof Date
+                  ? flight.lastUpdated.toISOString()
+                  : String(flight.lastUpdated),
+            }),
         );
+      }),
+    ),
+    fetchBookings: fromEffect((input?: { email?: string }) =>
+      Effect.gen(function* () {
+        const response = yield* getBookings(input?.email);
+        const bookings = response as ReadonlyArray<BookingResponse>;
 
-        return {
-          bookingId: response.booking.id,
-          pnrCode: response.booking.pnrCode,
-          status: response.booking.status,
-          totalPrice: {
-            amount: totalPrice.amount,
-            currency: totalPrice.currency,
-          },
-          confirmedAt: response.booking.createdAt.toISOString(),
-          checkoutUrl: response.checkoutUrl,
-        };
-      },
+        return bookings.map((booking) => ({
+          id: BookingId.make(booking.id.valueOf() ?? ""),
+          pnrCode: PnrCodeSchema.make(booking.pnrCode.valueOf() ?? ""),
+          status: booking.status as PnrStatus,
+          passengerCount: 1,
+          totalPrice: booking.segments.reduce<Money>(
+            (acc, segment: BookingSegment) => {
+              const rawPrice = segment.price as unknown as {
+                amount: number;
+                currency: CurrencyCode;
+              };
+              const price =
+                segment.price instanceof Money
+                  ? segment.price
+                  : Money.of(rawPrice.amount, rawPrice.currency);
+              return acc.add(price);
+            },
+            Money.zero(booking.segments[0]?.price.currency ?? "EUR"),
+          ),
+          createdAt: booking.createdAt,
+          expiresAt: booking.expiresAt,
+        }));
+      }).pipe(
+        Effect.tapError((error) =>
+          Effect.logError("Failed to fetch bookings", error),
+        ),
+      ),
+    ),
+    fetchBookingDetails: fromEffect((input: { pnr: string }) =>
+      getBookingByPnr(input.pnr),
+    ),
+    submitBooking: fromEffect(
+      (input: {
+        segments: Array<{ flightId: string; cabinClass: CabinClass }>;
+        passengers: ReadonlyArray<PassengerInput>;
+      }) =>
+        Effect.gen(function* () {
+          if (input.passengers.length === 0) {
+            return yield* Effect.fail(new Error("No passengers provided"));
+          }
+
+          const mappedPassengers = input.passengers.map((passenger) => ({
+            id: uuidv4(),
+            firstName: passenger.firstName,
+            lastName: passenger.lastName,
+            email: passenger.email,
+            dateOfBirth: passenger.dateOfBirth,
+            gender: passenger.gender,
+            type: derivePassengerType(passenger.dateOfBirth),
+          }));
+
+          const command: BookFlightCommand = {
+            segments:
+              input.segments as unknown as BookFlightCommand["segments"],
+            passengers:
+              mappedPassengers as unknown as BookFlightCommand["passengers"],
+            successUrl: `${window.location.origin}/success?pnr={{PNR}}`,
+            cancelUrl: `${window.location.origin}/cancel`,
+          };
+
+          const response = yield* Effect.scoped(bookFlight(command));
+
+          const totalPrice = response.booking.segments.reduce(
+            (sum, segment) => sum.add(segment.price),
+            Money.zero(response.booking.segments[0]?.price.currency ?? "EUR"),
+          );
+
+          return new BookingResult({
+            bookingId: response.booking.id,
+            pnrCode: response.booking.pnrCode,
+            status: response.booking.status,
+            totalPrice: {
+              amount: totalPrice.amount,
+              currency: totalPrice.currency as CurrencyCode,
+            },
+            confirmedAt: response.booking.createdAt.toISOString(),
+            checkoutUrl: response.checkoutUrl,
+          });
+        }),
+    ),
+    confirmBooking: fromEffect((input: { id: string }) =>
+      confirmBooking(input.id),
+    ),
+    cancelBooking: fromEffect((input: { id: string; reason: string }) =>
+      cancelBooking(input.id, input.reason),
     ),
   },
   actions: {
-    persistEmail: assign({
-      ...initialContext,
-      passengers: ({ context }) => context.passengers,
-      bookingResult: ({ context }) =>
-        context.bookingResult
-          ? { ...context.bookingResult, status: "CONFIRMED" }
+    persistEmail: assign(({ context }) => {
+      const email = context.passengers[0]?.email ?? context.userEmail;
+      if (email) {
+        saveLastEmail(email);
+      }
+      return {
+        // Clear flow but KEEP critical data
+        searchParams: null,
+        outboundFlights: [],
+        returnFlights: [],
+        selectedOutbound: null,
+        selectedReturn: null,
+        error: null,
+        activeAction: null,
+        // We KEEP userEmail and allBookings
+        userEmail: email,
+        allBookings: context.allBookings,
+        // Preserve confirmed status in result
+        bookingResult: context.bookingResult
+          ? { ...context.bookingResult, status: PnrStatus.CONFIRMED }
           : null,
-      userEmail: ({ context }) => {
-        const email = context.passengers[0]?.email ?? context.userEmail;
-        if (email) {
-          saveLastEmail(email);
-        }
-        return email;
-      },
+      };
     }),
+    resetBookingFlow: assign(({ context }) => ({
+      ...initialContext,
+      allBookings: context.allBookings,
+      userEmail: context.userEmail,
+    })),
   },
   guards: {
     isOneWay,
     isRoundTrip,
   },
-}).createMachine({
+});
+
+export const bookingMachine = machineSetup.createMachine({
   id: "booking",
   initial: "idle",
   context: initialContext,
@@ -436,6 +486,36 @@ export const bookingMachine = setup({
         sortOrder: () => "asc",
       }),
     },
+    CONFIRM_BOOKING_ACTION: {
+      target: "#booking.performingAction",
+      actions: assign({
+        activeAction: ({ event }) => ({
+          id: event.id,
+          type: "confirm" as const,
+        }),
+      }),
+    },
+    CANCEL_BOOKING_ACTION: {
+      target: "#booking.performingAction",
+      actions: assign({
+        activeAction: ({ event }) => ({
+          id: event.id,
+          type: "cancel" as const,
+        }),
+      }),
+    },
+    FETCH_BOOKINGS: {
+      target: "#booking.fetchingBookings",
+      actions: assign({
+        userEmail: ({ context, event }) =>
+          event.email ?? context.userEmail ?? "",
+      }),
+    },
+    FETCH_BOOKING_DETAILS: {
+      target: "#booking.fetchingBookingDetails",
+      actions: assign({ pnrToFetch: ({ event }) => event.pnr }),
+    },
+    RESET: { target: "#booking.idle", actions: "resetBookingFlow" },
   },
 
   states: {
@@ -454,13 +534,6 @@ export const bookingMachine = setup({
             error: () => null,
           }),
         },
-        FETCH_BOOKINGS: {
-          target: "fetchingBookings",
-        },
-        FETCH_BOOKING_DETAILS: {
-          target: "fetchingBookingDetails",
-          actions: assign({ pnrToFetch: ({ event }) => event.pnr }),
-        },
       },
     },
 
@@ -473,7 +546,8 @@ export const bookingMachine = setup({
         onDone: {
           target: "idle",
           actions: assign({
-            allBookings: ({ event }) => event.output,
+            allBookings: ({ event }) =>
+              event.output as unknown as ReadonlyArray<BookingSummary>,
           }),
         },
         onError: {
@@ -496,7 +570,8 @@ export const bookingMachine = setup({
         onDone: {
           target: "viewingBookingDetails",
           actions: assign({
-            currentBooking: ({ event }) => event.output,
+            currentBooking: ({ event }) =>
+              event.output as unknown as BookingResponse,
           }),
         },
         onError: {
@@ -514,10 +589,6 @@ export const bookingMachine = setup({
     viewingBookingDetails: {
       on: {
         BACK: { target: "idle" },
-        FETCH_BOOKING_DETAILS: {
-          target: "fetchingBookingDetails",
-          actions: assign({ pnrToFetch: ({ event }) => event.pnr }),
-        },
       },
     },
 
@@ -529,7 +600,8 @@ export const bookingMachine = setup({
         onDone: {
           target: "selectingOutbound",
           actions: assign({
-            outboundFlights: ({ event }) => event.output,
+            outboundFlights: ({ event }) =>
+              event.output as unknown as ReadonlyArray<FlightResult>,
           }),
         },
         onError: {
@@ -543,7 +615,7 @@ export const bookingMachine = setup({
         },
       },
       on: {
-        RESET: { target: "idle", actions: assign(initialContext) },
+        RESET: { target: "idle", actions: "resetBookingFlow" },
       },
     },
 
@@ -551,7 +623,7 @@ export const bookingMachine = setup({
       on: {
         SELECT_OUTBOUND: [
           {
-            guard: "isOneWay",
+            guard: isOneWay,
             target: "enteringPassengers",
             actions: assign({
               selectedOutbound: ({ event }) => event.selection,
@@ -593,7 +665,7 @@ export const bookingMachine = setup({
           target: "error",
           actions: assign({ error: ({ event }) => event.message }),
         },
-        RESET: { target: "idle", actions: assign(initialContext) },
+        RESET: { target: "idle", actions: "resetBookingFlow" },
       },
     },
 
@@ -605,7 +677,8 @@ export const bookingMachine = setup({
         onDone: {
           target: "selectingReturn",
           actions: assign({
-            returnFlights: ({ event }) => event.output,
+            returnFlights: ({ event }) =>
+              event.output as unknown as ReadonlyArray<FlightResult>,
           }),
         },
         onError: {
@@ -647,7 +720,7 @@ export const bookingMachine = setup({
           target: "error",
           actions: assign({ error: ({ event }) => event.message }),
         },
-        RESET: { target: "idle", actions: assign(initialContext) },
+        RESET: { target: "idle", actions: "resetBookingFlow" },
       },
     },
 
@@ -661,7 +734,7 @@ export const bookingMachine = setup({
         },
         BACK: [
           {
-            guard: "isOneWay",
+            guard: isOneWay,
             target: "selectingOutbound",
             actions: assign({ passengers: () => [] }),
           },
@@ -674,7 +747,7 @@ export const bookingMachine = setup({
           target: "error",
           actions: assign({ error: ({ event }) => event.message }),
         },
-        RESET: { target: "idle", actions: assign(initialContext) },
+        RESET: { target: "idle", actions: "resetBookingFlow" },
       },
     },
 
@@ -686,7 +759,7 @@ export const bookingMachine = setup({
           target: "error",
           actions: assign({ error: ({ event }) => event.message }),
         },
-        RESET: { target: "idle", actions: assign(initialContext) },
+        RESET: { target: "idle", actions: "resetBookingFlow" },
       },
     },
 
@@ -726,7 +799,8 @@ export const bookingMachine = setup({
           {
             target: "confirmed",
             actions: assign({
-              bookingResult: ({ event }) => event.output,
+              bookingResult: ({ event }) =>
+                event.output as unknown as BookingResult,
               error: () => null,
             }),
           },
@@ -745,7 +819,7 @@ export const bookingMachine = setup({
         BACK: {
           target: "reviewingSummary",
         },
-        RESET: { target: "idle", actions: assign(initialContext) },
+        RESET: { target: "idle", actions: "resetBookingFlow" },
       },
     },
 
@@ -757,7 +831,7 @@ export const bookingMachine = setup({
       },
       on: {
         COMPLETE: "confirmed",
-        RESET: { target: "idle", actions: assign(initialContext) },
+        RESET: { target: "idle", actions: "resetBookingFlow" },
       },
     },
 
@@ -775,15 +849,83 @@ export const bookingMachine = setup({
         },
       ],
       on: {
-        RESET: { target: "idle", actions: assign(initialContext) },
+        RESET: { target: "idle", actions: "resetBookingFlow" },
       },
     },
 
     error: {
       on: {
         RETRY: { target: "idle" },
-        FETCH_BOOKINGS: { target: "fetchingBookings" },
-        RESET: { target: "idle", actions: assign(initialContext) },
+        RESET: { target: "idle", actions: "resetBookingFlow" },
+      },
+    },
+
+    performingAction: {
+      tags: ["loading"],
+      initial: "selecting",
+      states: {
+        selecting: {
+          always: [
+            {
+              guard: ({ event }) => event.type === "CANCEL_BOOKING_ACTION",
+              target: "cancelling",
+            },
+            {
+              target: "confirming",
+            },
+          ],
+        },
+        confirming: {
+          invoke: {
+            src: "confirmBooking",
+            input: ({ context }) => ({ id: context.activeAction?.id ?? "" }),
+            onDone: {
+              target: "#booking.fetchingBookings",
+              actions: assign({ activeAction: () => null }),
+            },
+            onError: {
+              target: "#booking.error",
+              actions: assign({
+                error: ({ event }) => (event.error as Error).message,
+                activeAction: () => null,
+              }),
+            },
+          },
+        },
+        cancelling: {
+          invoke: {
+            src: "cancelBooking",
+            input: ({ context, event }) => {
+              // Priority to context if we just transitioned, but event might have it if we were already there
+              const id =
+                context.activeAction?.id ??
+                (
+                  event as Extract<
+                    BookingEvent,
+                    { type: "CANCEL_BOOKING_ACTION" }
+                  >
+                ).id;
+              const reason = (
+                event as Extract<
+                  BookingEvent,
+                  { type: "CANCEL_BOOKING_ACTION" }
+                >
+              ).reason;
+              return { id, reason: reason ?? "No reason provided" };
+            },
+            onDone: {
+              target: "#booking.fetchingBookings",
+              actions: assign({ activeAction: () => null }),
+            },
+            onError: {
+              target: "#booking.error",
+              actions: assign({
+                error: ({ event }) => (event.error as Error).message,
+                activeAction: () => null,
+              }),
+            },
+          },
+        },
       },
     },
   },
@@ -808,11 +950,15 @@ export type BookingStateValue =
   | "paying"
   | "redirecting"
   | "confirmed"
-  | "error";
+  | "error"
+  | { performingAction: "selecting" | "confirming" | "cancelling" };
 
 /** Map machine state to booking flow step index (0-based) */
 export const stateToStep = (state: BookingStateValue): number => {
-  const mapping: Record<BookingStateValue, number> = {
+  if (typeof state === "object") {
+    return 4;
+  }
+  const mapping: Record<string, number> = {
     idle: 0,
     fetchingBookings: 0,
     fetchingBookingDetails: 0,
@@ -828,7 +974,7 @@ export const stateToStep = (state: BookingStateValue): number => {
     confirmed: 5,
     error: -1,
   };
-  return mapping[state];
+  return mapping[state] ?? 0;
 };
 
 /** Map machine state to the corresponding route path */
@@ -836,6 +982,9 @@ export const stateToRoute = (
   state: BookingStateValue,
   context: BookingContext,
 ): string => {
+  if (typeof state === "object") {
+    return "/payment";
+  }
   switch (state) {
     case "idle":
     case "fetchingBookings":

@@ -7,11 +7,11 @@
  * the price should be null.
  */
 
-import { type CabinClass } from "@workspace/domain/kernel";
+import { type CabinClass, FlightId } from "@workspace/domain/kernel";
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
 import { type DatePrice } from "@/api/inventory.api";
-import { type FlightResult } from "../../machines/booking.machine";
+import { FlightResult } from "../../machines/booking.machine";
 
 // ---------------------------------------------------------------------------
 // Pure logic under test: compute lowest price per date from flights
@@ -80,18 +80,19 @@ const flightOnDateArb = (date: string) =>
       }),
     )
     .map(
-      ([id, num, cabins]): FlightResult => ({
-        flightId: id,
-        flightNumber: `AF${num}`,
-        origin: "CDG",
-        destination: "JFK",
-        departureTime: `${date}T10:00:00.000Z`,
-        arrivalTime: `${date}T18:00:00.000Z`,
-        durationMinutes: 480,
-        stops: 0,
-        cabins,
-        lastUpdated: new Date().toISOString(),
-      }),
+      ([id, num, cabins]): FlightResult =>
+        new FlightResult({
+          flightId: FlightId.make(id),
+          flightNumber: `AF${num}`,
+          origin: "CDG",
+          destination: "JFK",
+          departureTime: `${date}T10:00:00.000Z`,
+          arrivalTime: `${date}T18:00:00.000Z`,
+          durationMinutes: 480,
+          stops: 0,
+          cabins,
+          lastUpdated: new Date().toISOString(),
+        }),
     );
 
 // ---------------------------------------------------------------------------
@@ -157,8 +158,8 @@ describe("Property 21: Date carousel price consistency", () => {
   test("dates with only sold-out flights produce null price", () => {
     fc.assert(
       fc.property(dateArb, (date) => {
-        const soldOutFlight: FlightResult = {
-          flightId: "sold-out",
+        const soldOutFlight = new FlightResult({
+          flightId: FlightId.make("sold-out"),
           flightNumber: "AF000",
           origin: "CDG",
           destination: "JFK",
@@ -174,7 +175,7 @@ describe("Property 21: Date carousel price consistency", () => {
             },
           ],
           lastUpdated: new Date().toISOString(),
-        };
+        });
         const result = computeDatePrices([date], [soldOutFlight]);
         expect(result).toHaveLength(1);
         expect(result[0]?.lowestPrice).toBeNull();

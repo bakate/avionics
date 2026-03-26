@@ -13,6 +13,14 @@ vi.mock("react-i18next", () => ({
 
 vi.mock("react-router", () => ({
   useNavigate: () => vi.fn(),
+  useLocation: () => ({
+    pathname: "/",
+    search: "",
+    hash: "",
+    state: null,
+    key: "default",
+  }),
+  useParams: () => ({}),
 }));
 
 // Create arbitraries for BookingSummary

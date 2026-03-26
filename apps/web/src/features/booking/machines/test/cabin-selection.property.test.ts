@@ -6,10 +6,10 @@
  * CabinClass, and price matching the cabin data.
  */
 
-import { type CabinClass } from "@workspace/domain/kernel";
+import { type CabinClass, FlightId } from "@workspace/domain/kernel";
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
-import { createFlightSelection, type FlightResult } from "../booking.machine";
+import { createFlightSelection, FlightResult } from "../booking.machine";
 
 // ---------------------------------------------------------------------------
 // Arbitraries
@@ -50,18 +50,19 @@ const flightResultArb = fc
     }),
   )
   .map(
-    ([id, flightNum, origin, dest, duration, stops, cabins]): FlightResult => ({
-      flightId: id,
-      flightNumber: `AF${flightNum}`,
-      origin,
-      destination: dest,
-      departureTime: new Date().toISOString(),
-      arrivalTime: new Date().toISOString(),
-      durationMinutes: duration,
-      stops,
-      cabins,
-      lastUpdated: new Date().toISOString(),
-    }),
+    ([id, flightNum, origin, dest, duration, stops, cabins]): FlightResult =>
+      new FlightResult({
+        flightId: FlightId.make(id),
+        flightNumber: `AF${flightNum}`,
+        origin,
+        destination: dest,
+        departureTime: new Date().toISOString(),
+        arrivalTime: new Date().toISOString(),
+        durationMinutes: duration,
+        stops,
+        cabins,
+        lastUpdated: new Date().toISOString(),
+      }),
   );
 
 // ---------------------------------------------------------------------------

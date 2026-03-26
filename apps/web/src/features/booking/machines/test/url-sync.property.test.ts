@@ -7,11 +7,13 @@
  * to the equivalent state.
  */
 
+import { PnrStatus } from "@workspace/domain/booking";
+import { BookingId, PnrCodeSchema } from "@workspace/domain/kernel";
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
 import {
   type BookingContext,
-  type BookingResult,
+  BookingResult,
   type BookingStateValue,
   initialContext,
   routeToState,
@@ -22,13 +24,15 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const makeResult = (pnr: string): BookingResult => ({
-  bookingId: "00000000-0000-0000-0000-000000000001",
-  pnrCode: pnr,
-  status: "Confirmed",
-  totalPrice: { amount: 500, currency: "EUR" },
-  confirmedAt: new Date().toISOString(),
-});
+const makeResult = (pnr: string): BookingResult =>
+  new BookingResult({
+    bookingId: BookingId.make("00000000-0000-0000-0000-000000000001"),
+    pnrCode: PnrCodeSchema.make(pnr),
+    status: PnrStatus.CONFIRMED,
+    totalPrice: { amount: 500, currency: "EUR" },
+    confirmedAt: new Date().toISOString(),
+    checkoutUrl: undefined,
+  });
 
 // ---------------------------------------------------------------------------
 // Arbitraries

@@ -15,6 +15,7 @@ import PassengersPage from "@/pages/passengers.page";
 import PaymentPage from "@/pages/payment.page";
 import SuccessPage from "@/pages/success.page";
 import { ROUTES } from "@/routes";
+import { LAST_EMAIL_KEY } from "./features/booking/machines/booking.persistence";
 import { StressTestPage } from "./features/demo/pages/stress-test.page";
 
 const router = createBrowserRouter([
@@ -27,7 +28,11 @@ const router = createBrowserRouter([
         loader: async () => {
           const state = bookingActor.getSnapshot();
           if (state.matches("idle") || state.matches("error")) {
-            bookingActor.send({ type: "FETCH_BOOKINGS" });
+            const savedEmail = localStorage.getItem(LAST_EMAIL_KEY);
+            bookingActor.send({
+              type: "FETCH_BOOKINGS",
+              email: savedEmail ?? undefined,
+            });
           }
           return null;
         },

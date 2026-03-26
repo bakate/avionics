@@ -50,7 +50,8 @@ export const useBookingMachine = () => {
       isHome &&
       snapshotValue !== "idle" &&
       snapshotValue !== "searching" &&
-      snapshotValue !== "error"
+      snapshotValue !== "error" &&
+      expectedPath !== "/"
     ) {
       send({ type: "RESET" });
     }
@@ -112,6 +113,8 @@ export const useBookingMachine = () => {
     is,
     tags: snapshot.tags,
     actorRef: bookingActor,
+    activeAction: context.activeAction,
+    error: context.error,
     outboundFlights,
     returnFlights,
     filters,

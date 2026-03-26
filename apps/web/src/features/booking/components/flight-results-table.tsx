@@ -20,7 +20,10 @@ export type FlightResultsTableProps = {
   readonly flights: ReadonlyArray<FlightResult>;
   readonly pendingSelection: { flight: FlightResult; cabin: CabinClass } | null;
   readonly passengers: { adults: number; children: number; infants: number };
-  readonly onSelectCabin: (flight: FlightResult, cabin: CabinClass) => void;
+  readonly onSelectCabin: (
+    flight: FlightResult,
+    cabinClass: CabinClass,
+  ) => void;
   readonly onConfirmCabin: () => void;
 };
 
@@ -113,7 +116,10 @@ type FlightRowProps = {
   readonly flight: FlightResult;
   readonly pendingSelection: { flight: FlightResult; cabin: CabinClass } | null;
   readonly passengers: { adults: number; children: number; infants: number };
-  readonly onSelectCabin: (f: FlightResult, c: CabinClass) => void;
+  readonly onSelectCabin: (
+    flight: FlightResult,
+    cabinClass: CabinClass,
+  ) => void;
   readonly onConfirmCabin: () => void;
 };
 
@@ -124,7 +130,7 @@ const FlightRow = ({
   onSelectCabin,
   onConfirmCabin,
 }: FlightRowProps) => {
-  const dur = formatDuration(flight.durationMinutes);
+  const duration = formatDuration(flight.durationMinutes);
   const isExpanded = pendingSelection?.flight.flightId === flight.flightId;
 
   return (
@@ -147,7 +153,7 @@ const FlightRow = ({
             </div>
             <div className="flex flex-col items-center gap-0.5">
               <span className="text-[10px] font-medium text-gray-400">
-                {dur}
+                {duration}
               </span>
               <div className="relative h-px w-16 bg-gray-300">
                 <div className="absolute top-1/2 left-0 size-1.5 -translate-y-1/2 rounded-full bg-gray-400" />
@@ -174,17 +180,17 @@ const FlightRow = ({
             {flight.flightNumber}
           </span>
         </td>
-        {CABIN_ORDER.map((cab) => {
-          const cd = flight.cabins.find((c) => c.cabin === cab);
+        {CABIN_ORDER.map((cabinClass) => {
+          const cabinData = flight.cabins.find((c) => c.cabin === cabinClass);
           return (
-            <td key={cab} className="px-2 py-4">
-              {cd ? (
+            <td key={cabinClass} className="px-2 py-4">
+              {cabinData ? (
                 <CabinPriceCell
-                  cabin={cab}
-                  price={cd.price}
-                  availableSeats={cd.availableSeats}
+                  cabin={cabinClass}
+                  price={cabinData.price}
+                  availableSeats={cabinData.availableSeats}
                   passengers={passengers}
-                  onSelect={() => onSelectCabin(flight, cab)}
+                  onSelect={() => onSelectCabin(flight, cabinClass)}
                 />
               ) : (
                 <span className="text-xs text-gray-300 dark:text-gray-600">
@@ -223,7 +229,7 @@ const FlightMobileCard = ({
 }: FlightRowProps) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<CabinClass>("ECONOMY");
-  const dur = formatDuration(flight.durationMinutes);
+  const duration = formatDuration(flight.durationMinutes);
   const isExpanded = pendingSelection?.flight.flightId === flight.flightId;
 
   return (
@@ -239,7 +245,7 @@ const FlightMobileCard = ({
         </div>
         <div className="flex items-center gap-1 text-xs text-gray-400">
           <HugeiconsIcon icon={Time01Icon} size={12} />
-          <span>{dur}</span>
+          <span>{duration}</span>
           <span className="mx-1">·</span>
           <span>
             {flight.stops === 0
@@ -282,9 +288,9 @@ const FlightMobileCard = ({
       </div>
       <div className="mt-3">
         {(() => {
-          const cd = flight.cabins.find((c) => c.cabin === activeTab);
-          if (!cd) return <p className="text-sm text-gray-400">—</p>;
-          const soldOut = cd.availableSeats === 0;
+          const cabinData = flight.cabins.find((c) => c.cabin === activeTab);
+          if (!cabinData) return <p className="text-sm text-gray-400">—</p>;
+          const soldOut = cabinData.availableSeats === 0;
           return (
             <div className="flex items-center justify-between">
               <div>
@@ -297,15 +303,15 @@ const FlightMobileCard = ({
                     <p className="text-lg font-bold">
                       {formatMoney(
                         Money.of(
-                          calculateTotal(cd.price.amount, passengers),
-                          cd.price.currency as CurrencyCode,
+                          calculateTotal(cabinData.price.amount, passengers),
+                          cabinData.price.currency as CurrencyCode,
                         ),
                       )}
                     </p>
-                    {cd.availableSeats <= 5 && (
+                    {cabinData.availableSeats <= 5 && (
                       <p className="text-[10px] text-orange-500 font-semibold">
                         {t("select.seatsLeft_other", {
-                          count: cd.availableSeats,
+                          count: cabinData.availableSeats,
                         })}
                       </p>
                     )}
@@ -377,10 +383,10 @@ export const FlightResultsTable = ({
             </tr>
           </thead>
           <tbody>
-            {flights.map((f) => (
+            {flights.map((flight) => (
               <FlightRow
-                key={f.flightId}
-                flight={f}
+                key={flight.flightId}
+                flight={flight}
                 pendingSelection={pendingSelection}
                 passengers={passengers}
                 onSelectCabin={onSelectCabin}
@@ -391,10 +397,10 @@ export const FlightResultsTable = ({
         </table>
       </div>
       <div className="flex flex-col gap-3 md:hidden">
-        {flights.map((f) => (
+        {flights.map((flight) => (
           <FlightMobileCard
-            key={f.flightId}
-            flight={f}
+            key={flight.flightId}
+            flight={flight}
             pendingSelection={pendingSelection}
             passengers={passengers}
             onSelectCabin={onSelectCabin}
