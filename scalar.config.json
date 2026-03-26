@@ -5,7 +5,6 @@
     "title": "avionics",
     "description": "Avionics API Documentation"
   },
-  "baseUrl": "https://avionics.onrender.com",
   "navigation": {
     "routes": {
       "/": {

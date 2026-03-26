@@ -3,6 +3,7 @@ import { NodeContext, NodeRuntime } from "@effect/platform-node";
 import { ApiConfig } from "@workspace/config";
 import { ConfigProvider, Console, Effect } from "effect";
 import { Api } from "../src/api.js";
+import { transformSpec } from "../src/lib/openapi-examples.js";
 
 const program = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
@@ -10,9 +11,10 @@ const program = Effect.gen(function* () {
   const config = yield* ApiConfig;
 
   const spec = OpenApi.fromApi(Api);
+  const transformed = transformSpec(spec);
 
   const productionSpec = {
-    ...spec,
+    ...transformed,
     servers: [
       {
         url: config.apiUrl,

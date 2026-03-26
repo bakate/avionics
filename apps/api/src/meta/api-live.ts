@@ -2,6 +2,7 @@ import { HttpApiBuilder, OpenApi } from "@effect/platform";
 import { ApiConfig } from "@workspace/config";
 import { DateTime, Effect } from "effect";
 import { Api } from "../api.js";
+import { transformSpec } from "../lib/openapi-examples.js";
 
 const startedAt = DateTime.unsafeNow();
 
@@ -17,8 +18,10 @@ export const MetaApiLive = HttpApiBuilder.group(Api, "meta", (handlers) =>
       Effect.gen(function* () {
         const config = yield* ApiConfig;
         const spec = OpenApi.fromApi(Api);
+        const transformed = transformSpec(spec);
+
         return {
-          ...spec,
+          ...transformed,
           servers: [{ url: config.apiUrl, description: "Server" }],
         };
       }).pipe(Effect.orDie),

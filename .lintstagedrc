@@ -1,4 +1,10 @@
 {
   "*": "biome check --write --no-errors-on-unmatched",
-  "*.{json,ts,tsx,md,mdx,yaml,yml}": "prettier --write"
+  "*.{json,ts,tsx,md,mdx,yaml,yml,sql}": [
+    "prettier --write"
+  ],
+  "apps/api/src/**/*.ts": [
+    "pnpm openapi",
+    "git add openapi.json"
+  ]
 }

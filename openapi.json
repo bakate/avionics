@@ -1,0 +1,2742 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Avionics API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/bookings": {
+      "get": {
+        "tags": [
+          "bookings"
+        ],
+        "operationId": "bookings.list",
+        "parameters": [
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "BookingPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingPersistenceError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "bookings"
+        ],
+        "operationId": "bookings.book",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "BookResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpApiDecodeError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidAmountError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BookingStatusError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnsupportedCurrencyError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "PaymentDeclinedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDeclinedError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "FlightNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/FlightNotFoundError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BookingNotFoundError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CheckoutNotFoundError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "FlightFullError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/FlightFullError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/OptimisticLockingError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InventoryOvercapacityError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "BookingExpiredError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingExpiredError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "BookingPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/BookingPersistenceError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InventoryPersistenceError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PaymentApiUnavailableError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentApiUnavailableError"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "RequestTimeoutError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestTimeoutError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookFlightCommand"
+              },
+              "examples": {
+                "standard": {
+                  "summary": "Standard Booking Simulation",
+                  "description": "Simulate a booking for a passenger in Economy class with the simulation flag enabled.",
+                  "value": {
+                    "segments": [
+                      {
+                        "flightId": "CDG-DSS-d161s0",
+                        "cabinClass": "ECONOMY",
+                        "seatNumber": "25F"
+                      }
+                    ],
+                    "passengers": [
+                      {
+                        "id": "fee68be0-e99e-4c97-bc7f-f1d0de272539",
+                        "firstName": "Luigi",
+                        "lastName": "Zulauf",
+                        "email": "luigi_zulauf@hotmail.com",
+                        "dateOfBirth": "2013-08-24T03:20:58.111Z",
+                        "gender": "MALE",
+                        "type": "CHILD"
+                      }
+                    ],
+                    "successUrl": "https://avionics-url.com/success",
+                    "cancelUrl": "https://avionics-url.com/cancel",
+                    "simulate": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bookings/{pnr}": {
+      "get": {
+        "tags": [
+          "bookings"
+        ],
+        "operationId": "bookings.getByPnr",
+        "parameters": [
+          {
+            "name": "pnr",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "description": "a string matching the pattern ^[A-Z0-9]{6}$",
+              "pattern": "^[A-Z0-9]{6}$"
+            },
+            "required": true,
+            "description": "a string matching the pattern ^[A-Z0-9]{6}$"
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "BookingResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "BookingNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingNotFoundError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "BookingPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingPersistenceError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bookings/{id}/confirm": {
+      "post": {
+        "tags": [
+          "bookings"
+        ],
+        "operationId": "bookings.confirm",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "description": "a Universally Unique Identifier",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "description": "a Universally Unique Identifier"
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "BookingResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpApiDecodeError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BookingStatusError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvalidAmountError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UnsupportedCurrencyError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "PaymentDeclinedError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentDeclinedError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "BookingNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/BookingNotFoundError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FlightNotFoundError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CheckoutNotFoundError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "OptimisticLockingError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/OptimisticLockingError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FlightFullError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InventoryOvercapacityError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "BookingExpiredError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingExpiredError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "BookingPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/BookingPersistenceError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InventoryPersistenceError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "PaymentApiUnavailableError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentApiUnavailableError"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "RequestTimeoutError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestTimeoutError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bookings/{id}/cancel": {
+      "post": {
+        "tags": [
+          "bookings"
+        ],
+        "operationId": "bookings.cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "description": "a Universally Unique Identifier",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "required": true,
+            "description": "a Universally Unique Identifier"
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "BookingResponse",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpApiDecodeError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BookingStatusError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "BookingNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingNotFoundError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "OptimisticLockingError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OptimisticLockingError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "BookingPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingPersistenceError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "reason"
+                ],
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        }
+      }
+    },
+    "/api/bookings/pnr/{pnr}": {
+      "get": {
+        "tags": [
+          "bookings"
+        ],
+        "operationId": "bookings.getSummaryByPnr",
+        "parameters": [
+          {
+            "name": "pnr",
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "description": "a string matching the pattern ^[A-Z0-9]{6}$",
+              "pattern": "^[A-Z0-9]{6}$"
+            },
+            "required": true,
+            "description": "a string matching the pattern ^[A-Z0-9]{6}$"
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "BookingSummary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "BookingNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingNotFoundError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "BookingPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingPersistenceError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bookings/passenger/{id}": {
+      "get": {
+        "tags": [
+          "bookings"
+        ],
+        "operationId": "bookings.getPassengerHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PassengerBookingHistory"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "BookingPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingPersistenceError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/bookings/search": {
+      "get": {
+        "tags": [
+          "bookings"
+        ],
+        "operationId": "bookings.searchByPassengerName",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "a string at least 2 character(s) long",
+              "title": "minLength(2)",
+              "minLength": 2
+            },
+            "required": true,
+            "description": "a string at least 2 character(s) long"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "a string to be decoded into a number"
+            },
+            "required": false,
+            "description": "a string to be decoded into a number"
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingSummary"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "BookingPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingPersistenceError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/availability/{flightId}": {
+      "get": {
+        "tags": [
+          "inventory"
+        ],
+        "operationId": "inventory.getFlightAvailability",
+        "parameters": [
+          {
+            "name": "flightId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "FlightAvailability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlightAvailability"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "FlightNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlightNotFoundError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InventoryPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryPersistenceError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/availability/{flightId}/{cabin}": {
+      "get": {
+        "tags": [
+          "inventory"
+        ],
+        "operationId": "inventory.getCabinAvailability",
+        "parameters": [
+          {
+            "name": "flightId",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "cabin",
+            "in": "path",
+            "schema": {
+              "$comment": "/schemas/enums",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "title": "ECONOMY",
+                  "enum": [
+                    "ECONOMY"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "title": "BUSINESS",
+                  "enum": [
+                    "BUSINESS"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "title": "FIRST",
+                  "enum": [
+                    "FIRST"
+                  ]
+                }
+              ]
+            },
+            "required": true
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "CabinAvailability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CabinAvailability"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "FlightNotFoundError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlightNotFoundError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InventoryPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryPersistenceError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/search": {
+      "get": {
+        "tags": [
+          "inventory"
+        ],
+        "operationId": "inventory.findAvailableFlights",
+        "parameters": [
+          {
+            "name": "cabinClass",
+            "in": "query",
+            "schema": {
+              "$comment": "/schemas/enums",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "title": "ECONOMY",
+                  "enum": [
+                    "ECONOMY"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "title": "BUSINESS",
+                  "enum": [
+                    "BUSINESS"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "title": "FIRST",
+                  "enum": [
+                    "FIRST"
+                  ]
+                }
+              ]
+            },
+            "required": true
+          },
+          {
+            "name": "minSeats",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "a string to be decoded into a number"
+            },
+            "required": false,
+            "description": "a string to be decoded into a number"
+          },
+          {
+            "name": "departureDate",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/DateFromString"
+            },
+            "required": false
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "a string matching the pattern ^[A-Z]{3}$",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "required": false,
+            "description": "a string matching the pattern ^[A-Z]{3}$"
+          },
+          {
+            "name": "destination",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "a string matching the pattern ^[A-Z]{3}$",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "required": false,
+            "description": "a string matching the pattern ^[A-Z]{3}$"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "a string to be decoded into a number"
+            },
+            "required": false,
+            "description": "a string to be decoded into a number"
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": false
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FlightAvailability"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ValidationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InventoryPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryPersistenceError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/stats": {
+      "get": {
+        "tags": [
+          "inventory"
+        ],
+        "operationId": "inventory.getInventoryStats",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "InventoryStats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryStats"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "InventoryPersistenceError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryPersistenceError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "operationId": "health.check",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "timestamp",
+                    "components"
+                  ],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "healthy",
+                        "degraded",
+                        "unhealthy"
+                      ]
+                    },
+                    "timestamp": {
+                      "$ref": "#/components/schemas/DateTimeUtc"
+                    },
+                    "components": {
+                      "type": "object",
+                      "required": [],
+                      "properties": {},
+                      "additionalProperties": {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "healthy",
+                              "degraded",
+                              "unhealthy"
+                            ]
+                          },
+                          "latency": {
+                            "type": "number"
+                          },
+                          "error": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/meta": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "operationId": "meta.meta",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "version",
+                    "startedAt"
+                  ],
+                  "properties": {
+                    "version": {
+                      "type": "string"
+                    },
+                    "startedAt": {
+                      "$ref": "#/components/schemas/DateTimeUtc"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/openapi.json": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "operationId": "meta.openApi",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$id": "/schemas/any",
+                  "title": "any"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docs": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "operationId": "meta.docs",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "a string",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpApiDecodeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/webhooks/polar": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "operationId": "webhooks.polar",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "received"
+                  ],
+                  "properties": {
+                    "received": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The request did not match the expected schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/HttpApiDecodeError"
+                    },
+                    {
+                      "$ref": "#/components/schemas/MalformedPayloadError"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "WebhookAuthenticationError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookAuthenticationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "TransientError",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransientError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BookingResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "pnrCode",
+          "status",
+          "passengers",
+          "segments",
+          "expiresAt",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "a Universally Unique Identifier",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          },
+          "pnrCode": {
+            "type": "string",
+            "description": "a string matching the pattern ^[A-Z0-9]{6}$",
+            "pattern": "^[A-Z0-9]{6}$"
+          },
+          "status": {
+            "$comment": "/schemas/enums",
+            "anyOf": [
+              {
+                "type": "string",
+                "title": "HELD",
+                "enum": [
+                  "Held"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "CONFIRMED",
+                "enum": [
+                  "Confirmed"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "TICKETED",
+                "enum": [
+                  "Ticketed"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "CANCELLED",
+                "enum": [
+                  "Cancelled"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "EXPIRED",
+                "enum": [
+                  "Expired"
+                ]
+              }
+            ]
+          },
+          "passengers": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/PublicPassenger"
+            }
+          },
+          "segments": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/BookingSegment"
+            }
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "_tag"
+                ],
+                "properties": {
+                  "_tag": {
+                    "type": "string",
+                    "enum": [
+                      "None"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "description": "NoneEncoded"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "_tag",
+                  "value"
+                ],
+                "properties": {
+                  "_tag": {
+                    "type": "string",
+                    "enum": [
+                      "Some"
+                    ]
+                  },
+                  "value": {
+                    "$ref": "#/components/schemas/Date"
+                  }
+                },
+                "additionalProperties": false,
+                "description": "SomeEncoded<Date>"
+              }
+            ],
+            "description": "OptionEncoded<Date>"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/Date"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PublicPassenger": {
+        "type": "object",
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "gender",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BookingSegment": {
+        "type": "object",
+        "required": [
+          "id",
+          "flightId",
+          "cabin",
+          "price"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "a Universally Unique Identifier",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          },
+          "flightId": {
+            "type": "string"
+          },
+          "cabin": {
+            "$comment": "/schemas/enums",
+            "anyOf": [
+              {
+                "type": "string",
+                "title": "ECONOMY",
+                "enum": [
+                  "ECONOMY"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "BUSINESS",
+                "enum": [
+                  "BUSINESS"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "FIRST",
+                "enum": [
+                  "FIRST"
+                ]
+              }
+            ]
+          },
+          "price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "seatNumber": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "_tag"
+                ],
+                "properties": {
+                  "_tag": {
+                    "type": "string",
+                    "enum": [
+                      "None"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "description": "NoneEncoded"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "_tag",
+                  "value"
+                ],
+                "properties": {
+                  "_tag": {
+                    "type": "string",
+                    "enum": [
+                      "Some"
+                    ]
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "description": "SomeEncoded<string>"
+              }
+            ],
+            "description": "OptionEncoded<string>"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Money": {
+        "type": "object",
+        "required": [
+          "amount",
+          "currency"
+        ],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "a non-negative number",
+            "title": "nonNegative",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "EUR",
+              "USD",
+              "GBP",
+              "CHF"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Date": {
+        "type": "string",
+        "description": "a string to be decoded into a Date"
+      },
+      "HttpApiDecodeError": {
+        "type": "object",
+        "required": [
+          "issues",
+          "message",
+          "_tag"
+        ],
+        "properties": {
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Issue"
+            }
+          },
+          "message": {
+            "type": "string"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "HttpApiDecodeError"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "description": "The request did not match the expected schema"
+      },
+      "Issue": {
+        "type": "object",
+        "required": [
+          "_tag",
+          "path",
+          "message"
+        ],
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "Pointer",
+              "Unexpected",
+              "Missing",
+              "Composite",
+              "Refinement",
+              "Transformation",
+              "Type",
+              "Forbidden"
+            ],
+            "description": "The tag identifying the type of parse issue"
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PropertyKey"
+            },
+            "description": "The path to the property where the issue occurred"
+          },
+          "message": {
+            "type": "string",
+            "description": "A descriptive message explaining the issue"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Represents an error encountered while parsing a value to match the schema"
+      },
+      "PropertyKey": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "object",
+            "required": [
+              "_tag",
+              "key"
+            ],
+            "properties": {
+              "_tag": {
+                "type": "string",
+                "enum": [
+                  "symbol"
+                ]
+              },
+              "key": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "description": "an object to be decoded into a globally shared symbol"
+          }
+        ]
+      },
+      "BookingPersistenceError": {
+        "type": "object",
+        "required": [
+          "bookingId",
+          "reason",
+          "_tag"
+        ],
+        "properties": {
+          "bookingId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "BookingPersistenceError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "BookFlightCommand": {
+        "type": "object",
+        "required": [
+          "segments",
+          "passengers",
+          "successUrl"
+        ],
+        "properties": {
+          "segments": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "flightId",
+                "cabinClass"
+              ],
+              "properties": {
+                "flightId": {
+                  "type": "string"
+                },
+                "cabinClass": {
+                  "$comment": "/schemas/enums",
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "title": "ECONOMY",
+                      "enum": [
+                        "ECONOMY"
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "title": "BUSINESS",
+                      "enum": [
+                        "BUSINESS"
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "title": "FIRST",
+                      "enum": [
+                        "FIRST"
+                      ]
+                    }
+                  ]
+                },
+                "seatNumber": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "passengers": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "firstName",
+                "lastName",
+                "email",
+                "dateOfBirth",
+                "gender",
+                "type"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "firstName": {
+                  "type": "string"
+                },
+                "lastName": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string",
+                  "description": "a string matching the pattern ^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+                  "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+                },
+                "dateOfBirth": {
+                  "$ref": "#/components/schemas/Date"
+                },
+                "gender": {
+                  "$comment": "/schemas/enums",
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "title": "MALE",
+                      "enum": [
+                        "MALE"
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "title": "FEMALE",
+                      "enum": [
+                        "FEMALE"
+                      ]
+                    }
+                  ]
+                },
+                "type": {
+                  "$comment": "/schemas/enums",
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "title": "INFANT",
+                      "enum": [
+                        "INFANT"
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "title": "CHILD",
+                      "enum": [
+                        "CHILD"
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "title": "YOUNG_ADULT",
+                      "enum": [
+                        "YOUNG_ADULT"
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "title": "ADULT",
+                      "enum": [
+                        "ADULT"
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "title": "SENIOR",
+                      "enum": [
+                        "SENIOR"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "successUrl": {
+            "type": "string"
+          },
+          "cancelUrl": {
+            "type": "string"
+          },
+          "simulate": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BookResponse": {
+        "type": "object",
+        "required": [
+          "booking"
+        ],
+        "properties": {
+          "booking": {
+            "$ref": "#/components/schemas/BookingResponse"
+          },
+          "checkoutUrl": {
+            "type": "string"
+          },
+          "checkoutId": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "InvalidAmountError": {
+        "type": "object",
+        "required": [
+          "amount",
+          "_tag"
+        ],
+        "properties": {
+          "amount": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "InvalidAmountError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "BookingStatusError": {
+        "type": "object",
+        "required": [
+          "pnrCode",
+          "status",
+          "expected",
+          "_tag"
+        ],
+        "properties": {
+          "pnrCode": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "expected": {
+            "type": "string"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "BookingStatusError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "UnsupportedCurrencyError": {
+        "type": "object",
+        "required": [
+          "currency",
+          "supported",
+          "_tag"
+        ],
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "UnsupportedCurrencyError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "FlightFullError": {
+        "type": "object",
+        "required": [
+          "flightId",
+          "cabin",
+          "requested",
+          "available",
+          "_tag"
+        ],
+        "properties": {
+          "flightId": {
+            "type": "string"
+          },
+          "cabin": {
+            "type": "string"
+          },
+          "requested": {
+            "type": "number"
+          },
+          "available": {
+            "type": "number"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "FlightFullError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "OptimisticLockingError": {
+        "type": "object",
+        "required": [
+          "entityType",
+          "id",
+          "expectedVersion",
+          "actualVersion",
+          "_tag"
+        ],
+        "properties": {
+          "entityType": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "expectedVersion": {
+            "type": "number"
+          },
+          "actualVersion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "entityMissing": {
+            "type": "boolean"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "OptimisticLockingError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryOvercapacityError": {
+        "type": "object",
+        "required": [
+          "flightId",
+          "cabin",
+          "requested",
+          "available",
+          "capacity",
+          "_tag"
+        ],
+        "properties": {
+          "flightId": {
+            "type": "string"
+          },
+          "cabin": {
+            "type": "string"
+          },
+          "requested": {
+            "type": "number"
+          },
+          "available": {
+            "type": "number"
+          },
+          "capacity": {
+            "type": "number"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "InventoryOvercapacityError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "FlightNotFoundError": {
+        "type": "object",
+        "required": [
+          "flightId",
+          "_tag"
+        ],
+        "properties": {
+          "flightId": {
+            "type": "string"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "FlightNotFoundError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "BookingNotFoundError": {
+        "type": "object",
+        "required": [
+          "searchkey",
+          "_tag"
+        ],
+        "properties": {
+          "searchkey": {
+            "type": "string"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "BookingNotFoundError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "CheckoutNotFoundError": {
+        "type": "object",
+        "required": [
+          "checkoutId",
+          "_tag"
+        ],
+        "properties": {
+          "checkoutId": {
+            "type": "string"
+          },
+          "cause": {
+            "$id": "/schemas/unknown",
+            "title": "unknown"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "CheckoutNotFoundError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "BookingExpiredError": {
+        "type": "object",
+        "required": [
+          "pnrCode",
+          "expiresAt",
+          "_tag"
+        ],
+        "properties": {
+          "pnrCode": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "$ref": "#/components/schemas/Date"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "BookingExpiredError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryPersistenceError": {
+        "type": "object",
+        "required": [
+          "flightId",
+          "reason",
+          "_tag"
+        ],
+        "properties": {
+          "flightId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "InventoryPersistenceError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "RequestTimeoutError": {
+        "type": "object",
+        "required": [
+          "method",
+          "path",
+          "_tag"
+        ],
+        "properties": {
+          "method": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "RequestTimeoutError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "PaymentDeclinedError": {
+        "type": "object",
+        "required": [
+          "reason",
+          "_tag"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "cause": {
+            "$id": "/schemas/unknown",
+            "title": "unknown"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "PaymentDeclinedError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "PaymentApiUnavailableError": {
+        "type": "object",
+        "required": [
+          "message",
+          "_tag"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "cause": {
+            "$id": "/schemas/unknown",
+            "title": "unknown"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "PaymentApiUnavailableError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "BookingSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "pnrCode",
+          "status",
+          "passengerCount",
+          "totalPrice",
+          "createdAt",
+          "expiresAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "a Universally Unique Identifier",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          },
+          "pnrCode": {
+            "type": "string",
+            "description": "a string matching the pattern ^[A-Z0-9]{6}$",
+            "pattern": "^[A-Z0-9]{6}$"
+          },
+          "status": {
+            "$comment": "/schemas/enums",
+            "anyOf": [
+              {
+                "type": "string",
+                "title": "HELD",
+                "enum": [
+                  "Held"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "CONFIRMED",
+                "enum": [
+                  "Confirmed"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "TICKETED",
+                "enum": [
+                  "Ticketed"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "CANCELLED",
+                "enum": [
+                  "Cancelled"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "EXPIRED",
+                "enum": [
+                  "Expired"
+                ]
+              }
+            ]
+          },
+          "passengerCount": {
+            "type": "integer",
+            "description": "a positive number",
+            "title": "positive",
+            "exclusiveMinimum": 0
+          },
+          "totalPrice": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/Date"
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "PassengerBookingHistory": {
+        "type": "object",
+        "required": [
+          "bookingId",
+          "pnrCode",
+          "status",
+          "flightNumbers",
+          "totalPrice",
+          "bookedAt"
+        ],
+        "properties": {
+          "bookingId": {
+            "type": "string",
+            "description": "a Universally Unique Identifier",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          },
+          "pnrCode": {
+            "type": "string",
+            "description": "a string matching the pattern ^[A-Z0-9]{6}$",
+            "pattern": "^[A-Z0-9]{6}$"
+          },
+          "status": {
+            "$comment": "/schemas/enums",
+            "anyOf": [
+              {
+                "type": "string",
+                "title": "HELD",
+                "enum": [
+                  "Held"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "CONFIRMED",
+                "enum": [
+                  "Confirmed"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "TICKETED",
+                "enum": [
+                  "Ticketed"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "CANCELLED",
+                "enum": [
+                  "Cancelled"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "EXPIRED",
+                "enum": [
+                  "Expired"
+                ]
+              }
+            ]
+          },
+          "flightNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "totalPrice": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "bookedAt": {
+            "$ref": "#/components/schemas/Date"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FlightAvailability": {
+        "type": "object",
+        "required": [
+          "flightId",
+          "flightNumber",
+          "origin",
+          "destination",
+          "departureTime",
+          "arrivalTime",
+          "durationMinutes",
+          "stops",
+          "economyAvailable",
+          "businessAvailable",
+          "firstAvailable",
+          "economyPrice",
+          "businessPrice",
+          "firstPrice",
+          "lastUpdated"
+        ],
+        "properties": {
+          "flightId": {
+            "type": "string"
+          },
+          "flightNumber": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string",
+            "description": "a string matching the pattern ^[A-Z]{3}$",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "destination": {
+            "type": "string",
+            "description": "a string matching the pattern ^[A-Z]{3}$",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "departureTime": {
+            "$ref": "#/components/schemas/Date"
+          },
+          "arrivalTime": {
+            "$ref": "#/components/schemas/Date"
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "description": "a non-negative number",
+            "title": "nonNegative",
+            "minimum": 0
+          },
+          "stops": {
+            "type": "integer",
+            "description": "a non-negative number",
+            "title": "nonNegative",
+            "minimum": 0
+          },
+          "economyAvailable": {
+            "type": "integer",
+            "description": "a non-negative number",
+            "title": "nonNegative",
+            "minimum": 0
+          },
+          "businessAvailable": {
+            "type": "integer",
+            "description": "a non-negative number",
+            "title": "nonNegative",
+            "minimum": 0
+          },
+          "firstAvailable": {
+            "type": "integer",
+            "description": "a non-negative number",
+            "title": "nonNegative",
+            "minimum": 0
+          },
+          "economyPrice": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "businessPrice": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "firstPrice": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "lastUpdated": {
+            "$ref": "#/components/schemas/Date"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CabinAvailability": {
+        "type": "object",
+        "required": [
+          "cabin",
+          "available",
+          "capacity",
+          "price",
+          "utilizationPercent"
+        ],
+        "properties": {
+          "cabin": {
+            "$comment": "/schemas/enums",
+            "anyOf": [
+              {
+                "type": "string",
+                "title": "ECONOMY",
+                "enum": [
+                  "ECONOMY"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "BUSINESS",
+                "enum": [
+                  "BUSINESS"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "FIRST",
+                "enum": [
+                  "FIRST"
+                ]
+              }
+            ]
+          },
+          "available": {
+            "type": "integer",
+            "description": "a non-negative number",
+            "title": "nonNegative",
+            "minimum": 0
+          },
+          "capacity": {
+            "type": "integer",
+            "description": "a positive number",
+            "title": "positive",
+            "exclusiveMinimum": 0
+          },
+          "price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "utilizationPercent": {
+            "type": "number",
+            "description": "a number less than or equal to 100",
+            "title": "lessThanOrEqualTo(100)",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "additionalProperties": false
+      },
+      "DateFromString": {
+        "type": "string",
+        "description": "a string to be decoded into a Date"
+      },
+      "ValidationError": {
+        "type": "object",
+        "required": [
+          "reason",
+          "_tag"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "ValidationError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "InventoryStats": {
+        "type": "object",
+        "required": [
+          "totalFlights",
+          "totalSeatsAvailable",
+          "averageUtilization",
+          "fullFlights"
+        ],
+        "properties": {
+          "totalFlights": {
+            "type": "integer",
+            "description": "a non-negative number",
+            "title": "nonNegative",
+            "minimum": 0
+          },
+          "totalSeatsAvailable": {
+            "type": "integer",
+            "description": "a non-negative number",
+            "title": "nonNegative",
+            "minimum": 0
+          },
+          "averageUtilization": {
+            "type": "number",
+            "description": "a number less than or equal to 100",
+            "title": "lessThanOrEqualTo(100)",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "fullFlights": {
+            "type": "integer",
+            "description": "a non-negative number",
+            "title": "nonNegative",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "DateTimeUtc": {
+        "type": "string",
+        "description": "a string to be decoded into a DateTime.Utc"
+      },
+      "MalformedPayloadError": {
+        "type": "object",
+        "required": [
+          "message",
+          "_tag"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "MalformedPayloadError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "TransientError": {
+        "type": "object",
+        "required": [
+          "message",
+          "_tag"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "TransientError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "WebhookAuthenticationError": {
+        "type": "object",
+        "required": [
+          "_tag"
+        ],
+        "properties": {
+          "_tag": {
+            "type": "string",
+            "enum": [
+              "WebhookAuthenticationError"
+            ]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {}
+  },
+  "security": [],
+  "tags": [
+    {
+      "name": "bookings"
+    },
+    {
+      "name": "inventory"
+    },
+    {
+      "name": "health"
+    },
+    {
+      "name": "meta"
+    },
+    {
+      "name": "webhooks"
+    }
+  ],
+  "servers": [
+    {
+      "url": "https://avionics.onrender.com",
+      "description": "API Server"
+    }
+  ]
+}
