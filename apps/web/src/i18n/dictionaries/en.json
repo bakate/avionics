@@ -90,6 +90,16 @@
     "filters": "Filters",
     "clearAll": "Clear all",
     "stops": "Stops",
+    "stopsCount": {
+      "nonStop": "Non-stop",
+      "oneStopMax": "1 stop max"
+    },
+    "timeRange": {
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "evening": "Evening",
+      "night": "Night"
+    },
     "departureTime": "Departure time",
     "searching": "Searching for flights...",
     "airportSearching": "Searching...",

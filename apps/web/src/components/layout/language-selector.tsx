@@ -16,7 +16,7 @@ export function LanguageSelector() {
     (locale) =>
       ({
         code: locale,
-        name: locale,
+        name: locale === "en-GB" ? "en" : locale,
         flag: locale === "fr" ? "fr" : "us",
       }) as const,
   );

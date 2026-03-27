@@ -1,7 +1,7 @@
 import { Airplane01Icon, City01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import * as Autocomplete from "@workspace/ui/components/reui/autocomplete";
-import { Effect } from "effect";
+import { Effect, Fiber, pipe } from "effect";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type Airport, searchAirports } from "../lib/airport-service";
@@ -36,22 +36,31 @@ export const AirportAutocomplete = ({
   }, [value]);
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (query.length >= 2) {
-        setLoading(true);
-        Effect.runPromise(searchAirports(query, locale))
-          .then(setSuggestions)
-          .catch((err) => {
-            console.error("Search failed:", err);
-            setSuggestions([]);
-          })
-          .finally(() => setLoading(false));
-      } else {
-        setSuggestions([]);
-      }
-    }, 300);
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
 
-    return () => clearTimeout(delayDebounceFn);
+    setLoading(true);
+
+    const fiber = Effect.runFork(
+      pipe(
+        Effect.sleep("300 millis"),
+        Effect.andThen(() => searchAirports(query, locale)),
+        Effect.tap((results) => Effect.sync(() => setSuggestions(results))),
+        Effect.catchAll((err) =>
+          Effect.sync(() => {
+            console.error(err);
+            setSuggestions([]);
+          }),
+        ),
+        Effect.ensuring(Effect.sync(() => setLoading(false))),
+      ),
+    );
+
+    return () => {
+      Effect.runFork(Fiber.interrupt(fiber));
+    };
   }, [query, locale]);
 
   return (

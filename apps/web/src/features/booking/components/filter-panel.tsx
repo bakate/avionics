@@ -56,24 +56,22 @@ export const FilterPanel = ({
           {t("search.cabinClass")}
         </p>
         <div className="flex flex-wrap gap-2">
-          {cabinOptions
-            .filter((opt) => opt.value !== "ALL")
-            .map((opt) => (
-              <Button
-                key={opt.value}
-                variant="ghost"
-                size="sm"
-                onClick={() => handleCabinChange(opt.value)}
-                className={cn(
-                  "h-auto px-3 py-1.5 text-xs font-medium transition-all",
-                  filters.cabinClass === opt.value
-                    ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/50 hover:bg-blue-600/30 hover:text-blue-300"
-                    : "bg-white/5 text-slate-400 hover:bg-white/10 hover:dark:text-white",
-                )}
-              >
-                {opt.label}
-              </Button>
-            ))}
+          {cabinOptions.map((opt) => (
+            <Button
+              key={opt.value}
+              variant="ghost"
+              size="sm"
+              onClick={() => handleCabinChange(opt.value)}
+              className={cn(
+                "h-auto px-3 py-1.5 text-xs font-medium transition-all",
+                filters.cabinClass === opt.value
+                  ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/50 hover:bg-blue-600/30 hover:text-blue-300"
+                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:dark:text-white",
+              )}
+            >
+              {opt.label}
+            </Button>
+          ))}
         </div>
       </div>
 
@@ -96,7 +94,9 @@ export const FilterPanel = ({
                   : "bg-white/5 text-slate-400 hover:bg-white/10 hover:dark:text-white",
               )}
             >
-              {stop === 0 ? "Non-stop" : "1 stop max"}
+              {stop === 0
+                ? t("search.stopsCount.nonStop")
+                : t("search.stopsCount.oneStopMax")}
             </Button>
           ))}
         </div>
@@ -108,10 +108,22 @@ export const FilterPanel = ({
         </p>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Morning", range: [6, 12] as [number, number] },
-            { label: "Afternoon", range: [12, 18] as [number, number] },
-            { label: "Evening", range: [18, 24] as [number, number] },
-            { label: "Night", range: [0, 6] as [number, number] },
+            {
+              label: "search.timeRange.morning",
+              range: [6, 12] as [number, number],
+            },
+            {
+              label: "search.timeRange.afternoon",
+              range: [12, 18] as [number, number],
+            },
+            {
+              label: "search.timeRange.evening",
+              range: [18, 24] as [number, number],
+            },
+            {
+              label: "search.timeRange.night",
+              range: [0, 6] as [number, number],
+            },
           ].map((item) => (
             <Button
               key={item.label}
@@ -127,7 +139,7 @@ export const FilterPanel = ({
                   : "bg-white/5 text-slate-400 hover:bg-white/10 hover:dark:text-white",
               )}
             >
-              {item.label}
+              {t(item.label as any)}
             </Button>
           ))}
         </div>

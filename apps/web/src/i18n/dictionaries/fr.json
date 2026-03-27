@@ -90,6 +90,16 @@
     "filters": "Filtres",
     "clearAll": "Tout effacer",
     "stops": "Escales",
+    "stopsCount": {
+      "nonStop": "Direct",
+      "oneStopMax": "1 escale max"
+    },
+    "timeRange": {
+      "morning": "Matin",
+      "afternoon": "Après-midi",
+      "evening": "Soirée",
+      "night": "Nuit"
+    },
     "departureTime": "Heure de départ",
     "searching": "Recherche de vols en cours...",
     "airportSearching": "Recherche en cours...",
