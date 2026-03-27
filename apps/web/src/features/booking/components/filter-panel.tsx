@@ -4,11 +4,11 @@
 
 import { FilterHorizontalIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { type FilterState } from "@workspace/application/booking-types";
 import { Button } from "@workspace/ui/components/button";
 import { cn } from "@workspace/ui/lib/utils";
 import { useTranslation } from "react-i18next";
 import { cabinOptions } from "@/features/search/components/types";
-import { type FilterState } from "../schemas/ui.schema";
 
 export type FilterPanelProps = {
   readonly filters: FilterState;

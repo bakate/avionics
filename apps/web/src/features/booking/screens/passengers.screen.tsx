@@ -1,4 +1,8 @@
 import { effectTsResolver } from "@hookform/resolvers/effect-ts";
+import {
+  PassengerInput,
+  type PassengerInputEncoded,
+} from "@workspace/application/booking-types";
 import { type PassengerType } from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
 import { Heading } from "@workspace/ui/components/heading";
@@ -7,10 +11,6 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { PassengerForm } from "@/features/booking/components/passenger-form";
 import { useBookingMachine } from "@/features/booking/hooks/use-booking-machine";
-import {
-  PassengerInput,
-  type PassengerInputEncoded,
-} from "@/features/booking/schemas/passenger.schema";
 
 const PassengersFormSchema = Schema.Struct({
   passengers: Schema.mutable(

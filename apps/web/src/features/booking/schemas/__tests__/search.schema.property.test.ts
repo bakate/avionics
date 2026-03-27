@@ -9,9 +9,9 @@
  */
 
 import { fc, test } from "@fast-check/vitest";
+import { SearchParams } from "@workspace/application/booking-types";
 import { Schema } from "effect";
 import { describe, expect } from "vitest";
-import { SearchParams } from "../search.schema.js";
 
 const validRoundTrip = {
   tripType: "roundTrip" as const,

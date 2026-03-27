@@ -8,9 +8,9 @@
  */
 
 import { fc, test } from "@fast-check/vitest";
+import { PassengerInput } from "@workspace/application/booking-types";
 import { Schema } from "effect";
 import { describe, expect } from "vitest";
-import { PassengerInput } from "../passenger.schema.js";
 
 const validBase = {
   firstName: "Jean",

@@ -163,12 +163,14 @@ const FlightSegment = ({
   );
 };
 
+import { type BookingResponse } from "@workspace/api/booking-api";
+
 export const BookingDetailsPage = () => {
   const { t } = useTranslation();
   const { is, context, send } = useBookingMachine();
   const navigate = useNavigate();
 
-  const booking = context.currentBooking;
+  const booking = context.currentBooking as BookingResponse | null;
   const isLoading = is("fetchingBookingDetails");
   const error = context.error;
 

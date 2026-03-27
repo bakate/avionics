@@ -7,16 +7,15 @@
  * direction.
  */
 
+import { type BookingResponse } from "@workspace/api/booking-api";
+import { type PassengerInput, type SearchParams } from "@workspace/application/booking-types";
+import { type BookingSummary } from "@workspace/application/read-models";
 import { type CabinClass, FlightId } from "@workspace/domain/kernel";
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
 import { createActor, fromPromise, waitFor } from "xstate";
-import { type PassengerInput } from "../../schemas/passenger.schema";
-import { type SearchParams } from "../../schemas/search.schema";
 import {
-  type BookingResponse,
   type BookingResult,
-  type BookingSummary,
   bookingMachine,
   createFlightSelection,
   FlightResult,
@@ -106,34 +105,36 @@ describe("Property 22: Outbound/return selection symmetry", () => {
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async () => [selection.flight] as Array<FlightResult>,
+              async () => [selection.flight] as ReadonlyArray<FlightResult>,
             ),
             searchReturnFlights: fromPromise(
-              async () => [] as Array<FlightResult>,
+              async () => [] as ReadonlyArray<FlightResult>,
             ),
             submitBooking: fromPromise<
               BookingResult,
               {
-                segments: Array<{ flightId: string; cabinClass: CabinClass }>;
+                segments: ReadonlyArray<{
+                  flightId: string;
+                  cabinClass: CabinClass;
+                }>;
                 passengers: ReadonlyArray<PassengerInput>;
               }
             >(async () => {
               throw new Error("Not implemented");
             }),
             fetchBookings: fromPromise<
-              Array<BookingSummary>,
+              ReadonlyArray<BookingSummary>,
               { email?: string } | undefined
             >(async () => []),
-            fetchBookingDetails: fromPromise<BookingResponse, { pnr: string }>(
+            fetchBookingDetails: fromPromise<unknown, { pnr: string }>(
               async () => ({}) as BookingResponse,
             ),
-            confirmBooking: fromPromise<BookingResponse, { id: string }>(
+            confirmBooking: fromPromise<unknown, { id: string }>(
               async () => ({}) as BookingResponse,
             ),
-            cancelBooking: fromPromise<
-              BookingResponse,
-              { id: string; reason: string }
-            >(async () => ({}) as BookingResponse),
+            cancelBooking: fromPromise<unknown, { id: string; reason: string }>(
+              async () => ({}) as BookingResponse,
+            ),
           },
         });
 
@@ -165,12 +166,12 @@ describe("Property 22: Outbound/return selection symmetry", () => {
           const machine = bookingMachine.provide({
             actors: {
               searchFlights: fromPromise(
-                async (): Promise<Array<FlightResult>> => [
+                async (): Promise<ReadonlyArray<FlightResult>> => [
                   outboundSelection.flight,
                 ],
               ),
               searchReturnFlights: fromPromise(
-                async (): Promise<Array<FlightResult>> => [
+                async (): Promise<ReadonlyArray<FlightResult>> => [
                   returnSelection.flight,
                 ],
               ),
@@ -215,10 +216,14 @@ describe("Property 22: Outbound/return selection symmetry", () => {
         const machine1 = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [selection.flight],
+              async (): Promise<ReadonlyArray<FlightResult>> => [
+                selection.flight,
+              ],
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [selection.flight],
+              async (): Promise<ReadonlyArray<FlightResult>> => [
+                selection.flight,
+              ],
             ),
             submitBooking: fromPromise(async (): Promise<BookingResult> => {
               throw new Error("Not implemented");

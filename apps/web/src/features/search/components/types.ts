@@ -1,5 +1,5 @@
+import { SearchParams } from "@workspace/application/booking-types";
 import { CabinClass } from "@workspace/domain/kernel";
-import { SearchParams } from "../../booking/schemas/search.schema";
 
 export const searchFormSchema = SearchParams;
 

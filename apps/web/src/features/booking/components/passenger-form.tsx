@@ -1,5 +1,6 @@
 import { Calendar01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { type PassengerInputEncoded } from "@workspace/application/booking-types";
 import { type PassengerType } from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
 import { Calendar } from "@workspace/ui/components/calendar";
@@ -23,7 +24,6 @@ import { enUS, fr } from "react-day-picker/locale";
 import { type Control, Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "@/lib/format";
-import { type PassengerInputEncoded } from "../schemas/passenger.schema";
 
 export type PassengerFormProps = {
   readonly index: number;

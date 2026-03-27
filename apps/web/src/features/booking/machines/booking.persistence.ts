@@ -1,9 +1,10 @@
+import { 
+  FilterState,PassengerInput, SearchParams, 
+  SortField,
+  SortOrder,} from "@workspace/application/booking-types";
 import { BookingSummary } from "@workspace/application/read-models";
 import { CabinClassSchema } from "@workspace/domain/kernel";
 import { Schema } from "effect";
-import { PassengerInput } from "../schemas/passenger.schema";
-import { SearchParams } from "../schemas/search.schema";
-import { FilterState, SortField, SortOrder } from "../schemas/ui.schema";
 
 // --- Sub-schemas for the machine context ---
 

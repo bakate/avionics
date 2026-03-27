@@ -7,10 +7,9 @@
 
 import { faker } from "@faker-js/faker";
 import { fc, test } from "@fast-check/vitest";
+import { PassengerInput, SearchParams } from "@workspace/application/booking-types";
 import { Schema } from "effect";
 import { describe, expect } from "vitest";
-import { PassengerInput } from "../passenger.schema.js";
-import { SearchParams } from "../search.schema.js";
 
 // ---------------------------------------------------------------------------
 // Generators
@@ -107,9 +106,9 @@ describe("Property 17: API Schema round-trip", () => {
   test.prop([searchParamsArb], { numRuns: 100 })(
     "SearchParams encode → decode round-trip",
     (params) => {
-      const decoded = Schema.decodeSync(SearchParams)(params as any);
+      const decoded = Schema.decodeSync(SearchParams)(params as any) as typeof SearchParams.Type;
       const encoded = Schema.encodeSync(SearchParams)(decoded);
-      const reDecoded = Schema.decodeSync(SearchParams)(encoded);
+      const reDecoded = Schema.decodeSync(SearchParams)(encoded) as typeof SearchParams.Type;
 
       expect(reDecoded.origin).toBe(params.origin);
       expect(reDecoded.destination).toBe(params.destination);
@@ -131,7 +130,7 @@ describe("Property 17: API Schema round-trip", () => {
       const encoded = Schema.encodeSync(PassengerInput)(
         passenger as PassengerInput,
       );
-      const decoded = Schema.decodeSync(PassengerInput)(encoded);
+      const decoded = Schema.decodeSync(PassengerInput)(encoded) as PassengerInput;
 
       expect(decoded.firstName).toBe(passenger.firstName);
       expect(decoded.lastName).toBe(passenger.lastName);

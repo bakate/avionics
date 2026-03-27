@@ -7,6 +7,9 @@
  * context data (search params, selected outbound, selected return, passengers).
  */
 
+import { type BookingResponse } from "@workspace/api/booking-api";
+import { type PassengerInput, type SearchParams } from "@workspace/application/booking-types";
+import { type BookingSummary } from "@workspace/application/read-models";
 import {
   type CabinClass,
   type Email,
@@ -15,12 +18,8 @@ import {
 import fc from "fast-check";
 import { describe, expect, test } from "vitest";
 import { createActor, fromPromise, waitFor } from "xstate";
-import { type PassengerInput } from "../../schemas/passenger.schema";
-import { type SearchParams } from "../../schemas/search.schema";
 import {
-  type BookingResponse,
   type BookingResult,
-  type BookingSummary,
   bookingMachine,
   FlightResult,
   type FlightSelection,
@@ -94,34 +93,36 @@ describe("Property 14: Back navigation preserves context", () => {
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async () => [flight] as Array<FlightResult>,
+              async () => [flight] as ReadonlyArray<FlightResult>,
             ),
             searchReturnFlights: fromPromise(
-              async () => [] as Array<FlightResult>,
+              async () => [] as ReadonlyArray<FlightResult>,
             ),
             submitBooking: fromPromise<
               BookingResult,
               {
-                segments: Array<{ flightId: string; cabinClass: CabinClass }>;
+                segments: ReadonlyArray<{
+                  flightId: string;
+                  cabinClass: CabinClass;
+                }>;
                 passengers: ReadonlyArray<PassengerInput>;
               }
             >(async () => {
               throw new Error("Not implemented");
             }),
             fetchBookings: fromPromise<
-              Array<BookingSummary>,
+              ReadonlyArray<BookingSummary>,
               { email?: string } | undefined
             >(async () => []),
-            fetchBookingDetails: fromPromise<BookingResponse, { pnr: string }>(
+            fetchBookingDetails: fromPromise<unknown, { pnr: string }>(
               async () => ({}) as BookingResponse,
             ),
-            confirmBooking: fromPromise<BookingResponse, { id: string }>(
+            confirmBooking: fromPromise<unknown, { id: string }>(
               async () => ({}) as BookingResponse,
             ),
-            cancelBooking: fromPromise<
-              BookingResponse,
-              { id: string; reason: string }
-            >(async () => ({}) as BookingResponse),
+            cancelBooking: fromPromise<unknown, { id: string; reason: string }>(
+              async () => ({}) as BookingResponse,
+            ),
           },
         });
 
@@ -151,10 +152,10 @@ describe("Property 14: Back navigation preserves context", () => {
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [flight],
+              async (): Promise<ReadonlyArray<FlightResult>> => [flight],
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [returnFlight],
+              async (): Promise<ReadonlyArray<FlightResult>> => [returnFlight],
             ),
             submitBooking: fromPromise(async (): Promise<BookingResult> => {
               throw new Error("Not implemented");
@@ -191,10 +192,10 @@ describe("Property 14: Back navigation preserves context", () => {
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [flight],
+              async (): Promise<ReadonlyArray<FlightResult>> => [flight],
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [returnFlight],
+              async (): Promise<ReadonlyArray<FlightResult>> => [returnFlight],
             ),
             submitBooking: fromPromise(async (): Promise<BookingResult> => {
               throw new Error("Not implemented");
@@ -232,34 +233,36 @@ describe("Property 14: Back navigation preserves context", () => {
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async () => [flight] as Array<FlightResult>,
+              async () => [flight] as ReadonlyArray<FlightResult>,
             ),
             searchReturnFlights: fromPromise(
-              async () => [] as Array<FlightResult>,
+              async () => [] as ReadonlyArray<FlightResult>,
             ),
             submitBooking: fromPromise<
               BookingResult,
               {
-                segments: Array<{ flightId: string; cabinClass: CabinClass }>;
+                segments: ReadonlyArray<{
+                  flightId: string;
+                  cabinClass: CabinClass;
+                }>;
                 passengers: ReadonlyArray<PassengerInput>;
               }
             >(async () => {
               throw new Error("Not implemented");
             }),
             fetchBookings: fromPromise<
-              Array<BookingSummary>,
+              ReadonlyArray<BookingSummary>,
               { email?: string } | undefined
             >(async () => []),
-            fetchBookingDetails: fromPromise<BookingResponse, { pnr: string }>(
+            fetchBookingDetails: fromPromise<unknown, { pnr: string }>(
               async () => ({}) as BookingResponse,
             ),
-            confirmBooking: fromPromise<BookingResponse, { id: string }>(
+            confirmBooking: fromPromise<unknown, { id: string }>(
               async () => ({}) as BookingResponse,
             ),
-            cancelBooking: fromPromise<
-              BookingResponse,
-              { id: string; reason: string }
-            >(async () => ({}) as BookingResponse),
+            cancelBooking: fromPromise<unknown, { id: string; reason: string }>(
+              async () => ({}) as BookingResponse,
+            ),
           },
         });
 
@@ -300,10 +303,10 @@ describe("Property 14: Back navigation preserves context", () => {
         const machine = bookingMachine.provide({
           actors: {
             searchFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [flight],
+              async (): Promise<ReadonlyArray<FlightResult>> => [flight],
             ),
             searchReturnFlights: fromPromise(
-              async (): Promise<Array<FlightResult>> => [returnFlight],
+              async (): Promise<ReadonlyArray<FlightResult>> => [returnFlight],
             ),
             submitBooking: fromPromise(async (): Promise<BookingResult> => {
               return new Promise<BookingResult>(() => {

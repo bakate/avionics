@@ -3,9 +3,12 @@
  */
 import { ArrowDown01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  type SortField,
+  type SortOrder,
+} from "@workspace/application/booking-types";
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { type SortField, type SortOrder } from "../schemas/ui.schema";
 
 export type SortControlsProps = {
   readonly currentField: SortField;

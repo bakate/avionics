@@ -20,7 +20,11 @@
     "./inventory-queries": "./src/queries/inventory-queries.ts",
     "./cancellation.service": "./src/services/cancellation.service.ts",
     "./ports/event-bus": "./src/ports/event-bus.ts",
-    "./jobs/inventory-release": "./src/jobs/inventory-release.ts"
+    "./jobs/inventory-release": "./src/jobs/inventory-release.ts",
+    "./booking-machine": "./src/machines/booking/booking.machine.ts",
+    "./booking-types": "./src/machines/booking/booking.types.ts",
+    "./stress-test-machine": "./src/machines/stress-test/stress-test.machine.ts",
+    "./stress-test-types": "./src/machines/stress-test/stress-test.types.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",
@@ -33,8 +37,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@workspace/domain": "workspace:*",
     "effect": "catalog:effect3",
-    "@workspace/domain": "workspace:*"
+    "xstate": "^5.28.0"
   },
   "devDependencies": {
     "@biomejs/biome": "catalog:",
@@ -42,11 +47,11 @@
     "@fast-check/vitest": "catalog:",
     "@types/node": "catalog:node25",
     "@vitest/coverage-v8": "catalog:vitest4",
-    "@workspace/tsconfig": "workspace:*",
     "@workspace/prettier-config": "workspace:*",
+    "@workspace/tsconfig": "workspace:*",
     "@workspace/vitest-config": "workspace:*",
-    "typescript": "catalog:",
     "prettier": "catalog:",
+    "typescript": "catalog:",
     "vitest": "catalog:vitest4"
   }
 }
