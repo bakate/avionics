@@ -1,5 +1,6 @@
 import {
   Activity01Icon,
+  Airplane01Icon,
   Cancel01Icon,
   Menu01Icon,
 } from "@hugeicons/core-free-icons";
@@ -16,12 +17,17 @@ export const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white dark:bg-gray-900">
+    <header className="sticky top-0 z-50 border-b border-gray-200/60 bg-white/80 backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-900/80">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link
           to={buildRoute.home()}
-          className="text-xl font-bold tracking-tight text-blue-600 dark:text-blue-400"
+          className="flex items-center gap-2 text-xl font-bold tracking-tight text-blue-600 transition-opacity hover:opacity-80 dark:text-blue-400"
         >
+          <HugeiconsIcon
+            icon={Airplane01Icon}
+            size={20}
+            className="rotate-45"
+          />
           Avionics
         </Link>
 
@@ -29,13 +35,13 @@ export const Header = () => {
         <nav className="hidden md:flex items-center gap-4">
           <Link
             to={buildRoute.stressTest()}
-            className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+            className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
           >
             <HugeiconsIcon icon={Activity01Icon} size={18} />
             Stress Test
           </Link>
           <div
-            className="h-6 w-px bg-gray-200 dark:bg-gray-800"
+            className="h-6 w-px bg-gray-200 dark:bg-gray-700"
             aria-hidden="true"
           />
           <LanguageSelector />
@@ -54,7 +60,7 @@ export const Header = () => {
           <LanguageSelector />
           <button
             type="button"
-            className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+            className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors duration-200"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? (
@@ -67,11 +73,11 @@ export const Header = () => {
       </div>
 
       {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-4 space-y-4 shadow-lg top-16 absolute w-full left-0 z-40">
+      {isMobileMenuOpen ? (
+        <div className="md:hidden border-t border-gray-200/60 dark:border-gray-800/60 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md px-4 py-4 space-y-4 shadow-lg top-16 absolute w-full left-0 z-40">
           <Link
             to={buildRoute.stressTest()}
-            className="flex items-center gap-2 text-base font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
+            className="flex items-center gap-2 text-base font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <HugeiconsIcon icon={Activity01Icon} size={20} />
@@ -91,7 +97,7 @@ export const Header = () => {
             />
           </div>
         </div>
-      )}
+      ) : null}
     </header>
   );
 };

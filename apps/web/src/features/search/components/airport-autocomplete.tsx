@@ -30,6 +30,11 @@ export const AirportAutocomplete = ({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Sync internal query when external value changes (e.g. swap button)
+  useEffect(() => {
+    setQuery(value);
+  }, [value]);
+
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (query.length >= 2) {

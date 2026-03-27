@@ -228,10 +228,13 @@ export const SummaryScreen = () => {
         <div className="w-full lg:w-[380px]">
           <div className="sticky top-8">
             <Card className="border-border shadow-md overflow-hidden bg-background">
-              <div className="bg-slate-950 px-6 py-6 text-white border-b border-white/5">
-                <h3 className="text-xl font-bold">
+              <div className="bg-linear-to-br from-blue-950 to-slate-900 px-6 py-6 text-white border-b border-white/10">
+                <h3 className="text-xl font-bold tracking-tight">
                   {t("payment.priceSummary", "Price Summary")}
                 </h3>
+                <p className="text-blue-200/60 text-xs mt-1 font-medium uppercase tracking-wider">
+                  {t("payment.taxesIncluded", "Includes all taxes and fees")}
+                </p>
               </div>
               <CardContent className="p-6">
                 <div className="space-y-4 text-sm text-muted-foreground">

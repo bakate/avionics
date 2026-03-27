@@ -1,9 +1,11 @@
 import { type BookFlightCommand } from "@workspace/application/booking.commands";
+import { type FlightAvailability } from "@workspace/application/read-models";
 import { type CabinClass } from "@workspace/domain/kernel";
 import { Effect, Either } from "effect";
 import { v4 as uuidv4 } from "uuid";
-import { assign, setup } from "xstate";
+import { assign, fromPromise, setup } from "xstate";
 import { bookFlight } from "@/api/booking.api";
+import { ApiRuntime } from "@/api/client";
 import {
   findAvailableFlights,
   getFlightAvailability,
@@ -112,32 +114,31 @@ const executeStressTest = fromEffect(
     }),
 );
 
-const fetchAvailableFlights = fromEffect(() =>
-  Effect.gen(function* () {
-    const results = yield* findAvailableFlights({
+const fetchAvailableFlights = fromPromise(async () => {
+  const results = await ApiRuntime.runPromise(
+    findAvailableFlights({
       cabin: "ECONOMY",
-      departureDate: new Date(),
       limit: 12,
       sortBy: "availableSeatsAsc",
-    });
+    }),
+  );
 
-    return results.map((flight) => ({
-      flightId: flight.flightId.valueOf() ?? "",
-      flightNumber: flight.flightNumber.valueOf() ?? "",
-      origin: flight.origin.valueOf() ?? "",
-      destination: flight.destination.valueOf() ?? "",
-      departureTime:
-        flight.departureTime instanceof Date
-          ? flight.departureTime.toISOString()
-          : String(flight.departureTime),
-      availableSeats: flight.economyAvailable,
-    }));
-  }),
-);
+  return (results as ReadonlyArray<FlightAvailability>).map((flight) => ({
+    flightId: String(flight.flightId),
+    flightNumber: String(flight.flightNumber),
+    origin: String(flight.origin),
+    destination: String(flight.destination),
+    departureTime:
+      flight.departureTime instanceof Date
+        ? flight.departureTime.toISOString()
+        : String(flight.departureTime),
+    availableSeats: Number(flight.economyAvailable),
+  }));
+});
 
 const fetchSingleFlight = fromEffect((input: { flightId: string }) =>
   Effect.gen(function* () {
-    const flight = yield* getFlightAvailability(input.flightId);
+    const flight = yield* getFlightAvailability(input.flightId, false);
 
     return {
       flightId: flight.flightId.valueOf() ?? "",

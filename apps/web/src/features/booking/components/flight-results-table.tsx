@@ -370,7 +370,7 @@ export const FlightResultsTable = ({
                 {t("flight.duration")}
               </th>
               <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                Vol
+                {t("flight.number")}
               </th>
               {CABIN_ORDER.map((cab) => (
                 <th

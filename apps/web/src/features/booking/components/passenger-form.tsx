@@ -31,15 +31,28 @@ export type PassengerFormProps = {
   readonly control: Control<{ passengers: Array<PassengerInputEncoded> }>;
 };
 
+const PASSENGER_TYPE_BADGE: Partial<
+  Record<PassengerType, { label: string; classes: string }>
+> = {
+  ADULT: {
+    label: "search.adults",
+    classes: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+  },
+  CHILD: {
+    label: "search.children",
+    classes:
+      "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+  },
+  INFANT: {
+    label: "search.infants",
+    classes:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  },
+};
+
 export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
   const { t, i18n } = useTranslation();
-
-  const titleKey =
-    type === "ADULT"
-      ? "search.adults"
-      : type === "CHILD"
-        ? "search.children"
-        : "search.infants";
+  const badge = PASSENGER_TYPE_BADGE[type];
 
   return (
     <SectionCard
@@ -47,7 +60,21 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
         string,
         unknown
       >)}
-      description={t(titleKey, { count: 1 })}
+      action={
+        badge ? (
+          <span
+            className={cn(
+              "text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full",
+              badge.classes,
+            )}
+          >
+            {(t as (k: string, o: Record<string, unknown>) => string)(
+              badge.label,
+              { count: 1 },
+            )}
+          </span>
+        ) : null
+      }
     >
       <div className="grid md:grid-cols-2 gap-6">
         <Controller
@@ -102,7 +129,13 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
               <FieldLabel>{t("passengers.gender")}</FieldLabel>
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder={t("passengers.select_gender")} />
+                  <SelectValue placeholder={t("passengers.select_gender")}>
+                    {field.value === "MALE"
+                      ? t("passengers.genderTypes.male")
+                      : field.value === "FEMALE"
+                        ? t("passengers.genderTypes.female")
+                        : null}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="MALE">

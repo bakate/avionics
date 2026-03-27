@@ -130,6 +130,7 @@
   },
   "flight": {
     "duration": "Duration",
+    "number": "Flight",
     "perPassenger": "per passenger",
     "select": "Select",
     "nonstop": "Non-stop"

@@ -92,13 +92,17 @@ const PassengerCounter = ({
   );
 };
 
-export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
+export const SearchForm = ({
+  onSearch,
+  isLoading,
+  defaultValues,
+}: SearchFormProps) => {
   const { t, i18n } = useTranslation();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<SearchFormInput, unknown, SearchFormValues>({
     resolver: effectTsResolver(searchFormSchema),
-    defaultValues: initialFormState,
+    defaultValues: { ...initialFormState, ...defaultValues },
   });
 
   const tripType = useWatch({ control: form.control, name: "tripType" });
@@ -241,7 +245,7 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
               <AirportAutocomplete
                 value={field.value}
                 onChange={field.onChange}
-                placeholder="LHR"
+                placeholder="DSS"
                 disabled={busy}
               />
               <FieldError errors={getTranslatedErrors([fieldState.error])} />
@@ -276,62 +280,64 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                     };
 
                     return (
-                      <Popover>
-                        <PopoverTrigger
-                          render={
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "h-12 w-full justify-start rounded-xl border-border/60 bg-secondary/50 px-4 text-left font-semibold text-foreground hover:bg-secondary",
-                                !dateRange.from && "text-muted-foreground/50",
-                              )}
-                              disabled={busy}
-                            >
-                              <HugeiconsIcon
-                                icon={Calendar01Icon}
-                                size={20}
-                                className="mr-2text-muted-foreground"
-                              />
-                              {dateRange.from ? (
-                                dateRange.to ? (
-                                  <>
-                                    {formatDate(dateRange.from)} -{" "}
-                                    {formatDate(dateRange.to)}
-                                  </>
+                      <>
+                        <Popover>
+                          <PopoverTrigger
+                            render={
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "h-12 w-full justify-start rounded-xl border-border/60 bg-secondary/50 px-4 text-left font-semibold text-foreground hover:bg-secondary",
+                                  !dateRange.from && "text-muted-foreground/50",
+                                )}
+                                disabled={busy}
+                              >
+                                <HugeiconsIcon
+                                  icon={Calendar01Icon}
+                                  size={20}
+                                  className="mr-2 text-muted-foreground"
+                                />
+                                {dateRange.from ? (
+                                  dateRange.to ? (
+                                    <>
+                                      {formatDate(dateRange.from)} -{" "}
+                                      {formatDate(dateRange.to)}
+                                    </>
+                                  ) : (
+                                    formatDate(dateRange.from)
+                                  )
                                 ) : (
-                                  formatDate(dateRange.from)
-                                )
-                              ) : (
-                                <span>{t("search.selectDates")}</span>
-                              )}
-                            </Button>
-                          }
+                                  <span>{t("search.selectDates")}</span>
+                                )}
+                              </Button>
+                            }
+                          />
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              autoFocus
+                              mode="range"
+                              defaultMonth={dateRange.from ?? new Date()}
+                              selected={dateRange}
+                              locale={i18n.language === "fr" ? fr : enUS}
+                              onSelect={(range) => {
+                                departureField.onChange(
+                                  range?.from ? toISODate(range.from) : "",
+                                );
+                                returnField.onChange(
+                                  range?.to ? toISODate(range.to) : "",
+                                );
+                              }}
+                              numberOfMonths={2}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FieldError
+                          errors={getTranslatedErrors([
+                            form.formState.errors.departureDate,
+                            form.formState.errors.returnDate,
+                          ])}
                         />
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            autoFocus
-                            mode="range"
-                            defaultMonth={dateRange.from ?? new Date()}
-                            selected={dateRange}
-                            locale={i18n.language === "fr" ? fr : enUS}
-                            onSelect={(range) => {
-                              departureField.onChange(
-                                range?.from ? toISODate(range.from) : "",
-                              );
-                              returnField.onChange(
-                                range?.to ? toISODate(range.to) : "",
-                              );
-                            }}
-                            numberOfMonths={2}
-                          />
-                          <FieldError
-                            errors={getTranslatedErrors([
-                              form.formState.errors.departureDate,
-                              form.formState.errors.returnDate,
-                            ])}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                      </>
                     );
                   }
 
@@ -341,49 +347,51 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                     : undefined;
 
                   return (
-                    <Popover>
-                      <PopoverTrigger
-                        render={
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "h-12 w-full justify-start rounded-xl border-border/60 bg-secondary/50 px-4 text-left font-semibold text-foreground hover:bg-secondary",
-                              !selectedDate && "text-muted-foreground/50",
-                            )}
-                            disabled={busy}
-                          >
-                            <HugeiconsIcon
-                              icon={Calendar01Icon}
-                              size={20}
-                              className="mr-2 text-muted-foreground"
-                            />
-                            {selectedDate ? (
-                              formatDate(selectedDate)
-                            ) : (
-                              <span>{t("search.selectDeparture")}</span>
-                            )}
-                          </Button>
-                        }
+                    <>
+                      <Popover>
+                        <PopoverTrigger
+                          render={
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "h-12 w-full justify-start rounded-xl border-border/60 bg-secondary/50 px-4 text-left font-semibold text-foreground hover:bg-secondary",
+                                !selectedDate && "text-muted-foreground/50",
+                              )}
+                              disabled={busy}
+                            >
+                              <HugeiconsIcon
+                                icon={Calendar01Icon}
+                                size={20}
+                                className="mr-2 text-muted-foreground"
+                              />
+                              {selectedDate ? (
+                                formatDate(selectedDate)
+                              ) : (
+                                <span>{t("search.selectDeparture")}</span>
+                              )}
+                            </Button>
+                          }
+                        />
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            autoFocus
+                            mode="single"
+                            defaultMonth={selectedDate ?? new Date()}
+                            selected={selectedDate}
+                            onSelect={(date) => {
+                              departureField.onChange(
+                                date ? toISODate(date) : "",
+                              );
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FieldError
+                        errors={getTranslatedErrors([
+                          form.formState.errors.departureDate,
+                        ])}
                       />
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          autoFocus
-                          mode="single"
-                          defaultMonth={selectedDate ?? new Date()}
-                          selected={selectedDate}
-                          onSelect={(date) => {
-                            departureField.onChange(
-                              date ? toISODate(date) : "",
-                            );
-                          }}
-                        />
-                        <FieldError
-                          errors={getTranslatedErrors([
-                            form.formState.errors.departureDate,
-                          ])}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    </>
                   );
                 }}
               />
@@ -488,8 +496,11 @@ export const SearchForm = ({ onSearch, isLoading }: SearchFormProps) => {
                 value={field.value ?? "ALL"}
                 disabled={busy}
               >
-                <SelectTrigger className="h-12 w-full md:w-64 rounded-xl border-border/60 bg-secondary/50 px-4 font-semibold text-foreground hover:bg-secondary">
-                  <SelectValue placeholder="—" />
+                <SelectTrigger
+                  size="lg"
+                  className=" w-full md:w-64 rounded-xl border-border/60 bg-secondary/50 px-4 font-semibold text-foreground hover:bg-secondary"
+                >
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="w-full md:w-64">
                   {cabinOptions.map((opt) => (

@@ -1,3 +1,5 @@
+import { Cancel01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type CabinClass,
   type CurrencyCode,
@@ -5,6 +7,7 @@ import {
 } from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
 import { Heading } from "@workspace/ui/components/heading";
+import { cn } from "@workspace/ui/lib/utils";
 import { useTranslation } from "react-i18next";
 import { type FlightResult } from "@/features/booking/machines/booking.machine";
 import { formatMoney } from "@/lib/format";
@@ -102,54 +105,48 @@ export const FareDetailPanel = ({
             {t("select.includedPerPassenger")}
           </h3>
           <ul className="space-y-3 text-sm text-slate-700 dark:text-slate-300 mt-4">
-            <li className="flex items-start gap-2">
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                ✓
-              </span>
-              <span>{t("select.features.bags.small")}</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                ✓
-              </span>
-              <span>{t("select.features.bags.cabin")}*</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                ✓
-              </span>
-              <span>{t(`select.rules.baggage.${cabin}`)}</span>
-            </li>
-            <li className="flex items-start gap-2">
-              {cabin === "ECONOMY" ? (
-                <span className="text-red-500 dark:text-red-400 font-bold">
-                  ✕
+            {(
+              [
+                { key: "select.features.bags.small", included: true },
+                {
+                  key: `select.features.bags.cabin`,
+                  included: true,
+                  suffix: "*",
+                },
+                { key: `select.rules.baggage.${cabin}`, included: true },
+                {
+                  key: `select.rules.seat.${cabin}`,
+                  included: cabin !== "ECONOMY",
+                },
+                { key: `select.rules.modification.${cabin}`, included: true },
+                {
+                  key: `select.rules.refund.${cabin}`,
+                  included: cabin !== "ECONOMY",
+                },
+              ] as ReadonlyArray<{
+                key: string;
+                included: boolean;
+                suffix?: string;
+              }>
+            ).map(({ key, included, suffix }) => (
+              <li key={key} className="flex items-start gap-2">
+                <HugeiconsIcon
+                  icon={included ? Tick02Icon : Cancel01Icon}
+                  size={16}
+                  strokeWidth={2.5}
+                  className={cn(
+                    "mt-0.5 shrink-0",
+                    included
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-red-500 dark:text-red-400",
+                  )}
+                />
+                <span>
+                  {(t as (k: string) => string)(key)}
+                  {suffix}
                 </span>
-              ) : (
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                  ✓
-                </span>
-              )}
-              <span>{t(`select.rules.seat.${cabin}`)}</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                ✓
-              </span>
-              <span>{t(`select.rules.modification.${cabin}`)}</span>
-            </li>
-            <li className="flex items-start gap-2">
-              {cabin === "ECONOMY" ? (
-                <span className="text-red-500 dark:text-red-400 font-bold">
-                  ✕
-                </span>
-              ) : (
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                  ✓
-                </span>
-              )}
-              <span>{t(`select.rules.refund.${cabin}`)}</span>
-            </li>
+              </li>
+            ))}
           </ul>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-8">

@@ -45,12 +45,15 @@ const GetFlightAvailabilityResolver = RequestResolver.fromEffect(
 
 /**
  * Get flight availability (Cached & Deduplicated)
+ * @param flightId
+ * @param cache default true
+ * @returns
  */
-export const getFlightAvailability = (flightId: string) =>
+export const getFlightAvailability = (flightId: string, cache = true) =>
   Effect.request(
     GetFlightAvailabilityRequest({ flightId }),
     GetFlightAvailabilityResolver,
-  ).pipe(Effect.withRequestCaching(true));
+  ).pipe(Effect.withRequestCaching(cache));
 
 /**
  * Get cabin availability

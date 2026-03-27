@@ -66,6 +66,7 @@ const HomePage = () => {
                   })
                 }
                 isLoading={isLoading && state === "searching"}
+                defaultValues={context.searchParams ?? undefined}
               />
             </div>
           </div>
