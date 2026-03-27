@@ -16,7 +16,7 @@ import PaymentPage from "@/pages/payment.page";
 import SuccessPage from "@/pages/success.page";
 import { ROUTES } from "@/routes";
 import { LAST_EMAIL_KEY } from "./features/booking/machines/booking.persistence";
-import { StressTestPage } from "./features/demo/pages/stress-test.page";
+import { StressTestPage } from "./features/stress-test/pages/stress-test.page";
 
 const router = createBrowserRouter([
   {
