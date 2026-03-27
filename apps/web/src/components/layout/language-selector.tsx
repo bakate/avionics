@@ -7,19 +7,23 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import { useTranslation } from "react-i18next";
 
-import { SUPPORTED_LOCALES } from "@/i18n/types";
+import { type Locale, SUPPORTED_LOCALES } from "@/i18n/types";
+
+const LOCALE_METADATA: Record<Locale, { name: string; flag: string }> = {
+  fr: { name: "fr", flag: "fr" },
+  "en-GB": { name: "en", flag: "gb" },
+};
 
 export function LanguageSelector() {
   const { i18n, t } = useTranslation();
 
-  const languages = SUPPORTED_LOCALES.map(
-    (locale) =>
-      ({
-        code: locale,
-        name: locale === "en-GB" ? "en" : locale,
-        flag: locale === "fr" ? "fr" : "us",
-      }) as const,
-  );
+  const languages = SUPPORTED_LOCALES.map((locale) => {
+    const fallback = { name: locale, flag: "gb" };
+    return {
+      code: locale,
+      ...(LOCALE_METADATA[locale] ?? fallback),
+    };
+  });
 
   const currentLanguage =
     languages.find((lang) => lang.code === i18n.language) ?? languages[0];

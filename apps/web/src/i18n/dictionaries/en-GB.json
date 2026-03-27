@@ -143,7 +143,7 @@
     "number": "Flight",
     "perPassenger": "per passenger",
     "select": "Select",
-    "nonstop": "Non-stop"
+    "nonStop": "Non-stop"
   },
   "select": {
     "title": "Cabin selection",
@@ -209,7 +209,7 @@
   },
   "passengers": {
     "title": "Passengers",
-    "who_is_traveling": "Who's traveling?",
+    "who_is_traveling": "Who's travelling?",
     "passenger_number": "Passenger n°{{count}}",
     "first_name": "First Name",
     "last_name": "Last Name",
@@ -247,7 +247,7 @@
   },
   "success": {
     "title": "Payment Successful!",
-    "message": "Thank you for your choice. Your payment has been received and your booking is being finalized.",
+    "message": "Thank you for your choice. Your payment has been received and your booking is being finalised.",
     "pnrLabel": "Booking Reference (PNR)",
     "viewBooking": "View My Booking",
     "goHome": "Return to Home",

@@ -1,4 +1,4 @@
-import translation from "../i18n/dictionaries/en.json";
+import translation from "../i18n/dictionaries/en-GB.json";
 
 const resources = {
   translation,

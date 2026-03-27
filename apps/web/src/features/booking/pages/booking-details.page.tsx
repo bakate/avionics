@@ -142,7 +142,7 @@ const FlightSegment = ({
             </div>
           </div>
           <span className="mt-6 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-            {t("flight.nonstop")}
+            {t("flight.nonStop")}
           </span>
         </div>
 

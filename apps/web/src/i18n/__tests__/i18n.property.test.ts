@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, test } from "vitest";
-import en from "../dictionaries/en.json";
+import en from "../dictionaries/en-GB.json";
 import fr from "../dictionaries/fr.json";
 
 type NestedRecord = { [key: string]: string | NestedRecord };
