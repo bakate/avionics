@@ -128,6 +128,7 @@ export type BookingEvent =
   | { type: "BACK" }
   | { type: "COMPLETE" }
   | { type: "RESET" }
+  | { type: "CANCEL_PAYMENT" }
   | { type: "UPDATE_FILTERS"; filters: FS }
   | { type: "UPDATE_SORT"; field: SF; order: SO }
   | { type: "RESET_FILTERS" };

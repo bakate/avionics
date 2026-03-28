@@ -45,7 +45,13 @@
     "taxes": "Taxes & Frais",
     "info": "Informations de réservation",
     "date": "Date de réservation",
-    "confirmed": "Confirmé",
+    "status": {
+      "held": "Réservé",
+      "confirmed": "Confirmé",
+      "ticketed": "Émis",
+      "cancelled": "Annulé",
+      "expired": "Expiré"
+    },
     "actions": {
       "view": "Consulter la réservation",
       "pay": "Payer",
@@ -249,7 +255,14 @@
     "processing": "Traitement en cours...",
     "error": "Le paiement a échoué. Veuillez réessayer.",
     "retry": "Réessayer",
-    "expired": "Votre réservation a expiré. Veuillez recommencer la recherche."
+    "expired": "Votre réservation a expiré. Veuillez recommencer la recherche.",
+    "demoGuide": "Guide de Démo",
+    "demoPrompt": "Pour tester le paiement en mode bac à sable Polar, utilise les identifiants suivants :",
+    "cardNumber": "Numéro de carte",
+    "cardExpCvc": "Exp/CVC",
+    "cancelledTitle": "Paiement Annulé",
+    "cancelledMessage": "Ton paiement a été annulé. Tu vas être redirigé vers le récapitulatif pour réessayer.",
+    "errorCancelled": "Paiement annulé. Tu peux réessayer quand tu es prêt."
   },
   "success": {
     "title": "Paiement Réussi !",

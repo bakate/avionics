@@ -13,7 +13,8 @@ interface BookingSummaryCardProps {
 }
 
 export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language;
   const navigate = useNavigate();
   const {
     send,
@@ -45,7 +46,7 @@ export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
           void navigate(buildRoute.bookingDetails(booking.pnrCode));
         }
       }}
-      className={`group relative cursor-pointer overflow-hidden rounded-[2rem] border border-slate-200 bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-900/10 dark:border-slate-800 dark:bg-slate-950 dark:hover:shadow-blue-500/5 ${
+      className={`group relative cursor-pointer overflow-hidden rounded-2xl border border-border/40 bg-card p-6 transition-all duration-300 hover:-translate-y-1 premium-shadow ${
         isUpdating ? "opacity-70 pointer-events-none" : ""
       }`}
     >
@@ -65,10 +66,10 @@ export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
       <div className="flex flex-col gap-6">
         {/* Header: PNR & Status */}
         <div className="flex flex-col">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-            {t("booking.pnr") || "Booking Ref"}
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">
+            {t("booking.pnr")}
           </span>
-          <h3 className="text-2xl font-black tracking-tight text-slate-900 transition-colors group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-400">
+          <h3 className="text-2xl font-black tracking-tight text-foreground transition-colors group-hover:text-primary">
             {booking.pnrCode}
           </h3>
         </div>
@@ -98,7 +99,7 @@ export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                {t("booking.date") || "Date"}
+                {t("booking.date")}
               </span>
               <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
                 {formatDate(new Date(booking.createdAt))}
@@ -112,7 +113,7 @@ export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                {t("booking.passengers") || "Travelers"}
+                {t("booking.passengers")}
               </span>
               <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
                 {booking.passengerCount}{" "}
@@ -127,10 +128,10 @@ export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
         {/* Footer: Price & Expiry */}
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              {t("booking.totalPrice") || "Total Amount"}
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
+              {t("booking.totalPrice")}
             </span>
-            <span className="text-xl font-black text-blue-600 dark:text-blue-400">
+            <span className="text-2xl font-black text-primary">
               {formatMoney(booking.totalPrice)}
             </span>
           </div>
@@ -138,10 +139,10 @@ export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
           {booking.expiresAt._tag === "Some" && status === "held" && (
             <div className="flex flex-col items-end rounded-xl bg-amber-50 px-3 py-1.5 ring-1 ring-amber-100/50 dark:bg-amber-900/20 dark:ring-amber-900/30">
               <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                {t("booking.expiresAt") || "Expires in"}
+                {t("booking.expiresAt")}
               </span>
               <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300">
-                {formatDateTime(new Date(booking.expiresAt.value))}
+                {formatDateTime(new Date(booking.expiresAt.value), locale)}
               </span>
             </div>
           )}
@@ -155,18 +156,18 @@ export const BookingSummaryCard = ({ booking }: BookingSummaryCardProps) => {
               e.stopPropagation();
               void navigate(buildRoute.bookingDetails(booking.pnrCode));
             }}
-            className="mt-2 flex-1 rounded-2xl bg-slate-50 py-3 text-sm font-bold text-slate-600 transition-all hover:bg-blue-600 hover:text-white active:scale-[0.98] dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-blue-600 dark:hover:text-white"
+            className="mt-2 flex-1 rounded-lg bg-accent/20 py-3 text-sm font-bold text-muted-foreground transition-all hover:bg-primary hover:text-white active:scale-[0.98]"
           >
-            {t("booking.actions.view", "Consulter la réservation")}
+            {t("booking.actions.view")}
           </button>
 
           {status === "held" && (
             <button
               type="button"
               onClick={handlePay}
-              className="mt-2 flex-1 rounded-2xl bg-blue-600 py-3 text-sm font-bold text-white transition-all hover:bg-blue-700 active:scale-[0.98] shadow-lg shadow-blue-600/20"
+              className="mt-2 flex-1 rounded-lg bg-primary py-3 text-sm font-bold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98] shadow-lg shadow-primary/20"
             >
-              {t("booking.actions.payNow", "Payer")}
+              {t("booking.actions.payNow")}
             </button>
           )}
         </div>

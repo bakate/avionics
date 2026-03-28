@@ -10,6 +10,7 @@ import { ReturnScreen } from "@/features/booking/screens/return.screen";
 import HomePage from "@/features/search/screens/home.screen";
 import NotFoundPage from "@/features/search/screens/not-found.screen";
 import i18n from "@/i18n/config";
+import CancelPage from "@/pages/cancel.page";
 import ConfirmationPage from "@/pages/confirmation.page";
 import PassengersPage from "@/pages/passengers.page";
 import PaymentPage from "@/pages/payment.page";
@@ -44,7 +45,7 @@ const router = createBrowserRouter([
       { path: ROUTES.payment, element: <PaymentPage /> },
       { path: ROUTES.confirmation, element: <ConfirmationPage /> },
       { path: ROUTES.success, element: <SuccessPage /> },
-      { path: ROUTES.cancel, element: <HomePage /> },
+      { path: ROUTES.cancel, element: <CancelPage /> },
       { path: ROUTES.stressTest, element: <StressTestPage /> },
       {
         path: ROUTES.bookingDetails,

@@ -40,7 +40,8 @@ const FlightSegment = ({
   segment: typeof BookingSegment.Type;
   status?: PnrStatus;
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language;
   const [flightInfo, setFlightInfo] = useState<
     typeof FlightAvailability.Type | null
   >(null);
@@ -84,11 +85,11 @@ const FlightSegment = ({
   const depTime =
     flightInfo.departureTime instanceof Date
       ? flightInfo.departureTime
-      : formatDateTime(flightInfo.departureTime);
+      : formatDateTime(flightInfo.departureTime, locale);
   const arrTime =
     flightInfo.arrivalTime instanceof Date
       ? flightInfo.arrivalTime
-      : formatDateTime(flightInfo.arrivalTime);
+      : formatDateTime(flightInfo.arrivalTime, locale);
 
   return (
     <div className="relative flex flex-col gap-6 rounded-[2.5rem] border border-slate-200 bg-white p-6 shadow-sm transition-all hover:shadow-md md:p-10 dark:bg-slate-900 dark:border-slate-800">
@@ -166,7 +167,8 @@ const FlightSegment = ({
 import { type BookingResponse } from "@workspace/api/booking-api";
 
 export const BookingDetailsPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language;
   const { is, context, send } = useBookingMachine();
   const navigate = useNavigate();
 
@@ -382,7 +384,7 @@ export const BookingDetailsPage = () => {
                     {t("booking.createdAt")}
                   </span>
                   <span className="font-bold text-slate-900 dark:text-slate-100">
-                    {formatDateTime(new Date(booking.createdAt))}
+                    {formatDateTime(new Date(booking.createdAt), locale)}
                   </span>
                 </div>
 
@@ -400,7 +402,10 @@ export const BookingDetailsPage = () => {
                             {t("booking.expiresAt")}
                           </span>
                           <span className="text-sm font-bold text-amber-900 dark:text-amber-100">
-                            {formatDateTime(new Date(booking.expiresAt.value))}
+                            {formatDateTime(
+                              new Date(booking.expiresAt.value),
+                              locale,
+                            )}
                           </span>
                         </div>
                       </div>

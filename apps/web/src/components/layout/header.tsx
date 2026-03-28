@@ -17,11 +17,11 @@ export const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200/60 bg-white/80 backdrop-blur-md dark:border-gray-800/60 dark:bg-gray-900/80">
+    <header className="sticky top-0 z-50 border-b border-border/40 glass">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link
           to={buildRoute.home()}
-          className="flex items-center gap-2 text-xl font-bold tracking-tight text-blue-600 transition-opacity hover:opacity-80 dark:text-blue-400"
+          className="flex items-center gap-2 text-xl font-bold tracking-tight text-primary transition-all hover:scale-105 active:scale-95"
         >
           <HugeiconsIcon
             icon={Airplane01Icon}
@@ -35,15 +35,12 @@ export const Header = () => {
         <nav className="hidden md:flex items-center gap-4">
           <Link
             to={buildRoute.stressTest()}
-            className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400 transition-colors duration-200"
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors duration-200"
           >
             <HugeiconsIcon icon={Activity01Icon} size={18} />
             Stress Test
           </Link>
-          <div
-            className="h-6 w-px bg-gray-200 dark:bg-gray-700"
-            aria-hidden="true"
-          />
+          <div className="h-6 w-px bg-border/60" aria-hidden="true" />
           <LanguageSelector />
           <ModeToggle
             labels={{

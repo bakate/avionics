@@ -1,4 +1,4 @@
-import { Calendar01Icon } from "@hugeicons/core-free-icons";
+import { Calendar01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type PassengerInputEncoded } from "@workspace/application/booking-types";
 import { type PassengerType } from "@workspace/domain/kernel";
@@ -88,6 +88,7 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
 
   return (
     <SectionCard
+      className="premium-shadow border-border/40"
       title={t("passengers.passenger_number", { count: index + 1 } as Record<
         string,
         unknown
@@ -116,8 +117,13 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
           }
           render={({ field, fieldState }) => (
             <Field>
-              <FieldLabel>{t("passengers.first_name")}</FieldLabel>
-              <Input placeholder="John" {...field} />
+              <div className="flex items-center justify-between">
+                <FieldLabel>{t("passengers.first_name")}</FieldLabel>
+                {fieldState.isDirty && !fieldState.error ? (
+                  <HugeiconsIcon icon={Tick02Icon} size={14} className="text-success animate-in zoom-in duration-300" />
+                ) : null}
+              </div>
+              <Input placeholder="John" {...field} className="focus:ring-primary/20" />
               <FieldError errors={translateError(fieldState.error)} />
             </Field>
           )}
@@ -130,8 +136,13 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
           }
           render={({ field, fieldState }) => (
             <Field>
-              <FieldLabel>{t("passengers.last_name")}</FieldLabel>
-              <Input placeholder="Doe" {...field} />
+              <div className="flex items-center justify-between">
+                <FieldLabel>{t("passengers.last_name")}</FieldLabel>
+                {fieldState.isDirty && !fieldState.error ? (
+                  <HugeiconsIcon icon={Tick02Icon} size={14} className="text-success animate-in zoom-in duration-300" />
+                ) : null}
+              </div>
+              <Input placeholder="Doe" {...field} className="focus:ring-primary/20" />
               <FieldError errors={translateError(fieldState.error)} />
             </Field>
           )}
@@ -142,11 +153,17 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
           name={`passengers.${index}.email` as `passengers.${number}.email`}
           render={({ field, fieldState }) => (
             <Field className="md:col-span-2">
-              <FieldLabel>{t("passengers.email")}</FieldLabel>
+              <div className="flex items-center justify-between">
+                <FieldLabel>{t("passengers.email")}</FieldLabel>
+                {fieldState.isDirty && !fieldState.error ? (
+                  <HugeiconsIcon icon={Tick02Icon} size={14} className="text-success animate-in zoom-in duration-300" />
+                ) : null}
+              </div>
               <Input
                 type="email"
                 placeholder="john.doe@example.com"
                 {...field}
+                className="focus:ring-primary/20"
               />
               <FieldError errors={translateError(fieldState.error)} />
             </Field>

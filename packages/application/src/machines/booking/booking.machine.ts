@@ -474,6 +474,12 @@ export const createBookingMachine = (deps: BookingMachineDeps) => {
           },
         },
         on: {
+          CANCEL_PAYMENT: {
+            target: "reviewingSummary",
+            actions: assign({
+              error: () => "payment.errorCancelled",
+            }),
+          },
           BACK: {
             target: "reviewingSummary",
           },
@@ -484,6 +490,12 @@ export const createBookingMachine = (deps: BookingMachineDeps) => {
       redirecting: {
         entry: "redirect",
         on: {
+          CANCEL_PAYMENT: {
+            target: "reviewingSummary",
+            actions: assign({
+              error: () => "payment.errorCancelled",
+            }),
+          },
           COMPLETE: "confirmed",
           RESET: { target: "idle", actions: "resetBookingFlow" },
         },

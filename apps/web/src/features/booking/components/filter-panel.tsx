@@ -28,15 +28,15 @@ export const FilterPanel = ({
   };
 
   return (
-    <div className="space-y-8 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
+    <div className="space-y-8 rounded-2xl border border-border/40 bg-card p-6 premium-shadow">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <HugeiconsIcon
             icon={FilterHorizontalIcon}
             size={16}
-            className="text-blue-400"
+            className="text-primary"
           />
-          <h3 className="text-sm font-bold uppercase tracking-wider dark:text-white">
+          <h3 className="text-sm font-black uppercase tracking-wider text-foreground">
             {t("search.filters")}
           </h3>
         </div>
@@ -63,10 +63,10 @@ export const FilterPanel = ({
               size="sm"
               onClick={() => handleCabinChange(opt.value)}
               className={cn(
-                "h-auto px-3 py-1.5 text-xs font-medium transition-all",
+                "h-auto px-3 py-1.5 text-xs font-bold uppercase tracking-widest transition-all rounded-lg",
                 filters.cabinClass === opt.value
-                  ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/50 hover:bg-blue-600/30 hover:text-blue-300"
-                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:dark:text-white",
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                  : "bg-accent/10 text-muted-foreground hover:bg-accent/20 hover:text-foreground",
               )}
             >
               {opt.label}
@@ -88,10 +88,10 @@ export const FilterPanel = ({
               size="sm"
               onClick={() => onFiltersChange({ ...filters, maxStops: stop })}
               className={cn(
-                "flex-1 py-2 text-xs font-medium transition-all",
+                "flex-1 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-lg",
                 filters.maxStops === stop
-                  ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/50 hover:bg-blue-600/30 hover:text-blue-300"
-                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:dark:text-white",
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                  : "bg-accent/10 text-muted-foreground hover:bg-accent/20 hover:text-foreground",
               )}
             >
               {stop === 0
@@ -133,10 +133,10 @@ export const FilterPanel = ({
                 onFiltersChange({ ...filters, timeRange: item.range })
               }
               className={cn(
-                "w-full py-2 text-xs font-medium transition-all",
+                "w-full py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-lg",
                 filters.timeRange?.[0] === item.range[0]
-                  ? "bg-blue-600/20 text-blue-400 ring-1 ring-blue-500/50 hover:bg-blue-600/30 hover:text-blue-300"
-                  : "bg-white/5 text-slate-400 hover:bg-white/10 hover:dark:text-white",
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                  : "bg-accent/10 text-muted-foreground hover:bg-accent/20 hover:text-foreground",
               )}
             >
               {t(item.label as any)}

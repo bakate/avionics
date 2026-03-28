@@ -1,4 +1,9 @@
-import { Airplane01Icon, PassportIcon } from "@hugeicons/core-free-icons";
+import {
+  Airplane01Icon,
+  Calendar01Icon,
+  Mail01Icon,
+  PassportIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type CurrencyCode, Money } from "@workspace/domain/kernel";
 import { Button } from "@workspace/ui/components/button";
@@ -49,7 +54,7 @@ export const SummaryScreen = () => {
       <Heading
         title={t("payment.title")}
         description={t("payment.subtitle")}
-        className="mb-10"
+        descriptionClassName="mb-12"
       />
 
       <div className="flex flex-col lg:flex-row gap-10">
@@ -57,6 +62,7 @@ export const SummaryScreen = () => {
           {/* Outbound Flight */}
           <SectionCard
             title={t("payment.outboundFlight")}
+            className="pt-0"
             icon={
               <HugeiconsIcon
                 icon={Airplane01Icon}
@@ -193,29 +199,27 @@ export const SummaryScreen = () => {
                       <HugeiconsIcon icon={PassportIcon} size={16} />
                     </div>
                     <div className="font-bold text-lg text-foreground">
+                      {t(
+                        `passengers.genderTypes.${p.gender.toLowerCase() as "male" | "female"}`,
+                      )}{" "}
                       {p.firstName} {p.lastName}
                     </div>
                   </div>
-                  <div className="text-sm text-muted-foreground flex flex-wrap gap-x-6 gap-y-2 ml-10">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground/60">
-                        {t("passengers.gender")}:
-                      </span>
-                      {t(
-                        `passengers.genderTypes.${p.gender.toLowerCase()}`,
-                        p.gender,
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground/60">
-                        {t("passengers.dob")}:
-                      </span>
+                  <div className="flex flex-wrap gap-x-8 gap-y-2 text-[13px] mt-4 ml-1.5">
+                    <div className="flex items-center gap-2 text-foreground/80 font-medium">
+                      <HugeiconsIcon
+                        icon={Calendar01Icon}
+                        size={14}
+                        className="text-primary"
+                      />
                       {formatDate(new Date(p.dateOfBirth))}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground/60">
-                        {t("passengers.emailLabel", "Email")}:
-                      </span>
+                    <div className="flex items-center gap-2 text-foreground/80 font-medium">
+                      <HugeiconsIcon
+                        icon={Mail01Icon}
+                        size={14}
+                        className="text-primary"
+                      />
                       {p.email}
                     </div>
                   </div>
@@ -227,28 +231,27 @@ export const SummaryScreen = () => {
 
         <div className="w-full lg:w-[380px]">
           <div className="sticky top-8">
-            <Card className="border-border shadow-md overflow-hidden bg-background">
-              <div className="bg-linear-to-br from-blue-950 to-slate-900 px-6 py-6 text-white border-b border-white/10">
-                <h3 className="text-xl font-bold tracking-tight">
-                  {t("payment.priceSummary", "Price Summary")}
-                </h3>
-                <p className="text-blue-200/60 text-xs mt-1 font-medium uppercase tracking-wider">
-                  {t("payment.taxesIncluded", "Includes all taxes and fees")}
-                </p>
+            <Card className="border-border shadow-md overflow-hidden bg-background pt-0">
+              <div className="bg-linear-to-br from-blue-950 to-slate-900 px-6 py-6 border-b border-white/10">
+                <Heading
+                  title={t("payment.priceSummary")}
+                  description={t("payment.taxesIncluded")}
+                  headerClassName="text-xl text-white font-bold"
+                  descriptionClassName="text-blue-200/60 font-medium text-xs mt-1 uppercase tracking-wider"
+                  className="py-0 mb-0 space-y-0"
+                />
               </div>
               <CardContent className="p-6">
                 <div className="space-y-4 text-sm text-muted-foreground">
                   <div className="flex justify-between items-center text-slate-600">
-                    <span>{t("payment.passengersLabel", "Passengers")}</span>
+                    <span>{t("payment.passengersLabel")}</span>
                     <span className="font-medium text-foreground">
                       {context.passengers.length} ×
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center text-slate-600">
-                    <span>
-                      {t("payment.outboundFlight", "Outbound Flight")}
-                    </span>
+                    <span>{t("payment.outboundFlight")}</span>
                     <span className="font-medium text-foreground">
                       {formatMoney(
                         Money.of(
@@ -261,7 +264,7 @@ export const SummaryScreen = () => {
 
                   {returnFlight && returnPrice && (
                     <div className="flex justify-between items-center text-slate-600">
-                      <span>{t("payment.returnFlight", "Return Flight")}</span>
+                      <span>{t("payment.returnFlight")}</span>
                       <span className="font-medium text-foreground">
                         {formatMoney(
                           Money.of(
@@ -276,7 +279,7 @@ export const SummaryScreen = () => {
                   <div className="pt-4 border-t border-slate-100 mt-4">
                     <div className="flex justify-between items-end">
                       <span className="text-lg font-bold text-foreground">
-                        {t("payment.totalPrice", "Total Price")}
+                        {t("payment.totalPrice")}
                       </span>
                       <span className="text-3xl font-black tracking-tight text-primary">
                         {formatMoney(
@@ -288,10 +291,7 @@ export const SummaryScreen = () => {
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 text-right mt-1">
-                      {t(
-                        "payment.taxesIncluded",
-                        "Includes all taxes and fees",
-                      )}
+                      {t("payment.taxesIncluded")}
                     </p>
                   </div>
                 </div>
@@ -325,7 +325,7 @@ export const SummaryScreen = () => {
 
                 {context.error && (
                   <div className="mt-6 p-4 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold">
-                    {context.error}
+                    {t(context.error as "payment.errorCancelled")}
                   </div>
                 )}
 
@@ -350,6 +350,33 @@ export const SummaryScreen = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Demo Help Card */}
+            <SectionCard
+              title={t("payment.demoGuide")}
+              className="mt-6 border-primary/20 bg-primary/5 shadow-sm overflow-hidden"
+              icon={<HugeiconsIcon icon={Airplane01Icon} size={18} />}
+            >
+              <p className="text-sm text-muted-foreground mb-2">
+                {t("payment.demoPrompt")}
+              </p>
+              <div className="bg-background rounded-lg border border-primary/10 p-3 space-y-2 font-mono text-xs">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("payment.cardNumber")}:
+                  </span>
+                  <span className="font-bold text-primary">
+                    4242 4242 4242 4242
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    {t("payment.cardExpCvc")}:
+                  </span>
+                  <span className="font-bold text-primary">01/32 - 123</span>
+                </div>
+              </div>
+            </SectionCard>
           </div>
         </div>
       </div>

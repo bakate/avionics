@@ -38,11 +38,9 @@ export function BookingStatusBadge({
     }
   };
 
-  // We check for `booking.status.${normalizedStatus}` and fall back to `booking.${normalizedStatus}` if not found.
-  // Finally fallback to the string passed.
-  const translatedStatus = t(`booking.${normalizedStatus}`, {
-    defaultValue: status,
-  });
+  const translatedStatus = t(
+    `booking.status.${normalizedStatus}` as "booking.status.held",
+  );
 
   return (
     <Badge

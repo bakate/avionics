@@ -45,7 +45,13 @@
     "taxes": "Taxes & Fees",
     "info": "Booking Info",
     "date": "Booking Date",
-    "confirmed": "Confirmed",
+    "status": {
+      "held": "Held",
+      "confirmed": "Confirmed",
+      "ticketed": "Ticketed",
+      "cancelled": "Cancelled",
+      "expired": "Expired"
+    },
     "actions": {
       "view": "View Booking",
       "pay": "Pay",
@@ -249,7 +255,14 @@
     "processing": "Processing...",
     "error": "Payment failed. Please try again.",
     "retry": "Retry",
-    "expired": "Your reservation has expired. Please start a new search."
+    "expired": "Your reservation has expired. Please start a new search.",
+    "demoGuide": "Demo Guide",
+    "demoPrompt": "For testing the payment in Polar sandbox mode, use the following credentials:",
+    "cardNumber": "Card Number",
+    "cardExpCvc": "Expiry/CVC",
+    "cancelledTitle": "Payment Cancelled",
+    "cancelledMessage": "Your payment was cancelled. You are being redirected to the summary to try again.",
+    "errorCancelled": "Payment cancelled. You can try again when you are ready."
   },
   "success": {
     "title": "Payment Successful!",

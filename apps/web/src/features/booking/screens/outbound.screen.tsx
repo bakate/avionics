@@ -232,6 +232,7 @@ export const OutboundScreen = () => {
                 title={t("search.filters")}
                 icon={<HugeiconsIcon icon={FilterHorizontalIcon} size={18} />}
                 className="sticky top-24"
+                variant="ghost"
               >
                 <FilterPanel
                   filters={filters}

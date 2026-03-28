@@ -39,12 +39,20 @@ const CABIN_COLORS: Record<
   { bg: string; text: string; ring: string }
 > = {
   ECONOMY: {
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    ring: "ring-emerald-200",
+    bg: "bg-emerald-500/10",
+    text: "text-emerald-700 dark:text-emerald-400",
+    ring: "ring-emerald-500/20",
   },
-  BUSINESS: { bg: "bg-blue-50", text: "text-blue-700", ring: "ring-blue-200" },
-  FIRST: { bg: "bg-amber-50", text: "text-amber-700", ring: "ring-amber-200" },
+  BUSINESS: {
+    bg: "bg-primary/10",
+    text: "text-primary",
+    ring: "ring-primary/20",
+  },
+  FIRST: {
+    bg: "bg-amber-500/10",
+    text: "text-amber-700 dark:text-amber-400",
+    ring: "ring-amber-500/20",
+  },
 };
 
 const CABIN_ORDER: ReadonlyArray<CabinClass> = ["ECONOMY", "BUSINESS", "FIRST"];
@@ -77,12 +85,12 @@ const CabinPriceCell = ({
       className={cn(
         "flex min-h-[60px] min-w-[44px] flex-col items-center justify-center rounded-lg px-3 py-2 text-center transition-all ring-1 ring-inset",
         soldOut
-          ? "cursor-not-allowed bg-gray-50 text-gray-400 ring-gray-200 opacity-60"
+          ? "cursor-not-allowed bg-muted/30 text-muted-foreground ring-border/50 opacity-60"
           : cn(
               colors.bg,
               colors.text,
               colors.ring,
-              "hover:shadow-md hover:ring-2 cursor-pointer",
+              "hover:shadow-lg hover:ring-2 cursor-pointer hover:-translate-y-0.5",
             ),
       )}
       aria-label={
@@ -137,8 +145,8 @@ const FlightRow = ({
     <>
       <tr
         className={cn(
-          "border-b border-gray-100 dark:border-white/5 transition-colors hover:bg-gray-50/50 dark:hover:bg-white/5",
-          isExpanded && "bg-slate-50/50 dark:bg-slate-900/20",
+          "border-b border-border/40 transition-colors hover:bg-accent/5",
+          isExpanded && "bg-accent/10",
         )}
       >
         <td className="px-4 py-4">

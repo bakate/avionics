@@ -6,17 +6,17 @@ import { DateTime, Duration, Option } from "effect";
 // ---------------------------------------------------------------------------
 
 /** Format a Date to "HH:mm" (e.g. "14:35") */
-export const formatTime = (date: Date): string =>
+export const formatTime = (date: Date, locale: string = "fr"): string =>
   Option.match(DateTime.makeZoned(date), {
     onNone: () =>
-      date.toLocaleTimeString("fr-FR", {
+      date.toLocaleTimeString(locale, {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
       }),
     onSome: (dt) =>
       DateTime.format(dt, {
-        locale: "fr-FR",
+        locale: locale,
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
@@ -42,8 +42,8 @@ export const formatDate = (date: Date): string =>
   });
 
 /** Format a Date to "HH:mm · dd MMM yyyy" */
-export const formatDateTime = (date: Date): string =>
-  `${formatTime(date)} · ${formatDate(date)}`;
+export const formatDateTime = (date: Date, locale: string = "fr"): string =>
+  `${formatDate(date)} ${locale === "fr" ? "à" : "at"} ${formatTime(date)}`;
 
 /** Format a Date to "yyyy-MM-dd" using local time to avoid UTC shift */
 export const toISODate = (date: Date): string =>

@@ -38,13 +38,13 @@ export const FareDetailPanel = ({
     (passengers.adults * 1.0 + passengers.children * 0.75);
 
   return (
-    <div className="flex flex-col gap-6 p-6 bg-slate-50 dark:bg-slate-900/40 border-t border-slate-200 dark:border-white/10 rounded-b-xl">
+    <div className="flex flex-col gap-6 p-6 bg-accent/5 dark:bg-accent/10 border-t border-border/40 rounded-b-2xl animate-in slide-in-from-top-4 duration-500">
       <div className="flex justify-between items-start">
         <div className="w-full">
           <Heading title={t(`select.${cabin}`)} className="mb-4" />
           <div className="flex flex-col gap-1 mt-1">
             <div className="flex items-baseline gap-2">
-              <p className="text-slate-900 font-bold text-xl dark:text-white">
+              <p className="text-foreground font-black text-2xl tracking-tight">
                 {formatMoney(
                   Money.of(
                     totalPriceAmount,
@@ -53,7 +53,7 @@ export const FareDetailPanel = ({
                 )}
               </p>
               {totalPassengers > 1 && (
-                <span className="text-xs text-slate-500 font-medium">
+                <span className="text-xs text-muted-foreground font-bold uppercase tracking-widest">
                   {t("common.totalFor", { defaultValue: "au total pour" })}{" "}
                   {totalPassengers} {t("common.passengers").toLowerCase()}
                 </span>
@@ -154,12 +154,12 @@ export const FareDetailPanel = ({
         </p>
       </div>
 
-      <div className="flex justify-end pt-4 border-t dark:border-white/10">
+      <div className="flex justify-end pt-6 border-t border-border/40">
         <Button
           onClick={onConfirm}
-          className="w-full sm:w-auto px-8 text-base h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all"
+          className="w-full sm:w-auto px-10 text-base h-12 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-black tracking-widest transition-all hover:scale-105 premium-shadow"
         >
-          {t("select.continue")}
+          {t("select.continue").toUpperCase()}
         </Button>
       </div>
     </div>

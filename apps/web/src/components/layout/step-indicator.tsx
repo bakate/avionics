@@ -75,36 +75,35 @@ export const StepIndicator = () => {
   const activeStep = stateToStep(state as BookingStateValue) + 1;
 
   return (
-    <Stepper
-      value={activeStep}
-      className="max-w-7xl backdrop-blur-sm mx-auto bg-neutral-50 dark:bg-neutral-900 rounded-sm space-y-8 w-full mt-3 px-3"
-    >
+    <Stepper value={activeStep} className="max-w-7xl mx-auto w-full mt-6 px-4">
       <StepperNav className="gap-3">
         {STEPS.map((step, index) => (
           <StepperItem
             step={index + 1}
-            className="flex-1 items-start relative"
+            className="flex-1 items-center relative"
             key={step.title}
           >
             <StepperTrigger
-              className="flex grow flex-col items-start justify-center gap-2.5"
+              className="flex grow flex-col items-center justify-center gap-2.5"
               asChild
             >
-              <StepperIndicator className="data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=completed]:bg-success size-8 border-2 data-[state=completed]:text-white data-[state=inactive]:bg-transparent">
+              <StepperIndicator className="data-[state=inactive]:border-border data-[state=inactive]:text-muted-foreground data-[state=completed]:bg-success/90 size-9 border-[1.5px] data-[state=completed]:border-success data-[state=completed]:text-white data-[state=inactive]:bg-transparent transition-all duration-300">
                 {activeStep > index + 1 || state === "confirmed" ? (
                   <HugeiconsIcon
                     icon={Tick02Icon}
-                    strokeWidth={2}
-                    className="size-4"
+                    strokeWidth={2.5}
+                    className="size-4 animate-in zoom-in duration-300"
                   />
                 ) : (
                   step.icon
                 )}
               </StepperIndicator>
-              <StepperTitle>{t(step.title)}</StepperTitle>
+              <StepperTitle className="text-[11px] uppercase tracking-widest font-bold text-muted-foreground data-[state=active]:text-primary transition-colors text-center">
+                {t(step.title)}
+              </StepperTitle>
             </StepperTrigger>
             {STEPS.length > index + 1 ? (
-              <StepperSeparator className="group-data-[state=completed]/step:bg-success absolute inset-x-0 start-9 top-4 m-0 group-data-[orientation=horizontal]/stepper-nav:w-[calc(100%-2rem)] group-data-[orientation=horizontal]/stepper-nav:flex-none" />
+              <StepperSeparator className="group-data-[state=completed]/step:bg-success absolute inset-x-0 start-[50%] top-4.5 m-0 group-data-[orientation=horizontal]/stepper-nav:w-[calc(100%-2.5rem)] group-data-[orientation=horizontal]/stepper-nav:flex-none h-px bg-border transition-colors duration-500 translate-x-5" />
             ) : null}
           </StepperItem>
         ))}
