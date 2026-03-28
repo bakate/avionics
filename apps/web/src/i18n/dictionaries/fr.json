@@ -121,7 +121,13 @@
     "minPassengers": "Au moins 1 passager requis",
     "maxPassengers": "Maximum 9 passagers",
     "invalidAirportCode": "Veuillez sélectionner un aéroport valide (ex: CDG)",
-    "returnDateRequired": "La date de retour est requise pour un vol aller-retour"
+    "returnDateRequired": "La date de retour est requise pour un vol aller-retour",
+    "first_name_required": "Le prénom est requis",
+    "last_name_required": "Le nom est requis",
+    "invalid_email": "Adresse email invalide",
+    "future_date_of_birth": "La date de naissance ne peut pas être dans le futur",
+    "solo_passenger_min_age_male": "Vous devez être majeur comme vous voyagez seul",
+    "solo_passenger_min_age_female": "Vous devez être majeure comme vous voyagez seule"
   },
   "results": {
     "title": "Résultats de recherche",

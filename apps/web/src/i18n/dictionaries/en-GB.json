@@ -121,7 +121,13 @@
     "minPassengers": "At least 1 passenger required",
     "maxPassengers": "Maximum 9 passengers",
     "invalidAirportCode": "Please select a valid airport (e.g. CDG)",
-    "returnDateRequired": "Return date is required for a round-trip flight"
+    "returnDateRequired": "Return date is required for a round-trip flight",
+    "first_name_required": "First name is required",
+    "last_name_required": "Last name is required",
+    "invalid_email": "Invalid email address",
+    "future_date_of_birth": "Date of birth cannot be in the future",
+    "solo_passenger_min_age_male": "You must be of legal age as you are travelling alone",
+    "solo_passenger_min_age_female": "You must be of legal age as you are travelling alone"
   },
   "results": {
     "title": "Search results",

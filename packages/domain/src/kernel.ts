@@ -216,3 +216,32 @@ export class Schedule extends Schema.Class<Schedule>("Schedule")({
     return Schema.validateSync(Schedule.schema)(new Schedule(props));
   }
 }
+
+export const makeSchedule = (props: {
+  departure: Date;
+  arrival: Date;
+}): Schedule => Schedule.create(props);
+
+// =============================================================================
+// DOMAIN LOGIC (Pure predicates)
+// =============================================================================
+
+/**
+ * Checks if a person is at least 18 years old on a given reference date.
+ */
+export const isAtLeast18 = (
+  dateOfBirth: Date,
+  referenceDate: Date,
+): boolean => {
+  let age = referenceDate.getFullYear() - dateOfBirth.getFullYear();
+  const monthDiff = referenceDate.getMonth() - dateOfBirth.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && referenceDate.getDate() < dateOfBirth.getDate())
+  ) {
+    age--;
+  }
+
+  return age >= 18;
+};

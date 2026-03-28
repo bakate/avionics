@@ -21,7 +21,7 @@ import {
 } from "@workspace/ui/components/select";
 import { cn } from "@workspace/ui/lib/utils";
 import { enUS, fr } from "react-day-picker/locale";
-import { type Control, Controller } from "react-hook-form";
+import { type Control, Controller, useWatch } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "@/lib/format";
 
@@ -53,6 +53,38 @@ const PASSENGER_TYPE_BADGE: Partial<
 export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
   const { t, i18n } = useTranslation();
   const badge = PASSENGER_TYPE_BADGE[type];
+
+  const gender = useWatch({
+    control,
+    name: `passengers.${index}.gender` as `passengers.${number}.gender`,
+    defaultValue: "MALE",
+  });
+
+  const translateError = (
+    error?: { message?: string },
+    context?: Record<string, unknown>,
+  ) => {
+    if (!error?.message) return [];
+
+    let translationKey = `validation.${error.message}`;
+
+    // Handle gender-specific messages for solo_passenger_min_age
+    if (error.message === "solo_passenger_min_age" && context?.gender) {
+      translationKey =
+        context.gender === "FEMALE"
+          ? "validation.solo_passenger_min_age_female"
+          : "validation.solo_passenger_min_age_male";
+    }
+
+    return [
+      {
+        message: t(translationKey, {
+          defaultValue: error.message,
+          ...context,
+        }),
+      },
+    ];
+  };
 
   return (
     <SectionCard
@@ -86,7 +118,7 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
             <Field>
               <FieldLabel>{t("passengers.first_name")}</FieldLabel>
               <Input placeholder="John" {...field} />
-              <FieldError errors={[fieldState.error]} />
+              <FieldError errors={translateError(fieldState.error)} />
             </Field>
           )}
         />
@@ -100,7 +132,7 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
             <Field>
               <FieldLabel>{t("passengers.last_name")}</FieldLabel>
               <Input placeholder="Doe" {...field} />
-              <FieldError errors={[fieldState.error]} />
+              <FieldError errors={translateError(fieldState.error)} />
             </Field>
           )}
         />
@@ -116,7 +148,7 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
                 placeholder="john.doe@example.com"
                 {...field}
               />
-              <FieldError errors={[fieldState.error]} />
+              <FieldError errors={translateError(fieldState.error)} />
             </Field>
           )}
         />
@@ -146,7 +178,7 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <FieldError errors={[fieldState.error]} />
+              <FieldError errors={translateError(fieldState.error)} />
             </Field>
           )}
         />
@@ -197,7 +229,9 @@ export const PassengerForm = ({ index, type, control }: PassengerFormProps) => {
                   />
                 </PopoverContent>
               </Popover>
-              <FieldError errors={[fieldState.error]} />
+              <FieldError
+                errors={translateError(fieldState.error, { gender })}
+              />
             </Field>
           )}
         />

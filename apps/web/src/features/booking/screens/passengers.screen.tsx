@@ -1,6 +1,7 @@
 import { effectTsResolver } from "@hookform/resolvers/effect-ts";
 import {
-  PassengerInput,
+  createPassengerInputSchema,
+  type PassengerInput,
   type PassengerInputEncoded,
 } from "@workspace/application/booking-types";
 import { type PassengerType } from "@workspace/domain/kernel";
@@ -11,12 +12,6 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { PassengerForm } from "@/features/booking/components/passenger-form";
 import { useBookingMachine } from "@/features/booking/hooks/use-booking-machine";
-
-const PassengersFormSchema = Schema.Struct({
-  passengers: Schema.mutable(
-    Schema.Array(PassengerInput).pipe(Schema.minItems(1)),
-  ),
-});
 
 type PassengersFormValues = {
   passengers: Array<PassengerInputEncoded>;
@@ -82,7 +77,19 @@ export const PassengersScreen = () => {
 
   const form = useForm<PassengersFormValues>({
     resolver: effectTsResolver(
-      PassengersFormSchema,
+      Schema.Struct({
+        passengers: Schema.mutable(
+          Schema.Array(
+            createPassengerInputSchema(
+              searchParams?.departureDate ?? new Date().toISOString(),
+              (searchParams?.passengers.adults ?? 0) +
+                (searchParams?.passengers.children ?? 0) +
+                (searchParams?.passengers.infants ?? 0) ===
+                1,
+            ),
+          ).pipe(Schema.minItems(1)),
+        ),
+      }),
     ) as unknown as import("react-hook-form").Resolver<PassengersFormValues>,
     defaultValues: {
       passengers:
