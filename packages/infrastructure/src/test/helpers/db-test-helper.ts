@@ -10,6 +10,9 @@ export const TestLayer: Layer.Layer<
 /**
  * Clean all tables in the database
  * Deletes in correct order to respect foreign key constraints
+ *
+ * ⚠️ WARNING: This deletes ALL data from the test database!
+ * Make sure you're using a separate test database (see .env.test)
  */
 export const cleanDatabase = Effect.gen(function* () {
   const sql = yield* SqlClient.SqlClient;
