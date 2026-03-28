@@ -18,13 +18,44 @@
     }
   },
   "home": {
-    "title": "Trouvez votre prochain vol",
-    "subtitle": "Recherche de vol",
-    "badge": "Nouvelles destinations disponibles",
-    "recentBookings": "Réservations Récentes",
-    "recentBookingsSub": "Gérez vos réservations existantes",
-    "noBookings": "Pas encore de réservations",
-    "noBookingsSub": "Vos futurs voyages apparaîtront ici"
+    "title": "Votre voyage commence ici",
+    "subtitle": "Réservez vos vols internationaux avec un service et une précision d'exception.",
+    "badge": "Expérience de Première Classe",
+    "recentBookings": "Mes Voyages Récents",
+    "recentBookingsSub": "Gérez vos réservations en cours",
+    "noBookings": "Pas encore de voyages",
+    "noBookingsSub": "Vos futurs périples s'afficheront ici",
+    "hub": {
+      "book": "Réserver un vol",
+      "trips": "Mes Voyages",
+      "checkin": "Enregistrement",
+      "status": "Statut"
+    },
+    "destinations": {
+      "title": "Destinations d'exception",
+      "subtitle": "Découvrez notre sélection de lieux inspirants à travers le monde.",
+      "paris": "Paris, France",
+      "dakar": "Dakar, Sénégal",
+      "tokyo": "Tokyo, Japon",
+      "newyork": "New York, USA",
+      "from": "Vols dès",
+      "promoText": "Offres Exclusives"
+    },
+    "values": {
+      "title": "L'Excellence Avionics",
+      "reliability": {
+        "title": "Fiabilité Absolue",
+        "desc": "Systèmes de haute assurance."
+      },
+      "comfort": {
+        "title": "Confort Premium",
+        "desc": "Conçu pour votre bien-être."
+      },
+      "network": {
+        "title": "Réseau Global",
+        "desc": "Connecter les hubs stratégiques."
+      }
+    }
   },
   "booking": {
     "details": {

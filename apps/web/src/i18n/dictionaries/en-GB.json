@@ -18,13 +18,44 @@
     }
   },
   "home": {
-    "title": "Find your next flight",
-    "subtitle": "Flight search",
-    "badge": "New routes available",
-    "recentBookings": "Recent Bookings",
-    "recentBookingsSub": "Manage your existing reservations",
-    "noBookings": "No bookings yet",
-    "noBookingsSub": "Your future journeys will appear here"
+    "title": "Your journey begins here",
+    "subtitle": "Book your world-class flights with exceptional service and precision.",
+    "badge": "Premiere Class Experience",
+    "recentBookings": "My Recent Trips",
+    "recentBookingsSub": "Manage your current reservations",
+    "noBookings": "No journeys yet",
+    "noBookingsSub": "Your future adventures will appear here",
+    "hub": {
+      "book": "Book a Flight",
+      "trips": "My Trips",
+      "checkin": "Check-in",
+      "status": "Flight Status"
+    },
+    "destinations": {
+      "title": "Inspirational Destinations",
+      "subtitle": "Discover our handpicked selection of exceptional places around the globe.",
+      "paris": "Paris, France",
+      "dakar": "Dakar, Senegal",
+      "tokyo": "Tokyo, Japan",
+      "newyork": "New York, USA",
+      "from": "Flights from",
+      "promoText": "Exclusive Offers"
+    },
+    "values": {
+      "title": "The Avionics Difference",
+      "reliability": {
+        "title": "Absolute Reliability",
+        "desc": "High-assurance systems for safe operations."
+      },
+      "comfort": {
+        "title": "Premium Comfort",
+        "desc": "An experience designed for your well-being."
+      },
+      "network": {
+        "title": "Global Network",
+        "desc": "Connecting you to the world hubs."
+      }
+    }
   },
   "booking": {
     "details": {

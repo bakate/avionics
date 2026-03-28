@@ -20,7 +20,7 @@ export const BaseLayout = () => {
     <div className="flex min-h-screen flex-col">
       <Header />
       {shouldHideStepper ? null : <StepIndicator />}
-      <main className="mx-auto w-full max-w-7xl">
+      <main className="w-full">
         <Outlet />
       </main>
     </div>
