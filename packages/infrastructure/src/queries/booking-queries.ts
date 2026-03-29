@@ -29,6 +29,8 @@ interface BookingSummaryRow {
   total_price_currency: string;
   created_at: Date;
   expires_at: Date | null;
+  origin: string;
+  destination: string;
 }
 
 interface PassengerHistoryRow {
@@ -65,7 +67,9 @@ export const PostgresBookingQueriesLive = Layer.effect(
             COALESCE((SELECT SUM(s.price_amount) FROM segments s WHERE s.booking_id = b.id), 0) as total_price_amount,
             COALESCE((SELECT MAX(s.price_currency) FROM segments s WHERE s.booking_id = b.id), 'EUR') as total_price_currency,
             b.created_at,
-            b.expires_at
+            b.expires_at,
+            (SELECT fi.origin FROM segments s JOIN flight_inventory fi ON fi.flight_id = s.flight_id WHERE s.booking_id = b.id LIMIT 1) as origin,
+            (SELECT fi.destination FROM segments s JOIN flight_inventory fi ON fi.flight_id = s.flight_id WHERE s.booking_id = b.id ORDER BY s.id DESC LIMIT 1) as destination
           FROM bookings b
           WHERE b.pnr_code = ${pnr}
         `;
@@ -82,6 +86,8 @@ export const PostgresBookingQueriesLive = Layer.effect(
           id: row.id,
           pnrCode: row.pnr_code,
           status: row.status,
+          origin: row.origin,
+          destination: row.destination,
           passengerCount: row.passenger_count,
           totalPrice: {
             amount: Number.parseFloat(row.total_price_amount),
@@ -162,7 +168,9 @@ export const PostgresBookingQueriesLive = Layer.effect(
               COALESCE((SELECT SUM(s.price_amount) FROM segments s WHERE s.booking_id = b.id), 0) as total_price_amount,
               COALESCE((SELECT MAX(s.price_currency) FROM segments s WHERE s.booking_id = b.id), 'EUR') as total_price_currency,
               b.created_at,
-              b.expires_at
+              b.expires_at,
+              (SELECT fi.origin FROM segments s JOIN flight_inventory fi ON fi.flight_id = s.flight_id WHERE s.booking_id = b.id LIMIT 1) as origin,
+              (SELECT fi.destination FROM segments s JOIN flight_inventory fi ON fi.flight_id = s.flight_id WHERE s.booking_id = b.id ORDER BY s.id DESC LIMIT 1) as destination
             FROM bookings b
             ORDER BY b.created_at DESC
             LIMIT ${pageSize}
@@ -175,6 +183,8 @@ export const PostgresBookingQueriesLive = Layer.effect(
             id: row.id,
             pnrCode: row.pnr_code,
             status: row.status,
+            origin: row.origin,
+            destination: row.destination,
             passengerCount: row.passenger_count,
             totalPrice: {
               amount: Number.parseFloat(row.total_price_amount),

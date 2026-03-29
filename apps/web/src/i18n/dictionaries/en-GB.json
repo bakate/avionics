@@ -21,15 +21,25 @@
     "title": "Your journey begins here",
     "subtitle": "Book your world-class flights with exceptional service and precision.",
     "badge": "Premiere Class Experience",
+    "premiumExperience": "A Premium Experience",
+    "socialProof": "{{count}}+ satisfied travelers",
     "recentBookings": "My Recent Trips",
     "recentBookingsSub": "Manage your current reservations",
     "noBookings": "No journeys yet",
     "noBookingsSub": "Your future adventures will appear here",
+    "hero": {
+      "stats": {
+        "destinations": "Destinations",
+        "travelers": "Travelers",
+        "rating": "Average Rating",
+        "support": "Support"
+      }
+    },
     "hub": {
       "book": "Book a Flight",
       "trips": "My Trips",
-      "checkin": "Check-in",
-      "status": "Flight Status"
+      "comingSoon": "This feature is coming soon in the next version of Avionics. Stay tuned!",
+      "backToBooking": "Back to Booking"
     },
     "destinations": {
       "title": "Inspirational Destinations",
@@ -43,18 +53,49 @@
     },
     "values": {
       "title": "The Avionics Difference",
+      "subtitle": "Every detail matters for an uncompromising experience.",
       "reliability": {
+        "tag": "Reliability",
         "title": "Absolute Reliability",
-        "desc": "High-assurance systems for safe operations."
+        "desc": "High-assurance systems for safe and precise operations."
+      },
+      "excellence": {
+        "tag": "Excellence",
+        "title": "Uncompromising Excellence",
+        "desc": "Standard-setting service for the most discerning travelers."
       },
       "comfort": {
-        "title": "Premium Comfort",
-        "desc": "An experience designed for your well-being."
-      },
-      "network": {
-        "title": "Global Network",
-        "desc": "Connecting you to the world hubs."
+        "tag": "Comfort",
+        "title": "Sophisticated Comfort",
+        "desc": "An experience meticulously designed for your total well-being."
       }
+    },
+    "testimonials": {
+      "title": "What our travelers say",
+      "subtitle": "They trusted us. Join an elite community.",
+      "rating": "4.9 / 5",
+      "reviewsCount": "Based on 12,400+ verified reviews",
+      "sophie": {
+        "quote": "An incomparable booking experience. The interface is elegant and every detail exudes luxury.",
+        "author": "Sophie M.",
+        "role": "Business Class Traveler"
+      },
+      "thomas": {
+        "quote": "The service is exactly as expected. Seamless booking, instant confirmations.",
+        "author": "Thomas L.",
+        "role": "Managing Director"
+      },
+      "amara": {
+        "quote": "Avionics has redefined my vision of premium travel. I couldn't do without their platform anymore.",
+        "author": "Amara D.",
+        "role": "International Consultant"
+      }
+    },
+    "footer": {
+      "tagline": "World Class Aviation",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Use",
+      "contact": "Contact"
     }
   },
   "booking": {
@@ -319,6 +360,7 @@
     "loading": "Loading…",
     "error": "An error occurred",
     "retry": "Retry",
+    "viewAll": "View All",
     "passenger": "Passenger",
     "passengers": "Passengers"
   },

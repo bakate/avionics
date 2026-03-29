@@ -113,6 +113,7 @@ export type BookingContext = {
 
 export type BookingEvent =
   | { type: "SEARCH"; params: SP }
+  | { type: "SET_SEARCH_PARAMS"; params: Partial<SP> }
   | { type: "FETCH_BOOKINGS"; email?: string | undefined }
   | { type: "FETCH_BOOKING_DETAILS"; pnr: string }
   | { type: "SELECT_OUTBOUND"; selection: FlightSelection }

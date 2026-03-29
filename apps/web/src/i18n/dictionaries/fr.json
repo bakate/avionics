@@ -21,15 +21,25 @@
     "title": "Votre voyage commence ici",
     "subtitle": "Réservez vos vols internationaux avec un service et une précision d'exception.",
     "badge": "Expérience de Première Classe",
+    "premiumExperience": "Une Expérience Premium",
+    "socialProof": "{{count}}+ voyageurs satisfaits",
     "recentBookings": "Mes Voyages Récents",
     "recentBookingsSub": "Gérez vos réservations en cours",
     "noBookings": "Pas encore de voyages",
     "noBookingsSub": "Vos futurs périples s'afficheront ici",
+    "hero": {
+      "stats": {
+        "destinations": "Destinations",
+        "travelers": "Voyageurs",
+        "rating": "Note moyenne",
+        "support": "Support"
+      }
+    },
     "hub": {
       "book": "Réserver un vol",
       "trips": "Mes Voyages",
-      "checkin": "Enregistrement",
-      "status": "Statut"
+      "comingSoon": "Cette fonctionnalité arrive bientôt dans la prochaine version d'Avionics. Restez à l'écoute !",
+      "backToBooking": "Retour à la réservation"
     },
     "destinations": {
       "title": "Destinations d'exception",
@@ -43,18 +53,49 @@
     },
     "values": {
       "title": "L'Excellence Avionics",
+      "subtitle": "Chaque détail est pensé pour offrir une expérience sans compromis.",
       "reliability": {
+        "tag": "Fiabilité",
         "title": "Fiabilité Absolue",
-        "desc": "Systèmes de haute assurance."
+        "desc": "Systèmes de haute assurance pour des opérations sûres et précises."
+      },
+      "excellence": {
+        "tag": "Excellence",
+        "title": "Excellence Sans Compromis",
+        "desc": "Un standard de service pour les voyageurs les plus exigeants."
       },
       "comfort": {
-        "title": "Confort Premium",
-        "desc": "Conçu pour votre bien-être."
-      },
-      "network": {
-        "title": "Réseau Global",
-        "desc": "Connecter les hubs stratégiques."
+        "tag": "Confort",
+        "title": "Confort Sophistiqué",
+        "desc": "Une expérience méticuleusement conçue pour votre bien-être total."
       }
+    },
+    "testimonials": {
+      "title": "Ce que disent nos voyageurs",
+      "subtitle": "Ils nous ont fait confiance. Rejoignez une communauté d'élite.",
+      "rating": "4.9 / 5",
+      "reviewsCount": "Basé sur 12 400+ avis vérifiés",
+      "sophie": {
+        "quote": "Une expérience de réservation incomparable. L'interface est élégante et chaque détail respire le luxe.",
+        "author": "Sophie M.",
+        "role": "Voyageuse Business Class"
+      },
+      "thomas": {
+        "quote": "Le service est à la hauteur de mes attentes. Réservation fluide, confirmations instantanées.",
+        "author": "Thomas L.",
+        "role": "Directeur Général"
+      },
+      "amara": {
+        "quote": "Avionics a redéfini ma vision du voyage premium. Je ne pourrais plus me passer de leur plateforme.",
+        "author": "Amara D.",
+        "role": "Consultante Internationale"
+      }
+    },
+    "footer": {
+      "tagline": "World Class Aviation",
+      "privacy": "Confidentialité",
+      "terms": "CGU",
+      "contact": "Contact"
     }
   },
   "booking": {
@@ -319,6 +360,7 @@
     "loading": "Chargement…",
     "error": "Une erreur est survenue",
     "retry": "Réessayer",
+    "viewAll": "Voir Tout",
     "passenger": "Passager",
     "passengers": "Passagers"
   },

@@ -26,6 +26,8 @@ export class BookingSummary extends Schema.Class<BookingSummary>(
   id: BookingId,
   pnrCode: PnrCodeSchema,
   status: BookingStatusSchema,
+  origin: AirportCodeSchema,
+  destination: AirportCodeSchema,
   passengerCount: Schema.Number.pipe(Schema.int(), Schema.positive()),
   totalPrice: Money,
   createdAt: Schema.Date,

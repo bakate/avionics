@@ -173,6 +173,21 @@ export const createBookingMachine = (deps: BookingMachineDeps) => {
         actions: assign({ pnrToFetch: ({ event }) => event.pnr }),
       },
       RESET: { target: "#booking.idle", actions: "resetBookingFlow" },
+      SET_SEARCH_PARAMS: {
+        actions: assign({
+          searchParams: ({ context, event }) => {
+            const current = context.searchParams ?? {
+              tripType: "roundTrip",
+              origin: "CDG",
+              destination: "",
+              departureDate: new Date().toISOString().split("T")[0],
+              passengers: { adults: 1, children: 0, infants: 0 },
+              cabinClass: "ECONOMY",
+            };
+            return { ...current, ...event.params } as SearchParams;
+          },
+        }),
+      },
     },
 
     states: {

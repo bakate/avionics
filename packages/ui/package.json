@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "check-types": "tsc --noEmit",
     "format": "prettier --write \"**/*.{json,ts,tsx,md,mdx,yaml,yml}\" --cache --cache-location .cache/.prettiercache",
     "lint": "biome lint ."
   },
