@@ -41,7 +41,7 @@ export const FareDetailPanel = ({
     <div className="flex flex-col gap-6 p-6 bg-accent/5 dark:bg-accent/10 border-t border-border/40 rounded-b-2xl animate-in slide-in-from-top-4 duration-500">
       <div className="flex justify-between items-start">
         <div className="w-full">
-          <Heading title={t(`select.${cabin}`)} className="mb-4" />
+          <Heading title={t(`select.${cabin}`)} className="my-4" level="h3" />
           <div className="flex flex-col gap-1 mt-1">
             <div className="flex items-baseline gap-2">
               <p className="text-foreground font-black text-2xl tracking-tight">

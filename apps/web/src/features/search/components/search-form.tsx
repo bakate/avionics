@@ -2,6 +2,7 @@ import { effectTsResolver } from "@hookform/resolvers/effect-ts";
 import {
   Calendar01Icon,
   Exchange01Icon,
+  Loading02Icon,
   MinusSignIcon,
   PlusSignIcon,
   Search01Icon,
@@ -16,15 +17,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@workspace/ui/components/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@workspace/ui/components/select";
 import { cn } from "@workspace/ui/lib/utils";
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { type DateRange } from "react-day-picker";
 import { enUS, fr } from "react-day-picker/locale";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -109,6 +103,13 @@ export const SearchForm = ({
   const isRoundTrip = tripType === "roundTrip";
   const busy = isLoading || isPending;
 
+  // Update form when defaultValues changes (e.g. from DestinationCard)
+  useEffect(() => {
+    if (defaultValues) {
+      form.reset(defaultValues);
+    }
+  }, [defaultValues, form]);
+
   const onSubmit = (values: SearchFormValues) => {
     startTransition(() => {
       onSearch(values);
@@ -145,392 +146,341 @@ export const SearchForm = ({
   };
 
   return (
-    <form
-      onSubmit={form.handleSubmit(onSubmit)}
-      className="relative w-full overflow-hidden rounded-2xl border border-border/50 bg-card/80 p-6 shadow-2xl shadow-primary/5 backdrop-blur-xl md:rounded-3xl md:p-8"
-    >
-      {/* Subtle top accent line */}
-      <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-accent to-transparent" />
-      {/* Trip Type Toggle */}
-      <Controller
-        control={form.control}
-        name="tripType"
-        render={({ field }) => (
-          <div
-            className="mb-6 flex gap-1.5"
-            role="radiogroup"
-            aria-label={t("search.tripType")}
-          >
+    <form onSubmit={form.handleSubmit(onSubmit)} className="relative w-full">
+      <div className="flex flex-col gap-2">
+        {/* Trip Type Toggle - Slimmer */}
+        <Controller
+          control={form.control}
+          name="tripType"
+          render={({ field }) => (
+            <div
+              className="flex gap-6 px-6 pb-2"
+              role="radiogroup"
+              aria-label={t("search.tripType")}
+            >
+              {[
+                { id: "roundTrip", label: "search.roundTrip" },
+                { id: "oneWay", label: "search.oneWay" },
+              ].map((type) => (
+                <button
+                  key={type.id}
+                  type="button"
+                  onClick={() => {
+                    field.onChange(type.id);
+                    if (type.id === "oneWay") {
+                      form.setValue("returnDate", "");
+                    }
+                  }}
+                  disabled={busy}
+                  className={cn(
+                    "text-[9px] font-bold uppercase tracking-[0.2em] transition-all",
+                    field.value === type.id
+                      ? "text-white"
+                      : "text-white/40 hover:text-white/70",
+                  )}
+                >
+                  {t(type.label as "search.roundTrip" | "search.oneWay")}
+                </button>
+              ))}
+            </div>
+          )}
+        />
+
+        {/* Main Integrated Bar Content (Outer container handled by Hub) */}
+        <div className="flex flex-col lg:flex-row lg:items-stretch">
+          {/* Origin */}
+          <div className="flex-1 px-8 py-6 transition-colors focus-within:bg-white/5 lg:border-r lg:border-white/10">
+            <Controller
+              control={form.control}
+              name="origin"
+              render={({ field, fieldState }) => (
+                <Field className="group" data-invalid={fieldState.invalid}>
+                  <FieldLabel className="mb-0 text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">
+                    {t("search.origin")}
+                  </FieldLabel>
+                  <AirportAutocomplete
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="PAR"
+                    disabled={busy}
+                    className="h-auto border-none bg-transparent p-0 text-2xl font-black uppercase tracking-tighter text-white placeholder:text-white/40 focus-visible:ring-0"
+                  />
+                  <FieldError
+                    errors={getTranslatedErrors([fieldState.error])}
+                  />
+                </Field>
+              )}
+            />
+          </div>
+
+          {/* Swap Button - Absolute/Integrated */}
+          <div className="relative z-10 -my-4 flex items-center justify-center lg:my-0 lg:-mx-5">
             <Button
               type="button"
-              variant="ghost"
-              onClick={() => {
-                field.onChange("roundTrip");
-                if (field.value === "oneWay") {
-                  form.setValue("returnDate", "");
-                }
-              }}
+              variant="outline"
+              size="icon"
+              onClick={handleSwap}
               disabled={busy}
-              className={cn(
-                "rounded-full px-5 py-2 text-sm font-semibold transition-all",
-                field.value === "roundTrip"
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-              )}
-              aria-pressed={field.value === "roundTrip"}
+              className="size-10 rounded-full border-white/10 bg-white/10 text-white shadow-xl backdrop-blur-md transition-all hover:scale-110 hover:bg-royal-blue"
             >
-              {t("search.roundTrip")}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                field.onChange("oneWay");
-                form.setValue("returnDate", "");
-              }}
-              disabled={busy}
-              className={cn(
-                "rounded-full px-5 py-2 text-sm font-semibold transition-all",
-                field.value === "oneWay"
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-              )}
-              aria-pressed={field.value === "oneWay"}
-            >
-              {t("search.oneWay")}
+              <HugeiconsIcon icon={Exchange01Icon} size={18} />
             </Button>
           </div>
-        )}
-      />
 
-      {/* Origin / Destination */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start">
-        <Controller
-          control={form.control}
-          name="origin"
-          render={({ field, fieldState }) => (
-            <Field className="flex-1" data-invalid={fieldState.invalid}>
-              <FieldLabel>{t("search.origin").toUpperCase()}</FieldLabel>
-              <AirportAutocomplete
-                value={field.value}
-                onChange={field.onChange}
-                placeholder="CDG"
-                disabled={busy}
-              />
-              <FieldError errors={getTranslatedErrors([fieldState.error])} />
-            </Field>
-          )}
-        />
+          {/* Destination */}
+          <div className="flex-1 px-8 py-6 transition-colors focus-within:bg-white/5 lg:border-r lg:border-white/10">
+            <Controller
+              control={form.control}
+              name="destination"
+              render={({ field, fieldState }) => (
+                <Field className="group" data-invalid={fieldState.invalid}>
+                  <FieldLabel className="mb-0 text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">
+                    {t("search.destination")}
+                  </FieldLabel>
+                  <AirportAutocomplete
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="TYO"
+                    disabled={busy}
+                    className="h-auto border-none bg-transparent p-0 text-2xl font-black uppercase tracking-tighter text-white placeholder:text-white/40 focus-visible:ring-0"
+                  />
+                  <FieldError
+                    errors={getTranslatedErrors([fieldState.error])}
+                  />
+                </Field>
+              )}
+            />
+          </div>
 
-        <div className="flex items-center justify-center md:pt-8">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleSwap}
-            disabled={busy}
-            aria-label={t("search.swap")}
-            className="flex size-10 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-all hover:border-accent hover:bg-accent/10 hover:text-accent-foreground active:scale-95"
-          >
-            <HugeiconsIcon icon={Exchange01Icon} size={20} />
-          </Button>
-        </div>
-
-        <Controller
-          control={form.control}
-          name="destination"
-          render={({ field, fieldState }) => (
-            <Field className="flex-1" data-invalid={fieldState.invalid}>
-              <FieldLabel>{t("search.destination").toUpperCase()}</FieldLabel>
-              <AirportAutocomplete
-                value={field.value}
-                onChange={field.onChange}
-                placeholder="DSS"
-                disabled={busy}
-              />
-              <FieldError errors={getTranslatedErrors([fieldState.error])} />
-            </Field>
-          )}
-        />
-      </div>
-
-      {/* Dates + Passengers + Cabin */}
-      <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-start">
-        {/* Date Picker - Range for round-trip, single for one-way */}
-        <Field className="flex-1">
-          <FieldLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {(t("search.dates") || "Dates").toUpperCase()}
-          </FieldLabel>
-          <Controller
-            control={form.control}
-            name="departureDate"
-            render={({ field: departureField }) => (
-              <Controller
-                control={form.control}
-                name="returnDate"
-                render={({ field: returnField }) => {
-                  if (isRoundTrip) {
+          {/* Dates */}
+          <div className="flex-[1.2] px-8 py-6 transition-colors hover:bg-white/5 lg:border-r lg:border-white/10">
+            <Controller
+              control={form.control}
+              name="departureDate"
+              render={({ field: departureField }) => (
+                <Controller
+                  control={form.control}
+                  name="returnDate"
+                  render={({ field: returnField }) => {
+                    const toDate = (val: string | undefined | null) =>
+                      val ? new Date(val) : undefined;
                     const dateRange: DateRange = {
-                      from: departureField.value
-                        ? new Date(departureField.value)
-                        : undefined,
-                      to: returnField.value
-                        ? new Date(returnField.value)
-                        : undefined,
+                      from: toDate(departureField.value),
+                      to: isRoundTrip ? toDate(returnField.value) : undefined,
                     };
 
                     return (
-                      <>
-                        <Popover>
-                          <PopoverTrigger
-                            render={
-                              <Button
-                                variant="outline"
-                                className={cn(
-                                  "h-12 w-full justify-start rounded-xl border-border/60 bg-secondary/50 px-4 text-left font-semibold text-foreground hover:bg-secondary",
-                                  !dateRange.from && "text-muted-foreground/50",
-                                )}
-                                disabled={busy}
-                              >
-                                <HugeiconsIcon
-                                  icon={Calendar01Icon}
-                                  size={20}
-                                  className="mr-2 text-muted-foreground"
-                                />
-                                {dateRange.from ? (
-                                  dateRange.to ? (
-                                    <>
-                                      {formatDate(dateRange.from)} -{" "}
-                                      {formatDate(dateRange.to)}
-                                    </>
-                                  ) : (
-                                    formatDate(dateRange.from)
-                                  )
-                                ) : (
-                                  <span>{t("search.selectDates")}</span>
-                                )}
-                              </Button>
-                            }
-                          />
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                              autoFocus
-                              mode="range"
-                              defaultMonth={dateRange.from ?? new Date()}
-                              selected={dateRange}
-                              locale={i18n.language === "fr" ? fr : enUS}
-                              onSelect={(range) => {
-                                departureField.onChange(
-                                  range?.from ? toISODate(range.from) : "",
-                                );
-                                returnField.onChange(
-                                  range?.to ? toISODate(range.to) : "",
-                                );
-                              }}
-                              numberOfMonths={2}
-                            />
-                          </PopoverContent>
-                        </Popover>
-                        <FieldError
-                          errors={getTranslatedErrors([
-                            form.formState.errors.departureDate,
-                            form.formState.errors.returnDate,
-                          ])}
-                        />
-                      </>
-                    );
-                  }
-
-                  // One-way: single date picker
-                  const selectedDate = departureField.value
-                    ? new Date(departureField.value)
-                    : undefined;
-
-                  return (
-                    <>
                       <Popover>
                         <PopoverTrigger
                           render={
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "h-12 w-full justify-start rounded-xl border-border/60 bg-secondary/50 px-4 text-left font-semibold text-foreground hover:bg-secondary",
-                                !selectedDate && "text-muted-foreground/50",
-                              )}
-                              disabled={busy}
+                            <button
+                              type="button"
+                              className="group flex h-16 w-full cursor-pointer flex-col justify-center text-left transition-colors outline-none focus-visible:bg-white/5"
                             >
-                              <HugeiconsIcon
-                                icon={Calendar01Icon}
-                                size={20}
-                                className="mr-2 text-muted-foreground"
-                              />
-                              {selectedDate ? (
-                                formatDate(selectedDate)
-                              ) : (
-                                <span>{t("search.selectDeparture")}</span>
-                              )}
-                            </Button>
+                              <span className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
+                                {t("search.dates")}
+                              </span>
+                              <div className="flex items-center gap-4">
+                                <HugeiconsIcon
+                                  icon={Calendar01Icon}
+                                  size={18}
+                                  className="text-royal-blue"
+                                />
+                                <span className="text-base font-bold text-white">
+                                  {dateRange.from
+                                    ? isRoundTrip && dateRange.to
+                                      ? `${formatDate(dateRange.from)} - ${formatDate(dateRange.to)}`
+                                      : formatDate(dateRange.from)
+                                    : t("search.selectDates")}
+                                </span>
+                              </div>
+                            </button>
                           }
                         />
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             autoFocus
-                            mode="single"
-                            defaultMonth={selectedDate ?? new Date()}
-                            selected={selectedDate}
-                            onSelect={(date) => {
-                              departureField.onChange(
-                                date ? toISODate(date) : "",
-                              );
+                            mode={(isRoundTrip ? "range" : "single") as any}
+                            defaultMonth={dateRange.from ?? new Date()}
+                            selected={isRoundTrip ? dateRange : dateRange.from}
+                            locale={i18n.language === "fr" ? fr : enUS}
+                            onSelect={(val: any) => {
+                              if (isRoundTrip) {
+                                departureField.onChange(
+                                  val?.from ? toISODate(val.from) : "",
+                                );
+                                returnField.onChange(
+                                  val?.to ? toISODate(val.to) : "",
+                                );
+                              } else {
+                                departureField.onChange(
+                                  val ? toISODate(val) : "",
+                                );
+                              }
                             }}
+                            numberOfMonths={isRoundTrip ? 2 : 1}
                           />
                         </PopoverContent>
                       </Popover>
-                      <FieldError
-                        errors={getTranslatedErrors([
-                          form.formState.errors.departureDate,
-                        ])}
-                      />
-                    </>
-                  );
-                }}
-              />
-            )}
-          />
-        </Field>
+                    );
+                  }}
+                />
+              )}
+            />
+          </div>
 
-        {/* Structured Passenger Counter */}
-        <Field className="flex-1">
-          <FieldLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("search.passengers").toUpperCase()}
-          </FieldLabel>
-          <Controller
-            control={form.control}
-            name="passengers"
-            render={({ field, fieldState }) => {
-              const total =
-                field.value.adults + field.value.children + field.value.infants;
-              return (
-                <>
-                  <Popover>
-                    <PopoverTrigger
-                      render={
-                        <Button
-                          variant="outline"
-                          className="h-12 w-full  md:w-64 justify-start rounded-xl border-border/60 bg-secondary/50 px-4 text-left font-semibold text-foreground hover:bg-secondary"
-                          disabled={busy}
+          {/* Passengers & Cabin */}
+          <div className="flex-1 px-8 py-6 transition-colors hover:bg-white/5 lg:border-r lg:border-white/10">
+            <Controller
+              control={form.control}
+              name="passengers"
+              render={({ field: pField }) => (
+                <Controller
+                  control={form.control}
+                  name="cabinClass"
+                  render={({ field: cField }) => {
+                    const total =
+                      pField.value.adults +
+                      pField.value.children +
+                      pField.value.infants;
+                    const cabinLabel =
+                      cabinOptions.find((o) => o.value === cField.value)
+                        ?.label ?? "Economy";
+
+                    return (
+                      <Popover>
+                        <PopoverTrigger
+                          render={
+                            <button
+                              type="button"
+                              className="group flex h-full w-full flex-col text-left disabled:opacity-50"
+                              disabled={busy}
+                            >
+                              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">
+                                {t("search.passengers")} &{" "}
+                                {t("search.cabinClass")}
+                              </span>
+                              <div className="flex items-center gap-2 pt-1 font-bold text-white">
+                                <HugeiconsIcon
+                                  icon={UserIcon}
+                                  size={18}
+                                  className="text-white/60 group-hover:text-white"
+                                />
+                                <span className="text-base tracking-tight">
+                                  {total} PAX, {cabinLabel}
+                                </span>
+                              </div>
+                            </button>
+                          }
+                        />
+                        <PopoverContent
+                          className="w-[320px] rounded-[2rem] p-6 shadow-2xl"
+                          align="end"
                         >
-                          <HugeiconsIcon
-                            icon={UserIcon}
-                            size={20}
-                            className="mr-2 text-muted-foreground"
-                          />
-                          {t("search.passengersCount", { count: total })}
-                        </Button>
-                      }
-                    />
-                    <PopoverContent
-                      className="w-auto md:w-64 rounded-xl"
-                      align="start"
-                    >
-                      <div className="flex flex-col gap-1">
-                        <PassengerCounter
-                          label={t("search.adults", {
-                            count: field.value.adults,
-                          })}
-                          value={field.value.adults}
-                          min={1}
-                          max={9}
-                          onChange={(v) =>
-                            field.onChange({ ...field.value, adults: v })
-                          }
-                          disabled={busy}
-                        />
-                        <PassengerCounter
-                          label={t("search.children", {
-                            count: field.value.children,
-                          })}
-                          value={field.value.children}
-                          min={0}
-                          max={8}
-                          onChange={(v) =>
-                            field.onChange({ ...field.value, children: v })
-                          }
-                          disabled={busy}
-                        />
-                        <PassengerCounter
-                          label={t("search.infants", {
-                            count: field.value.infants,
-                          })}
-                          value={field.value.infants}
-                          min={0}
-                          max={4}
-                          onChange={(v) =>
-                            field.onChange({ ...field.value, infants: v })
-                          }
-                          disabled={busy}
-                        />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <FieldError
-                    errors={getTranslatedErrors([fieldState.error])}
-                  />
-                </>
-              );
-            }}
-          />
-        </Field>
+                          <div className="space-y-6">
+                            <div className="space-y-4">
+                              <PassengerCounter
+                                label={t("search.adults", {
+                                  count: pField.value.adults,
+                                })}
+                                value={pField.value.adults}
+                                min={1}
+                                max={9}
+                                onChange={(v) =>
+                                  pField.onChange({
+                                    ...pField.value,
+                                    adults: v,
+                                  })
+                                }
+                                disabled={busy}
+                              />
+                              <PassengerCounter
+                                label={t("search.children", {
+                                  count: pField.value.children,
+                                })}
+                                value={pField.value.children}
+                                min={0}
+                                max={8}
+                                onChange={(v) =>
+                                  pField.onChange({
+                                    ...pField.value,
+                                    children: v,
+                                  })
+                                }
+                                disabled={busy}
+                              />
+                              <PassengerCounter
+                                label={t("search.infants", {
+                                  count: pField.value.infants,
+                                })}
+                                value={pField.value.infants}
+                                min={0}
+                                max={4}
+                                onChange={(v) =>
+                                  pField.onChange({
+                                    ...pField.value,
+                                    infants: v,
+                                  })
+                                }
+                                disabled={busy}
+                              />
+                            </div>
 
-        {/* Cabin Class */}
-        <Controller
-          control={form.control}
-          name="cabinClass"
-          render={({ field, fieldState }) => (
-            <Field className="flex-1" data-invalid={fieldState.invalid}>
-              <FieldLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("search.cabinClass").toUpperCase()}
-              </FieldLabel>
-              <Select
-                onValueChange={field.onChange}
-                value={field.value ?? "ALL"}
-                disabled={busy}
-              >
-                <SelectTrigger
-                  size="lg"
-                  className=" w-full md:w-64 rounded-xl border-border/60 bg-secondary/50 px-4 font-semibold text-foreground hover:bg-secondary"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="w-full md:w-64">
-                  {cabinOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FieldError errors={getTranslatedErrors([fieldState.error])} />
-            </Field>
-          )}
-        />
-      </div>
+                            <div className="border-t border-slate-100 pt-6 dark:border-white/10">
+                              <span className="mb-4 block text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                {t("search.cabinClass")}
+                              </span>
+                              <div className="grid grid-cols-1 gap-2">
+                                {cabinOptions.map((opt) => (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => cField.onChange(opt.value)}
+                                    className={cn(
+                                      "flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all",
+                                      cField.value === opt.value
+                                        ? "bg-royal-blue text-white"
+                                        : "hover:bg-slate-50 dark:hover:bg-white/5",
+                                    )}
+                                  >
+                                    {opt.label}
+                                    {cField.value === opt.value && (
+                                      <div className="size-1.5 rounded-full bg-white" />
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    );
+                  }}
+                />
+              )}
+            />
+          </div>
 
-      {/* Submit */}
-      <div className="mt-8 flex justify-end">
-        <Button
-          type="submit"
-          size="huge"
-          disabled={busy}
-          className="font-bold active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {busy ? (
-            <span className="size-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-          ) : (
-            <HugeiconsIcon icon={Search01Icon} size={20} />
-          )}
-          {t("search.submit").toUpperCase()}
-        </Button>
+          {/* Submit Action */}
+          <div className="flex items-center justify-center p-4">
+            <Button
+              type="submit"
+              disabled={busy}
+              className="relative h-16 w-16 overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-royal-blue to-blue-800 p-0 text-white shadow-premium-shadow transition-all duration-500 hover:scale-105 hover:shadow-royal-blue/30 active:scale-95 disabled:opacity-50"
+            >
+              <div className="absolute inset-0 bg-linear-to-tr from-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+              {busy ? (
+                <HugeiconsIcon
+                  icon={Loading02Icon}
+                  size={24}
+                  className="animate-spin"
+                />
+              ) : (
+                <HugeiconsIcon icon={Search01Icon} size={24} />
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
     </form>
   );

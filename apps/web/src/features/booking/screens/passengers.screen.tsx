@@ -124,11 +124,11 @@ export const PassengersScreen = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto py-8 px-4">
+    <div className="w-full max-w-7xl mx-auto py-8 px-4">
       <Heading
         title={t("passengers.title")}
         description={t("passengers.who_is_traveling")}
-        className="mb-8"
+        className="my-8"
       />
 
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 mt-4">

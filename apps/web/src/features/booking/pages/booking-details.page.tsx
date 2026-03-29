@@ -102,6 +102,7 @@ const FlightSegment = ({
             <Heading
               title={number}
               description={segment.cabin}
+              level="h3"
               descriptionClassName="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
               headerClassName="text-base font-bold tracking-tight text-slate-900 dark:text-slate-100"
             />
@@ -208,6 +209,7 @@ export const BookingDetailsPage = () => {
           </Button>
           <div className="flex flex-col">
             <Heading
+              level="h3"
               description={booking ? `${booking.pnrCode}` : t("common.loading")}
               title={t("booking.details.manage")}
             />
@@ -265,7 +267,11 @@ export const BookingDetailsPage = () => {
           {/* Main Content: Flight Details */}
           <div className="space-y-8 lg:col-span-2">
             <div className="flex flex-col gap-4">
-              <Heading title={t("booking.details.flights")} className="mb-0" />
+              <Heading
+                title={t("booking.details.flights")}
+                className="mb-0"
+                level="h3"
+              />
 
               <div className="space-y-6">
                 {booking.segments.map((segment) => (

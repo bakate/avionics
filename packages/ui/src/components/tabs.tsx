@@ -21,12 +21,14 @@ function Tabs({
 }
 
 const tabsListVariants = cva(
-  "rounded-4xl p-[3px] group-data-horizontal/tabs:h-9 group-data-vertical/tabs:rounded-2xl data-[variant=line]:rounded-none group/tabs-list text-muted-foreground inline-flex w-fit items-center justify-center group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col",
+  "inline-flex items-center justify-center text-muted-foreground transition-all flex-row",
   {
     variants: {
       variant: {
-        default: "bg-muted",
-        line: "gap-1 bg-transparent",
+        default: "rounded-lg bg-muted p-1 h-10",
+        capsule:
+          "rounded-full bg-white/5 border border-white/10 p-1.5 h-14 backdrop-blur-md",
+        line: "gap-6 bg-transparent h-12 border-b border-border w-full justify-start rounded-none px-0",
       },
     },
     defaultVariants: {
@@ -50,17 +52,34 @@ function TabsList({
   );
 }
 
-function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
+const tabsTriggerVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ring-offset-background",
+  {
+    variants: {
+      variant: {
+        default:
+          "rounded-md px-3 py-1.5 text-sm font-medium data-active:bg-background data-active:text-foreground data-active:shadow-sm",
+        capsule:
+          "rounded-full px-8 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white/50 hover:text-white/80 data-active:bg-white data-active:text-royal-blue data-active:shadow-lg",
+        line: "relative px-1 py-4 text-sm font-medium text-muted-foreground hover:text-foreground data-active:text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:opacity-0 data-active:after:opacity-100 after:transition-all",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);
+
+function TabsTrigger({
+  className,
+  variant = "default",
+  ...props
+}: TabsPrimitive.Tab.Props & VariantProps<typeof tabsTriggerVariants>) {
   return (
     <TabsPrimitive.Tab
       data-slot="tabs-trigger"
-      className={cn(
-        "gap-1.5 rounded-xl border border-transparent px-2 py-1 text-sm font-medium group-data-vertical/tabs:px-2.5 group-data-vertical/tabs:py-1.5 [&_svg:not([class*='size-'])]:size-4 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring text-foreground/60 hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center whitespace-nowrap transition-all group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-        "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-transparent dark:group-data-[variant=line]/tabs-list:data-active:border-transparent dark:group-data-[variant=line]/tabs-list:data-active:bg-transparent",
-        "data-active:bg-background dark:data-active:text-foreground dark:data-active:border-input dark:data-active:bg-input/30 data-active:text-foreground",
-        "after:bg-foreground after:absolute after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100",
-        className,
-      )}
+      data-variant={variant}
+      className={cn(tabsTriggerVariants({ variant }), className)}
       {...props}
     />
   );

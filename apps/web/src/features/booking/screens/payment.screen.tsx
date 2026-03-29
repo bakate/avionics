@@ -50,11 +50,11 @@ export const SummaryScreen = () => {
     context.passengers.length;
 
   return (
-    <div className="mx-auto max-w-6xl py-12 px-4 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl py-4 sm:py-12 px-4 sm:px-6 lg:px-8">
       <Heading
         title={t("payment.title")}
         description={t("payment.subtitle")}
-        descriptionClassName="mb-12"
+        className="my-4 sm:my-8"
       />
 
       <div className="flex flex-col lg:flex-row gap-10">
@@ -236,6 +236,7 @@ export const SummaryScreen = () => {
                 <Heading
                   title={t("payment.priceSummary")}
                   description={t("payment.taxesIncluded")}
+                  level="h3"
                   headerClassName="text-xl text-white font-bold"
                   descriptionClassName="text-blue-200/60 font-medium text-xs mt-1 uppercase tracking-wider"
                   className="py-0 mb-0 space-y-0"

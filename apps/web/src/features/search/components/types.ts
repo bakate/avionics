@@ -1,4 +1,5 @@
 import { SearchParams } from "@workspace/application/booking-types";
+import { type BookingSummary } from "@workspace/application/read-models";
 import { CabinClass } from "@workspace/domain/kernel";
 
 export const searchFormSchema = SearchParams;
@@ -10,6 +11,14 @@ export type SearchFormProps = {
   readonly onSearch: (params: SearchFormValues) => void;
   readonly isLoading: boolean;
   readonly defaultValues?: Partial<SearchFormInput> | undefined;
+};
+
+export type SearchHubProps = SearchFormProps & {
+  readonly allBookings?: ReadonlyArray<BookingSummary> | undefined;
+  readonly isFetchingBookings?: boolean | undefined;
+  readonly hasBookings?: boolean | undefined;
+  readonly onRetryFetchBookings?: (() => void) | undefined;
+  readonly error?: string | undefined;
 };
 
 export const cabinOptions = [
