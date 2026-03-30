@@ -58,10 +58,10 @@ const tabsTriggerVariants = cva(
     variants: {
       variant: {
         default:
-          "rounded-md px-3 py-1.5 text-sm font-medium data-active:bg-background data-active:text-foreground data-active:shadow-sm",
+          "rounded-md px-3 py-1.5 text-sm font-medium data-selected:bg-background data-selected:text-foreground data-selected:shadow-sm",
         capsule:
-          "rounded-full px-8 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white/50 hover:text-white/80 data-active:bg-white data-active:text-royal-blue data-active:shadow-lg",
-        line: "relative px-1 py-4 text-sm font-medium text-muted-foreground hover:text-foreground data-active:text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:opacity-0 data-active:after:opacity-100 after:transition-all",
+          "rounded-full px-8 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white/50 hover:text-white/80 data-selected:bg-white data-selected:text-royal-blue data-selected:shadow-lg",
+        line: "relative px-1 py-4 text-sm font-medium text-muted-foreground hover:text-foreground data-selected:text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:opacity-0 data-selected:after:opacity-100 after:transition-all",
       },
     },
     defaultVariants: {

@@ -113,7 +113,7 @@ const HomePage = () => {
 
           <div className="mt-10 flex flex-col gap-6 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-4 motion-safe:duration-1000">
             <SocialProofAvatars count={124500} />
-            <div className="flex items-center divide-x divide-white/10">
+            <div className="sm:flex sm:items-center divide-x divide-white/10 grid grid-cols-2 gap-3 ">
               <HeroStatBadge
                 value="50+"
                 label={t("home.hero.stats.destinations")}
@@ -142,26 +142,30 @@ const HomePage = () => {
         <div className="absolute -bottom-48 left-1/2 -translate-x-1/2 z-20 h-96 w-full max-w-5xl opacity-20 blur-[120px] bg-royal-blue/30 pointer-events-none" />
 
         {/* Global Search Hub Overlay */}
-        <div className="absolute bottom-0 left-0 z-30 w-full translate-y-[50%]">
+        <div className="absolute bottom-0 left-0 z-30 w-full translate-y-[80%] sm:translate-y-[50%]">
           <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
-        <SearchHub
-          onSearch={(params: SearchFormValues) => send({ type: "SEARCH", params })}
-          isLoading={isLoading && state === "searching"}
-          defaultValues={context.searchParams ?? undefined}
-          allBookings={context.allBookings}
-          isFetchingBookings={isFetchingBookings}
-          hasBookings={hasBookings}
-          onRetryFetchBookings={() => send({ type: "FETCH_BOOKINGS" })}
-          error={state === "error" ? (context.error ?? undefined) : undefined}
-        />
+            <SearchHub
+              onSearch={(params: SearchFormValues) =>
+                send({ type: "SEARCH", params })
+              }
+              isLoading={isLoading && state === "searching"}
+              defaultValues={context.searchParams ?? undefined}
+              allBookings={context.allBookings}
+              isFetchingBookings={isFetchingBookings}
+              hasBookings={hasBookings}
+              onRetryFetchBookings={() => send({ type: "FETCH_BOOKINGS" })}
+              error={
+                state === "error" ? (context.error ?? undefined) : undefined
+              }
+            />
           </div>
         </div>
       </div>
 
       {/* ─── Destinations Showcase ─────────────────────────────────── */}
-      <div className="bg-linear-to-b from-slate-50 via-white to-white dark:from-slate-950/20 dark:via-background dark:to-background">
+      <div className="relative z-10 bg-linear-to-b from-slate-50 via-white to-white dark:from-slate-950/20 dark:via-background dark:to-background pt-32 md:pt-48">
         <Section spacing="xl">
-          <div className=" flex flex-col items-center text-center gap-8">
+          <div className=" flex flex-col items-center text-center gap-8 mt-38 sm:mt-0">
             <div className="mb-4 h-px w-20 bg-linear-to-r from-transparent via-royal-blue to-transparent" />
             <Heading
               level="h2"
@@ -223,7 +227,7 @@ const HomePage = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-y-12 md:grid-cols-3 md:grid-rows-[auto_auto_auto_auto] gap-x-8">
           {valueItems.map((item) => (
             <ValueCard key={item.tag} {...item} />
           ))}
@@ -245,7 +249,7 @@ const HomePage = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-y-12 md:grid-cols-3 md:grid-rows-[auto_1fr_auto] gap-x-8">
           {testimonials.map((testimonial) => (
             <TestimonialCard key={testimonial.author} {...testimonial} />
           ))}

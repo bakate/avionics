@@ -38,6 +38,7 @@
     "hub": {
       "book": "Book a Flight",
       "trips": "My Trips",
+      "viewAll": "View all my journeys",
       "comingSoon": "This feature is coming soon in the next version of Avionics. Stay tuned!",
       "backToBooking": "Back to Booking"
     },
@@ -49,7 +50,8 @@
       "tokyo": "Tokyo, Japan",
       "newyork": "New York, USA",
       "from": "Flights from",
-      "promoText": "Exclusive Offers"
+      "promoText": "Exclusive Offers",
+      "selectDestination": "Select this destination"
     },
     "values": {
       "title": "The Avionics Difference",

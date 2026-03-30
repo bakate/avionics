@@ -17,7 +17,7 @@ export const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/40 glass">
+    <header className="sticky top-0 z-50 border-b border-border/40 glass-premium">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         <Link
           to={buildRoute.home()}

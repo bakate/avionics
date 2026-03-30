@@ -12,6 +12,7 @@ export const ROUTES = {
   cancel: "/cancel",
   stressTest: "/stress-test",
   bookingDetails: "/booking/:id",
+  trips: "/trips",
 } as const;
 
 export type RouteName = keyof typeof ROUTES;
@@ -30,4 +31,5 @@ export const buildRoute = {
   cancel: () => ROUTES.cancel,
   stressTest: () => ROUTES.stressTest,
   bookingDetails: (id: string) => `/booking/${encodeURIComponent(id)}` as const,
+  trips: () => ROUTES.trips,
 } as const;

@@ -1,5 +1,6 @@
-import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { Search01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@workspace/ui/components/button";
 import { useTranslation } from "react-i18next";
 
 type DestinationCardProps = {
@@ -49,15 +50,15 @@ export const DestinationCard = ({
       ) : null}
 
       {/* Content */}
-      <div className="absolute inset-x-0 bottom-0 p-12">
-        <div className="mb-3 text-[10px] font-bold tracking-[0.4em] text-white/60 uppercase">
+      <div className="absolute inset-x-0 bottom-0 p-10">
+        <div className="mb-2 text-[10px] font-bold tracking-[0.4em] text-white/70 uppercase">
           {country}
         </div>
         <h3 className="font-heading mb-8 text-5xl font-normal tracking-tight text-white transition-all duration-700 group-hover:translate-x-2">
           {city}
         </h3>
 
-        <div className="flex items-center justify-between border-t border-white/20 pt-8">
+        <div className="flex items-end justify-between border-t border-white/10 pt-8">
           <div className="flex flex-col">
             <span className="mb-2 text-[10px] font-semibold tracking-[0.3em] text-white/50 uppercase">
               {t("home.destinations.from")}
@@ -67,17 +68,20 @@ export const DestinationCard = ({
             </span>
           </div>
 
-          <button
+          <Button
             type="button"
             onClick={handleSelect}
-            className="flex size-16 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-2xl ring-1 ring-white/30 transition-all duration-500 hover:cursor-pointer group-hover:scale-110 group-hover:bg-white group-hover:text-royal-blue group-hover:ring-white group-hover:shadow-[0_0_30px_rgba(255,255,255,0.4)]"
+            size="icon"
+            variant="ghost"
+            aria-label={t("home.destinations.selectDestination")}
+            className="group/btn relative size-12 rounded-full bg-white/10 p-0 text-white backdrop-blur-md ring-1 ring-white/20 transition-all duration-500 hover:scale-110 hover:bg-white hover:text-royal-blue hover:ring-white hover:shadow-[0_0_30px_rgba(255,255,255,0.3)] active:scale-95"
           >
             <HugeiconsIcon
-              icon={ArrowRight01Icon}
-              size={32}
-              className="transition-transform duration-500 group-hover:translate-x-0.5"
+              icon={Search01Icon}
+              size={22}
+              className="transition-transform duration-500 group-hover/btn:scale-110"
             />
-          </button>
+          </Button>
         </div>
       </div>
     </div>

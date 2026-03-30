@@ -1,6 +1,7 @@
 import { Airplane01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 
 export const HomeFooter = () => {
   const { t } = useTranslation();
@@ -21,36 +22,36 @@ export const HomeFooter = () => {
 
       {/* Navigation Section */}
       <nav className="mt-12 flex items-center justify-center gap-6 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-        <button
-          type="button"
+        <Link
+          to="/"
           className="hover:text-royal-blue transition-colors cursor-pointer"
         >
           {t("home.footer.privacy")}
-        </button>
+        </Link>
 
         <span
           className="w-1 h-1 rounded-full bg-slate-200"
           aria-hidden="true"
         />
 
-        <button
-          type="button"
+        <Link
+          to="/"
           className="hover:text-royal-blue transition-colors cursor-pointer"
         >
           {t("home.footer.terms")}
-        </button>
+        </Link>
 
         <span
           className="w-1 h-1 rounded-full bg-slate-200"
           aria-hidden="true"
         />
 
-        <button
-          type="button"
+        <Link
+          to="/"
           className="hover:text-royal-blue transition-colors cursor-pointer"
         >
           {t("home.footer.contact")}
-        </button>
+        </Link>
       </nav>
     </footer>
   );

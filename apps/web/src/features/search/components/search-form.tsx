@@ -162,9 +162,13 @@ export const SearchForm = ({
                 { id: "roundTrip", label: "search.roundTrip" },
                 { id: "oneWay", label: "search.oneWay" },
               ].map((type) => (
+                // biome-ignore lint/a11y/useSemanticElements: trip type toggle uses button-based segmented control for custom design
                 <button
                   key={type.id}
                   type="button"
+                  role="radio"
+                  aria-checked={field.value === type.id}
+                  tabIndex={field.value === type.id ? 0 : -1}
                   onClick={() => {
                     field.onChange(type.id);
                     if (type.id === "oneWay") {
@@ -173,9 +177,9 @@ export const SearchForm = ({
                   }}
                   disabled={busy}
                   className={cn(
-                    "text-[9px] font-bold uppercase tracking-[0.2em] transition-all",
+                    "text-[9px] font-bold uppercase tracking-[0.2em] transition-all cursor-pointer outline-none focus-visible:text-royal-blue",
                     field.value === type.id
-                      ? "text-white"
+                      ? "text-white opacity-100"
                       : "text-white/40 hover:text-white/70",
                   )}
                 >
@@ -466,6 +470,7 @@ export const SearchForm = ({
             <Button
               type="submit"
               disabled={busy}
+              aria-label={busy ? t("search.searching") : t("search.submit")}
               className="relative h-16 w-16 overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-royal-blue to-blue-800 p-0 text-white shadow-premium-shadow transition-all duration-500 hover:scale-105 hover:shadow-royal-blue/30 active:scale-95 disabled:opacity-50"
             >
               <div className="absolute inset-0 bg-linear-to-tr from-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />

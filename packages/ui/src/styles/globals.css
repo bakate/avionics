@@ -166,7 +166,7 @@
 
 @layer utilities {
     .glass-premium {
-        @apply bg-white/40 backdrop-blur-2xl border border-white/30 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)];
+        @apply bg-white/40 backdrop-blur-2xl border border-white/30 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] dark:bg-black/20 dark:border-white/10 dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.4)];
     }
     .text-shadow-premium {
         text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);

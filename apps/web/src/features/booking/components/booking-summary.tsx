@@ -89,7 +89,7 @@ export const BookingSummaryCard = ({
               status={booking.status}
               isUpdating={isUpdating}
               className={`${
-                isCompact ? "px-2 py-1 text-[8px]" : "px-4 py-1.5 text-[10px]"
+                isCompact ? "px-2 py-1 text-[10px]" : "px-4 py-1.5 text-[10px]"
               } font-black uppercase tracking-widest shadow-sm transition-all`}
             />
           </div>
