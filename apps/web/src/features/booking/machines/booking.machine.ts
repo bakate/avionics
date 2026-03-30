@@ -179,7 +179,7 @@ export const bookingMachine = createBookingMachine({
     fetchBookings: fromEffect((input?: { email?: string }) =>
       Effect.gen(function* () {
         const response = yield* getBookings(input?.email);
-        return response as ReadonlyArray<BookingSummary>;
+        return response as unknown as ReadonlyArray<BookingSummary>;
       }).pipe(
         Effect.tapError((error) =>
           Effect.logError("Failed to fetch bookings", error),

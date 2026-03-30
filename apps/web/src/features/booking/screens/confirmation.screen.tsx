@@ -29,6 +29,10 @@ export const ConfirmationScreen = () => {
     pnrCode: booking.pnrCode as BookingSummary["pnrCode"],
     status: booking.status as BookingSummary["status"],
     totalPrice: booking.totalPrice as BookingSummary["totalPrice"],
+    origin: context.selectedOutbound?.flight.origin as BookingSummary["origin"],
+    destination: (context.selectedReturn?.flight.destination ??
+      context.selectedOutbound?.flight
+        .destination) as BookingSummary["destination"],
     createdAt: new Date(booking.confirmedAt),
     expiresAt: { _tag: "None" } as None<Date>,
     passengerCount: context.passengers.length,
