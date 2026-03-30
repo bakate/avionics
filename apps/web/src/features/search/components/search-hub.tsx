@@ -1,5 +1,6 @@
 import { Airplane01Icon, Ticket01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { type BookingSummary } from "@workspace/application/read-models";
 import { Button } from "@workspace/ui/components/button";
 import { Heading } from "@workspace/ui/components/heading";
 import { ItemGroup } from "@workspace/ui/components/item";
@@ -176,7 +177,7 @@ export const SearchHub = ({
                 <ItemGroup className="gap-3 p-1 py-4">
                   {allBookings
                     .slice(0, 3)
-                    .map((booking: any, index: number) => (
+                    .map((booking: BookingSummary, index: number) => (
                       <BookingItem
                         key={booking.id}
                         booking={booking}

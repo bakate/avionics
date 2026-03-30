@@ -7,7 +7,9 @@
   "paths": {
     "/api/bookings": {
       "get": {
-        "tags": ["bookings"],
+        "tags": [
+          "bookings"
+        ],
         "operationId": "bookings.list",
         "parameters": [
           {
@@ -28,7 +30,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/BookingResponse"
+                    "$ref": "#/components/schemas/BookingSummary"
                   }
                 }
               }
@@ -57,7 +59,9 @@
         }
       },
       "post": {
-        "tags": ["bookings"],
+        "tags": [
+          "bookings"
+        ],
         "operationId": "bookings.book",
         "parameters": [],
         "security": [],
@@ -208,18 +212,18 @@
                       {
                         "flightId": "CDG-DSS-d161s0",
                         "cabinClass": "ECONOMY",
-                        "seatNumber": "25F"
+                        "seatNumber": "28F"
                       }
                     ],
                     "passengers": [
                       {
-                        "id": "fee68be0-e99e-4c97-bc7f-f1d0de272539",
-                        "firstName": "Luigi",
-                        "lastName": "Zulauf",
-                        "email": "luigi_zulauf@hotmail.com",
-                        "dateOfBirth": "2013-08-24T03:20:58.111Z",
+                        "id": "32e7defc-4a79-4a74-a483-b4613384c162",
+                        "firstName": "Giovanna",
+                        "lastName": "King",
+                        "email": "giovanna_king@hotmail.com",
+                        "dateOfBirth": "2025-11-25T21:32:58.502Z",
                         "gender": "MALE",
-                        "type": "CHILD"
+                        "type": "INFANT"
                       }
                     ],
                     "successUrl": "https://avionics-url.com/success",
@@ -235,7 +239,9 @@
     },
     "/api/bookings/{pnr}": {
       "get": {
-        "tags": ["bookings"],
+        "tags": [
+          "bookings"
+        ],
         "operationId": "bookings.getByPnr",
         "parameters": [
           {
@@ -297,7 +303,9 @@
     },
     "/api/bookings/{id}/confirm": {
       "post": {
-        "tags": ["bookings"],
+        "tags": [
+          "bookings"
+        ],
         "operationId": "bookings.confirm",
         "parameters": [
           {
@@ -450,7 +458,9 @@
     },
     "/api/bookings/{id}/cancel": {
       "post": {
-        "tags": ["bookings"],
+        "tags": [
+          "bookings"
+        ],
         "operationId": "bookings.cancel",
         "parameters": [
           {
@@ -531,7 +541,9 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["reason"],
+                "required": [
+                  "reason"
+                ],
                 "properties": {
                   "reason": {
                     "type": "string"
@@ -547,7 +559,9 @@
     },
     "/api/bookings/pnr/{pnr}": {
       "get": {
-        "tags": ["bookings"],
+        "tags": [
+          "bookings"
+        ],
         "operationId": "bookings.getSummaryByPnr",
         "parameters": [
           {
@@ -609,7 +623,9 @@
     },
     "/api/bookings/passenger/{id}": {
       "get": {
-        "tags": ["bookings"],
+        "tags": [
+          "bookings"
+        ],
         "operationId": "bookings.getPassengerHistory",
         "parameters": [
           {
@@ -661,7 +677,9 @@
     },
     "/api/bookings/search": {
       "get": {
-        "tags": ["bookings"],
+        "tags": [
+          "bookings"
+        ],
         "operationId": "bookings.searchByPassengerName",
         "parameters": [
           {
@@ -727,7 +745,9 @@
     },
     "/api/inventory/availability/{flightId}": {
       "get": {
-        "tags": ["inventory"],
+        "tags": [
+          "inventory"
+        ],
         "operationId": "inventory.getFlightAvailability",
         "parameters": [
           {
@@ -786,7 +806,9 @@
     },
     "/api/inventory/availability/{flightId}/{cabin}": {
       "get": {
-        "tags": ["inventory"],
+        "tags": [
+          "inventory"
+        ],
         "operationId": "inventory.getCabinAvailability",
         "parameters": [
           {
@@ -806,17 +828,23 @@
                 {
                   "type": "string",
                   "title": "ECONOMY",
-                  "enum": ["ECONOMY"]
+                  "enum": [
+                    "ECONOMY"
+                  ]
                 },
                 {
                   "type": "string",
                   "title": "BUSINESS",
-                  "enum": ["BUSINESS"]
+                  "enum": [
+                    "BUSINESS"
+                  ]
                 },
                 {
                   "type": "string",
                   "title": "FIRST",
-                  "enum": ["FIRST"]
+                  "enum": [
+                    "FIRST"
+                  ]
                 }
               ]
             },
@@ -870,7 +898,9 @@
     },
     "/api/inventory/search": {
       "get": {
-        "tags": ["inventory"],
+        "tags": [
+          "inventory"
+        ],
         "operationId": "inventory.findAvailableFlights",
         "parameters": [
           {
@@ -882,17 +912,23 @@
                 {
                   "type": "string",
                   "title": "ECONOMY",
-                  "enum": ["ECONOMY"]
+                  "enum": [
+                    "ECONOMY"
+                  ]
                 },
                 {
                   "type": "string",
                   "title": "BUSINESS",
-                  "enum": ["BUSINESS"]
+                  "enum": [
+                    "BUSINESS"
+                  ]
                 },
                 {
                   "type": "string",
                   "title": "FIRST",
-                  "enum": ["FIRST"]
+                  "enum": [
+                    "FIRST"
+                  ]
                 }
               ]
             },
@@ -1007,7 +1043,9 @@
     },
     "/api/inventory/stats": {
       "get": {
-        "tags": ["inventory"],
+        "tags": [
+          "inventory"
+        ],
         "operationId": "inventory.getInventoryStats",
         "parameters": [],
         "security": [],
@@ -1047,7 +1085,9 @@
     },
     "/api/health": {
       "get": {
-        "tags": ["health"],
+        "tags": [
+          "health"
+        ],
         "operationId": "health.check",
         "parameters": [],
         "security": [],
@@ -1058,11 +1098,19 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["status", "timestamp", "components"],
+                  "required": [
+                    "status",
+                    "timestamp",
+                    "components"
+                  ],
                   "properties": {
                     "status": {
                       "type": "string",
-                      "enum": ["healthy", "degraded", "unhealthy"]
+                      "enum": [
+                        "healthy",
+                        "degraded",
+                        "unhealthy"
+                      ]
                     },
                     "timestamp": {
                       "$ref": "#/components/schemas/DateTimeUtc"
@@ -1073,11 +1121,17 @@
                       "properties": {},
                       "additionalProperties": {
                         "type": "object",
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "properties": {
                           "status": {
                             "type": "string",
-                            "enum": ["healthy", "degraded", "unhealthy"]
+                            "enum": [
+                              "healthy",
+                              "degraded",
+                              "unhealthy"
+                            ]
                           },
                           "latency": {
                             "type": "number"
@@ -1110,7 +1164,9 @@
     },
     "/api/meta": {
       "get": {
-        "tags": ["meta"],
+        "tags": [
+          "meta"
+        ],
         "operationId": "meta.meta",
         "parameters": [],
         "security": [],
@@ -1121,7 +1177,10 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["version", "startedAt"],
+                  "required": [
+                    "version",
+                    "startedAt"
+                  ],
                   "properties": {
                     "version": {
                       "type": "string"
@@ -1150,7 +1209,9 @@
     },
     "/api/openapi.json": {
       "get": {
-        "tags": ["meta"],
+        "tags": [
+          "meta"
+        ],
         "operationId": "meta.openApi",
         "parameters": [],
         "security": [],
@@ -1181,7 +1242,9 @@
     },
     "/api/docs": {
       "get": {
-        "tags": ["meta"],
+        "tags": [
+          "meta"
+        ],
         "operationId": "meta.docs",
         "parameters": [],
         "security": [],
@@ -1211,7 +1274,9 @@
     },
     "/api/webhooks/polar": {
       "post": {
-        "tags": ["webhooks"],
+        "tags": [
+          "webhooks"
+        ],
         "operationId": "webhooks.polar",
         "parameters": [],
         "security": [],
@@ -1222,7 +1287,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["received"],
+                  "required": [
+                    "received"
+                  ],
                   "properties": {
                     "received": {
                       "type": "boolean"
@@ -1276,16 +1343,18 @@
   },
   "components": {
     "schemas": {
-      "BookingResponse": {
+      "BookingSummary": {
         "type": "object",
         "required": [
           "id",
           "pnrCode",
           "status",
-          "passengers",
-          "segments",
-          "expiresAt",
-          "createdAt"
+          "origin",
+          "destination",
+          "passengerCount",
+          "totalPrice",
+          "createdAt",
+          "expiresAt"
         ],
         "properties": {
           "id": {
@@ -1305,178 +1374,81 @@
               {
                 "type": "string",
                 "title": "HELD",
-                "enum": ["Held"]
+                "enum": [
+                  "Held"
+                ]
               },
               {
                 "type": "string",
                 "title": "CONFIRMED",
-                "enum": ["Confirmed"]
+                "enum": [
+                  "Confirmed"
+                ]
               },
               {
                 "type": "string",
                 "title": "TICKETED",
-                "enum": ["Ticketed"]
+                "enum": [
+                  "Ticketed"
+                ]
               },
               {
                 "type": "string",
                 "title": "CANCELLED",
-                "enum": ["Cancelled"]
+                "enum": [
+                  "Cancelled"
+                ]
               },
               {
                 "type": "string",
                 "title": "EXPIRED",
-                "enum": ["Expired"]
+                "enum": [
+                  "Expired"
+                ]
               }
             ]
           },
-          "passengers": {
-            "type": "array",
-            "minItems": 1,
-            "items": {
-              "$ref": "#/components/schemas/PublicPassenger"
-            }
+          "origin": {
+            "type": "string",
+            "description": "a string matching the pattern ^[A-Z]{3}$",
+            "pattern": "^[A-Z]{3}$"
           },
-          "segments": {
-            "type": "array",
-            "minItems": 1,
-            "items": {
-              "$ref": "#/components/schemas/BookingSegment"
-            }
+          "destination": {
+            "type": "string",
+            "description": "a string matching the pattern ^[A-Z]{3}$",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "passengerCount": {
+            "type": "integer",
+            "description": "a positive number",
+            "title": "positive",
+            "exclusiveMinimum": 0
+          },
+          "totalPrice": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/Date"
           },
           "expiresAt": {
             "anyOf": [
               {
-                "type": "object",
-                "required": ["_tag"],
-                "properties": {
-                  "_tag": {
-                    "type": "string",
-                    "enum": ["None"]
-                  }
-                },
-                "additionalProperties": false,
-                "description": "NoneEncoded"
+                "$ref": "#/components/schemas/Date"
               },
               {
-                "type": "object",
-                "required": ["_tag", "value"],
-                "properties": {
-                  "_tag": {
-                    "type": "string",
-                    "enum": ["Some"]
-                  },
-                  "value": {
-                    "$ref": "#/components/schemas/Date"
-                  }
-                },
-                "additionalProperties": false,
-                "description": "SomeEncoded<Date>"
-              }
-            ],
-            "description": "OptionEncoded<Date>"
-          },
-          "createdAt": {
-            "$ref": "#/components/schemas/Date"
-          }
-        },
-        "additionalProperties": false
-      },
-      "PublicPassenger": {
-        "type": "object",
-        "required": ["id", "firstName", "lastName", "gender", "type"],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "gender": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
-      "BookingSegment": {
-        "type": "object",
-        "required": ["id", "flightId", "cabin", "price"],
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "a Universally Unique Identifier",
-            "format": "uuid",
-            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-          },
-          "flightId": {
-            "type": "string"
-          },
-          "cabin": {
-            "$comment": "/schemas/enums",
-            "anyOf": [
-              {
-                "type": "string",
-                "title": "ECONOMY",
-                "enum": ["ECONOMY"]
-              },
-              {
-                "type": "string",
-                "title": "BUSINESS",
-                "enum": ["BUSINESS"]
-              },
-              {
-                "type": "string",
-                "title": "FIRST",
-                "enum": ["FIRST"]
+                "type": "null"
               }
             ]
-          },
-          "price": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "seatNumber": {
-            "anyOf": [
-              {
-                "type": "object",
-                "required": ["_tag"],
-                "properties": {
-                  "_tag": {
-                    "type": "string",
-                    "enum": ["None"]
-                  }
-                },
-                "additionalProperties": false,
-                "description": "NoneEncoded"
-              },
-              {
-                "type": "object",
-                "required": ["_tag", "value"],
-                "properties": {
-                  "_tag": {
-                    "type": "string",
-                    "enum": ["Some"]
-                  },
-                  "value": {
-                    "type": "string"
-                  }
-                },
-                "additionalProperties": false,
-                "description": "SomeEncoded<string>"
-              }
-            ],
-            "description": "OptionEncoded<string>"
           }
         },
         "additionalProperties": false
       },
       "Money": {
         "type": "object",
-        "required": ["amount", "currency"],
+        "required": [
+          "amount",
+          "currency"
+        ],
         "properties": {
           "amount": {
             "type": "number",
@@ -1486,7 +1458,12 @@
           },
           "currency": {
             "type": "string",
-            "enum": ["EUR", "USD", "GBP", "CHF"]
+            "enum": [
+              "EUR",
+              "USD",
+              "GBP",
+              "CHF"
+            ]
           }
         },
         "additionalProperties": false
@@ -1497,7 +1474,11 @@
       },
       "HttpApiDecodeError": {
         "type": "object",
-        "required": ["issues", "message", "_tag"],
+        "required": [
+          "issues",
+          "message",
+          "_tag"
+        ],
         "properties": {
           "issues": {
             "type": "array",
@@ -1510,7 +1491,9 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["HttpApiDecodeError"]
+            "enum": [
+              "HttpApiDecodeError"
+            ]
           }
         },
         "additionalProperties": false,
@@ -1518,7 +1501,11 @@
       },
       "Issue": {
         "type": "object",
-        "required": ["_tag", "path", "message"],
+        "required": [
+          "_tag",
+          "path",
+          "message"
+        ],
         "properties": {
           "_tag": {
             "type": "string",
@@ -1559,11 +1546,16 @@
           },
           {
             "type": "object",
-            "required": ["_tag", "key"],
+            "required": [
+              "_tag",
+              "key"
+            ],
             "properties": {
               "_tag": {
                 "type": "string",
-                "enum": ["symbol"]
+                "enum": [
+                  "symbol"
+                ]
               },
               "key": {
                 "type": "string"
@@ -1576,7 +1568,11 @@
       },
       "BookingPersistenceError": {
         "type": "object",
-        "required": ["bookingId", "reason", "_tag"],
+        "required": [
+          "bookingId",
+          "reason",
+          "_tag"
+        ],
         "properties": {
           "bookingId": {
             "type": "string"
@@ -1586,21 +1582,30 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["BookingPersistenceError"]
+            "enum": [
+              "BookingPersistenceError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "BookFlightCommand": {
         "type": "object",
-        "required": ["segments", "passengers", "successUrl"],
+        "required": [
+          "segments",
+          "passengers",
+          "successUrl"
+        ],
         "properties": {
           "segments": {
             "type": "array",
             "minItems": 1,
             "items": {
               "type": "object",
-              "required": ["flightId", "cabinClass"],
+              "required": [
+                "flightId",
+                "cabinClass"
+              ],
               "properties": {
                 "flightId": {
                   "type": "string"
@@ -1611,17 +1616,23 @@
                     {
                       "type": "string",
                       "title": "ECONOMY",
-                      "enum": ["ECONOMY"]
+                      "enum": [
+                        "ECONOMY"
+                      ]
                     },
                     {
                       "type": "string",
                       "title": "BUSINESS",
-                      "enum": ["BUSINESS"]
+                      "enum": [
+                        "BUSINESS"
+                      ]
                     },
                     {
                       "type": "string",
                       "title": "FIRST",
-                      "enum": ["FIRST"]
+                      "enum": [
+                        "FIRST"
+                      ]
                     }
                   ]
                 },
@@ -1677,12 +1688,16 @@
                     {
                       "type": "string",
                       "title": "MALE",
-                      "enum": ["MALE"]
+                      "enum": [
+                        "MALE"
+                      ]
                     },
                     {
                       "type": "string",
                       "title": "FEMALE",
-                      "enum": ["FEMALE"]
+                      "enum": [
+                        "FEMALE"
+                      ]
                     }
                   ]
                 },
@@ -1692,27 +1707,37 @@
                     {
                       "type": "string",
                       "title": "INFANT",
-                      "enum": ["INFANT"]
+                      "enum": [
+                        "INFANT"
+                      ]
                     },
                     {
                       "type": "string",
                       "title": "CHILD",
-                      "enum": ["CHILD"]
+                      "enum": [
+                        "CHILD"
+                      ]
                     },
                     {
                       "type": "string",
                       "title": "YOUNG_ADULT",
-                      "enum": ["YOUNG_ADULT"]
+                      "enum": [
+                        "YOUNG_ADULT"
+                      ]
                     },
                     {
                       "type": "string",
                       "title": "ADULT",
-                      "enum": ["ADULT"]
+                      "enum": [
+                        "ADULT"
+                      ]
                     },
                     {
                       "type": "string",
                       "title": "SENIOR",
-                      "enum": ["SENIOR"]
+                      "enum": [
+                        "SENIOR"
+                      ]
                     }
                   ]
                 }
@@ -1734,7 +1759,9 @@
       },
       "BookResponse": {
         "type": "object",
-        "required": ["booking"],
+        "required": [
+          "booking"
+        ],
         "properties": {
           "booking": {
             "$ref": "#/components/schemas/BookingResponse"
@@ -1748,9 +1775,255 @@
         },
         "additionalProperties": false
       },
+      "BookingResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "pnrCode",
+          "status",
+          "passengers",
+          "segments",
+          "expiresAt",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "a Universally Unique Identifier",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          },
+          "pnrCode": {
+            "type": "string",
+            "description": "a string matching the pattern ^[A-Z0-9]{6}$",
+            "pattern": "^[A-Z0-9]{6}$"
+          },
+          "status": {
+            "$comment": "/schemas/enums",
+            "anyOf": [
+              {
+                "type": "string",
+                "title": "HELD",
+                "enum": [
+                  "Held"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "CONFIRMED",
+                "enum": [
+                  "Confirmed"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "TICKETED",
+                "enum": [
+                  "Ticketed"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "CANCELLED",
+                "enum": [
+                  "Cancelled"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "EXPIRED",
+                "enum": [
+                  "Expired"
+                ]
+              }
+            ]
+          },
+          "passengers": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/PublicPassenger"
+            }
+          },
+          "segments": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/BookingSegment"
+            }
+          },
+          "expiresAt": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "_tag"
+                ],
+                "properties": {
+                  "_tag": {
+                    "type": "string",
+                    "enum": [
+                      "None"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "description": "NoneEncoded"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "_tag",
+                  "value"
+                ],
+                "properties": {
+                  "_tag": {
+                    "type": "string",
+                    "enum": [
+                      "Some"
+                    ]
+                  },
+                  "value": {
+                    "$ref": "#/components/schemas/Date"
+                  }
+                },
+                "additionalProperties": false,
+                "description": "SomeEncoded<Date>"
+              }
+            ],
+            "description": "OptionEncoded<Date>"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/Date"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PublicPassenger": {
+        "type": "object",
+        "required": [
+          "id",
+          "firstName",
+          "lastName",
+          "gender",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BookingSegment": {
+        "type": "object",
+        "required": [
+          "id",
+          "flightId",
+          "cabin",
+          "price"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "a Universally Unique Identifier",
+            "format": "uuid",
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+          },
+          "flightId": {
+            "type": "string"
+          },
+          "cabin": {
+            "$comment": "/schemas/enums",
+            "anyOf": [
+              {
+                "type": "string",
+                "title": "ECONOMY",
+                "enum": [
+                  "ECONOMY"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "BUSINESS",
+                "enum": [
+                  "BUSINESS"
+                ]
+              },
+              {
+                "type": "string",
+                "title": "FIRST",
+                "enum": [
+                  "FIRST"
+                ]
+              }
+            ]
+          },
+          "price": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "seatNumber": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "_tag"
+                ],
+                "properties": {
+                  "_tag": {
+                    "type": "string",
+                    "enum": [
+                      "None"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "description": "NoneEncoded"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "_tag",
+                  "value"
+                ],
+                "properties": {
+                  "_tag": {
+                    "type": "string",
+                    "enum": [
+                      "Some"
+                    ]
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "description": "SomeEncoded<string>"
+              }
+            ],
+            "description": "OptionEncoded<string>"
+          }
+        },
+        "additionalProperties": false
+      },
       "InvalidAmountError": {
         "type": "object",
-        "required": ["amount", "_tag"],
+        "required": [
+          "amount",
+          "_tag"
+        ],
         "properties": {
           "amount": {
             "type": "number"
@@ -1760,14 +2033,21 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["InvalidAmountError"]
+            "enum": [
+              "InvalidAmountError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "BookingStatusError": {
         "type": "object",
-        "required": ["pnrCode", "status", "expected", "_tag"],
+        "required": [
+          "pnrCode",
+          "status",
+          "expected",
+          "_tag"
+        ],
         "properties": {
           "pnrCode": {
             "type": "string"
@@ -1780,14 +2060,20 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["BookingStatusError"]
+            "enum": [
+              "BookingStatusError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "UnsupportedCurrencyError": {
         "type": "object",
-        "required": ["currency", "supported", "_tag"],
+        "required": [
+          "currency",
+          "supported",
+          "_tag"
+        ],
         "properties": {
           "currency": {
             "type": "string"
@@ -1800,14 +2086,22 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["UnsupportedCurrencyError"]
+            "enum": [
+              "UnsupportedCurrencyError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "FlightFullError": {
         "type": "object",
-        "required": ["flightId", "cabin", "requested", "available", "_tag"],
+        "required": [
+          "flightId",
+          "cabin",
+          "requested",
+          "available",
+          "_tag"
+        ],
         "properties": {
           "flightId": {
             "type": "string"
@@ -1823,7 +2117,9 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["FlightFullError"]
+            "enum": [
+              "FlightFullError"
+            ]
           }
         },
         "additionalProperties": false
@@ -1862,7 +2158,9 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["OptimisticLockingError"]
+            "enum": [
+              "OptimisticLockingError"
+            ]
           }
         },
         "additionalProperties": false
@@ -1895,42 +2193,57 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["InventoryOvercapacityError"]
+            "enum": [
+              "InventoryOvercapacityError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "FlightNotFoundError": {
         "type": "object",
-        "required": ["flightId", "_tag"],
+        "required": [
+          "flightId",
+          "_tag"
+        ],
         "properties": {
           "flightId": {
             "type": "string"
           },
           "_tag": {
             "type": "string",
-            "enum": ["FlightNotFoundError"]
+            "enum": [
+              "FlightNotFoundError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "BookingNotFoundError": {
         "type": "object",
-        "required": ["searchkey", "_tag"],
+        "required": [
+          "searchkey",
+          "_tag"
+        ],
         "properties": {
           "searchkey": {
             "type": "string"
           },
           "_tag": {
             "type": "string",
-            "enum": ["BookingNotFoundError"]
+            "enum": [
+              "BookingNotFoundError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "CheckoutNotFoundError": {
         "type": "object",
-        "required": ["checkoutId", "_tag"],
+        "required": [
+          "checkoutId",
+          "_tag"
+        ],
         "properties": {
           "checkoutId": {
             "type": "string"
@@ -1941,14 +2254,20 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["CheckoutNotFoundError"]
+            "enum": [
+              "CheckoutNotFoundError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "BookingExpiredError": {
         "type": "object",
-        "required": ["pnrCode", "expiresAt", "_tag"],
+        "required": [
+          "pnrCode",
+          "expiresAt",
+          "_tag"
+        ],
         "properties": {
           "pnrCode": {
             "type": "string"
@@ -1958,14 +2277,20 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["BookingExpiredError"]
+            "enum": [
+              "BookingExpiredError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "InventoryPersistenceError": {
         "type": "object",
-        "required": ["flightId", "reason", "_tag"],
+        "required": [
+          "flightId",
+          "reason",
+          "_tag"
+        ],
         "properties": {
           "flightId": {
             "type": "string"
@@ -1975,14 +2300,20 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["InventoryPersistenceError"]
+            "enum": [
+              "InventoryPersistenceError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "RequestTimeoutError": {
         "type": "object",
-        "required": ["method", "path", "_tag"],
+        "required": [
+          "method",
+          "path",
+          "_tag"
+        ],
         "properties": {
           "method": {
             "type": "string"
@@ -1992,14 +2323,19 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["RequestTimeoutError"]
+            "enum": [
+              "RequestTimeoutError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "PaymentDeclinedError": {
         "type": "object",
-        "required": ["reason", "_tag"],
+        "required": [
+          "reason",
+          "_tag"
+        ],
         "properties": {
           "reason": {
             "type": "string"
@@ -2013,14 +2349,19 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["PaymentDeclinedError"]
+            "enum": [
+              "PaymentDeclinedError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "PaymentApiUnavailableError": {
         "type": "object",
-        "required": ["message", "_tag"],
+        "required": [
+          "message",
+          "_tag"
+        ],
         "properties": {
           "message": {
             "type": "string"
@@ -2031,84 +2372,8 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["PaymentApiUnavailableError"]
-          }
-        },
-        "additionalProperties": false
-      },
-      "BookingSummary": {
-        "type": "object",
-        "required": [
-          "id",
-          "pnrCode",
-          "status",
-          "passengerCount",
-          "totalPrice",
-          "createdAt",
-          "expiresAt"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "a Universally Unique Identifier",
-            "format": "uuid",
-            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-          },
-          "pnrCode": {
-            "type": "string",
-            "description": "a string matching the pattern ^[A-Z0-9]{6}$",
-            "pattern": "^[A-Z0-9]{6}$"
-          },
-          "status": {
-            "$comment": "/schemas/enums",
-            "anyOf": [
-              {
-                "type": "string",
-                "title": "HELD",
-                "enum": ["Held"]
-              },
-              {
-                "type": "string",
-                "title": "CONFIRMED",
-                "enum": ["Confirmed"]
-              },
-              {
-                "type": "string",
-                "title": "TICKETED",
-                "enum": ["Ticketed"]
-              },
-              {
-                "type": "string",
-                "title": "CANCELLED",
-                "enum": ["Cancelled"]
-              },
-              {
-                "type": "string",
-                "title": "EXPIRED",
-                "enum": ["Expired"]
-              }
-            ]
-          },
-          "passengerCount": {
-            "type": "integer",
-            "description": "a positive number",
-            "title": "positive",
-            "exclusiveMinimum": 0
-          },
-          "totalPrice": {
-            "$ref": "#/components/schemas/Money"
-          },
-          "createdAt": {
-            "$ref": "#/components/schemas/Date"
-          },
-          "expiresAt": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Date"
-              },
-              {
-                "type": "null"
-              }
+            "enum": [
+              "PaymentApiUnavailableError"
             ]
           }
         },
@@ -2142,27 +2407,37 @@
               {
                 "type": "string",
                 "title": "HELD",
-                "enum": ["Held"]
+                "enum": [
+                  "Held"
+                ]
               },
               {
                 "type": "string",
                 "title": "CONFIRMED",
-                "enum": ["Confirmed"]
+                "enum": [
+                  "Confirmed"
+                ]
               },
               {
                 "type": "string",
                 "title": "TICKETED",
-                "enum": ["Ticketed"]
+                "enum": [
+                  "Ticketed"
+                ]
               },
               {
                 "type": "string",
                 "title": "CANCELLED",
-                "enum": ["Cancelled"]
+                "enum": [
+                  "Cancelled"
+                ]
               },
               {
                 "type": "string",
                 "title": "EXPIRED",
-                "enum": ["Expired"]
+                "enum": [
+                  "Expired"
+                ]
               }
             ]
           },
@@ -2284,17 +2559,23 @@
               {
                 "type": "string",
                 "title": "ECONOMY",
-                "enum": ["ECONOMY"]
+                "enum": [
+                  "ECONOMY"
+                ]
               },
               {
                 "type": "string",
                 "title": "BUSINESS",
-                "enum": ["BUSINESS"]
+                "enum": [
+                  "BUSINESS"
+                ]
               },
               {
                 "type": "string",
                 "title": "FIRST",
-                "enum": ["FIRST"]
+                "enum": [
+                  "FIRST"
+                ]
               }
             ]
           },
@@ -2329,7 +2610,10 @@
       },
       "ValidationError": {
         "type": "object",
-        "required": ["reason", "_tag"],
+        "required": [
+          "reason",
+          "_tag"
+        ],
         "properties": {
           "reason": {
             "type": "string"
@@ -2339,7 +2623,9 @@
           },
           "_tag": {
             "type": "string",
-            "enum": ["ValidationError"]
+            "enum": [
+              "ValidationError"
+            ]
           }
         },
         "additionalProperties": false
@@ -2387,39 +2673,53 @@
       },
       "MalformedPayloadError": {
         "type": "object",
-        "required": ["message", "_tag"],
+        "required": [
+          "message",
+          "_tag"
+        ],
         "properties": {
           "message": {
             "type": "string"
           },
           "_tag": {
             "type": "string",
-            "enum": ["MalformedPayloadError"]
+            "enum": [
+              "MalformedPayloadError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "TransientError": {
         "type": "object",
-        "required": ["message", "_tag"],
+        "required": [
+          "message",
+          "_tag"
+        ],
         "properties": {
           "message": {
             "type": "string"
           },
           "_tag": {
             "type": "string",
-            "enum": ["TransientError"]
+            "enum": [
+              "TransientError"
+            ]
           }
         },
         "additionalProperties": false
       },
       "WebhookAuthenticationError": {
         "type": "object",
-        "required": ["_tag"],
+        "required": [
+          "_tag"
+        ],
         "properties": {
           "_tag": {
             "type": "string",
-            "enum": ["WebhookAuthenticationError"]
+            "enum": [
+              "WebhookAuthenticationError"
+            ]
           }
         },
         "additionalProperties": false
@@ -2447,7 +2747,7 @@
   ],
   "servers": [
     {
-      "url": "https://avionics.onrender.com",
+      "url": "http://localhost:3000",
       "description": "API Server"
     }
   ]

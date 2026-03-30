@@ -38,8 +38,18 @@ export function BookingStatusBadge({
     }
   };
 
+  const statusKeyMap: Record<string, string> = {
+    held: "booking.status.held",
+    confirmed: "booking.status.confirmed",
+    ticketed: "booking.status.ticketed",
+    cancelled: "booking.status.cancelled",
+    expired: "booking.status.expired",
+  };
+
   const translatedStatus = t(
-    `booking.status.${normalizedStatus}` as "booking.status.held",
+    (statusKeyMap[normalizedStatus] ??
+      `booking.status.${normalizedStatus}`) as "booking.status.held",
+    { defaultValue: status },
   );
 
   return (

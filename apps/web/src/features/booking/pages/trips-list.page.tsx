@@ -17,7 +17,7 @@ export const TripsListPage = () => {
   const { context, is } = useBookingMachine();
   const navigate = useNavigate();
 
-  const allBookings = context.allBookings;
+  const allBookings = context.allBookings ?? [];
   const isLoading = is("fetchingBookings");
   const hasBookings = allBookings.length > 0;
 
@@ -34,6 +34,7 @@ export const TripsListPage = () => {
           size="icon"
           onClick={handleBack}
           className="rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+          aria-label={t("common.back")}
         >
           <HugeiconsIcon icon={ArrowLeft01Icon} size={20} />
         </Button>

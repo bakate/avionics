@@ -72,6 +72,13 @@ export interface BookingQueriesPort {
     name: string,
     limit: number,
   ): Effect.Effect<ReadonlyArray<BookingSummary>, BookingPersistenceError>;
+
+  /**
+   * Find all bookings associated with an email address
+   */
+  findByEmail(
+    email: string,
+  ): Effect.Effect<ReadonlyArray<BookingSummary>, BookingPersistenceError>;
 }
 
 export class BookingQueries extends Context.Tag("BookingQueries")<

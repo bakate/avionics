@@ -1,4 +1,3 @@
-import { type BookingResponse } from "@workspace/api/booking-api";
 import { type BookFlightCommand } from "@workspace/application/booking.commands";
 import { createBookingMachine } from "@workspace/application/booking-machine";
 import {
@@ -8,17 +7,13 @@ import {
   type SearchParams,
 } from "@workspace/application/booking-types";
 import { type BookingSummary } from "@workspace/application/read-models";
-import { type PnrStatus } from "@workspace/domain/booking";
 import {
-  BookingId,
   type CabinClass,
   type CurrencyCode,
   FlightId,
   Money,
   type PassengerType,
-  PnrCodeSchema,
 } from "@workspace/domain/kernel";
-import { type BookingSegment } from "@workspace/domain/segment";
 import { Effect } from "effect";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -184,30 +179,7 @@ export const bookingMachine = createBookingMachine({
     fetchBookings: fromEffect((input?: { email?: string }) =>
       Effect.gen(function* () {
         const response = yield* getBookings(input?.email);
-        const bookings = response as ReadonlyArray<BookingResponse>;
-
-        return bookings.map((booking) => ({
-          id: BookingId.make(booking.id.valueOf() ?? ""),
-          pnrCode: PnrCodeSchema.make(booking.pnrCode.valueOf() ?? ""),
-          status: booking.status as PnrStatus,
-          passengerCount: 1,
-          totalPrice: booking.segments.reduce<Money>(
-            (acc, segment: BookingSegment) => {
-              const rawPrice = segment.price as unknown as {
-                amount: number;
-                currency: CurrencyCode;
-              };
-              const price =
-                segment.price instanceof Money
-                  ? segment.price
-                  : Money.of(rawPrice.amount, rawPrice.currency);
-              return acc.add(price);
-            },
-            Money.zero(booking.segments[0]?.price.currency ?? "EUR"),
-          ),
-          createdAt: booking.createdAt,
-          expiresAt: booking.expiresAt,
-        })) as ReadonlyArray<BookingSummary>;
+        return response as ReadonlyArray<BookingSummary>;
       }).pipe(
         Effect.tapError((error) =>
           Effect.logError("Failed to fetch bookings", error),

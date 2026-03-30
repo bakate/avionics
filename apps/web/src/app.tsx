@@ -20,6 +20,18 @@ import { ROUTES } from "@/routes";
 import { LAST_EMAIL_KEY } from "./features/booking/machines/booking.persistence";
 import { StressTestPage } from "./features/stress-test/pages/stress-test.page";
 
+const fetchBookingsLoader = async () => {
+  const state = bookingActor.getSnapshot();
+  if (state.matches("idle") || state.matches("error")) {
+    const savedEmail = localStorage.getItem(LAST_EMAIL_KEY);
+    bookingActor.send({
+      type: "FETCH_BOOKINGS",
+      email: savedEmail ?? undefined,
+    });
+  }
+  return null;
+};
+
 const router = createBrowserRouter([
   {
     element: <BaseLayout />,
@@ -27,17 +39,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: ROUTES.home,
-        loader: async () => {
-          const state = bookingActor.getSnapshot();
-          if (state.matches("idle") || state.matches("error")) {
-            const savedEmail = localStorage.getItem(LAST_EMAIL_KEY);
-            bookingActor.send({
-              type: "FETCH_BOOKINGS",
-              email: savedEmail ?? undefined,
-            });
-          }
-          return null;
-        },
+        loader: fetchBookingsLoader,
         element: <HomePage />,
       },
       { path: ROUTES.outbound, element: <OutboundScreen /> },
@@ -71,17 +73,7 @@ const router = createBrowserRouter([
       },
       {
         path: ROUTES.trips,
-        loader: async () => {
-          const state = bookingActor.getSnapshot();
-          if (state.matches("idle") || state.matches("error")) {
-            const savedEmail = localStorage.getItem(LAST_EMAIL_KEY);
-            bookingActor.send({
-              type: "FETCH_BOOKINGS",
-              email: savedEmail ?? undefined,
-            });
-          }
-          return null;
-        },
+        loader: fetchBookingsLoader,
         element: <TripsListPage />,
       },
       { path: "*", element: <NotFoundPage /> },

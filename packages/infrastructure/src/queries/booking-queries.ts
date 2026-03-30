@@ -373,6 +373,55 @@ export const PostgresBookingQueriesLive = Layer.effect(
       getPassengerHistory,
       findExpiredBookings,
       searchByPassengerName,
+      findByEmail: (email) =>
+        Effect.gen(function* () {
+          const rows = yield* sql<BookingSummaryRow>`
+            SELECT DISTINCT
+              b.id,
+              b.pnr_code,
+              b.status,
+              (SELECT COUNT(*)::int FROM passengers p2 WHERE p2.booking_id = b.id) as passenger_count,
+              COALESCE((SELECT SUM(s.price_amount) FROM segments s WHERE s.booking_id = b.id), 0) as total_price_amount,
+              COALESCE((SELECT MAX(s.price_currency) FROM segments s WHERE s.booking_id = b.id), 'EUR') as total_price_currency,
+              b.created_at,
+              b.expires_at,
+              (SELECT fi.origin FROM segments s JOIN flight_inventory fi ON fi.flight_id = s.flight_id WHERE s.booking_id = b.id LIMIT 1) as origin,
+              (SELECT fi.destination FROM segments s JOIN flight_inventory fi ON fi.flight_id = s.flight_id WHERE s.booking_id = b.id ORDER BY s.id DESC LIMIT 1) as destination
+            FROM bookings b
+            INNER JOIN passengers p ON p.booking_id = b.id
+            WHERE p.email = ${email}
+            ORDER BY b.created_at DESC
+          `;
+
+          return yield* Effect.forEach(rows, (row) =>
+            Schema.decodeUnknown(BookingSummary)({
+              id: row.id,
+              pnrCode: row.pnr_code,
+              status: row.status,
+              origin: row.origin,
+              destination: row.destination,
+              passengerCount: row.passenger_count,
+              totalPrice: {
+                amount: Number.parseFloat(row.total_price_amount),
+                currency: row.total_price_currency,
+              },
+              createdAt: toDateString(row.created_at),
+              expiresAt: toDateString(row.expires_at) ?? null,
+            }).pipe(
+              Effect.mapError(
+                (error) =>
+                  new BookingPersistenceError({
+                    bookingId: row.id,
+                    reason: `Failed to decode booking by email: ${error.message}`,
+                  }),
+              ),
+            ),
+          );
+        }).pipe(
+          Effect.catchTag("SqlError", () =>
+            Effect.succeed([] as ReadonlyArray<BookingSummary>),
+          ),
+        ),
     };
   }),
 );
@@ -398,6 +447,7 @@ export const PostgresBookingQueriesTest = (
       getPassengerHistory: () => Effect.succeed([]),
       findExpiredBookings: () => Effect.succeed([]),
       searchByPassengerName: () => Effect.succeed([]),
+      findByEmail: () => Effect.succeed([]),
       ...overrides,
     }),
   );

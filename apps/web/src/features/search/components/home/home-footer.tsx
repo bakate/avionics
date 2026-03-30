@@ -9,7 +9,7 @@ export const HomeFooter = () => {
   return (
     <footer className="border-t border-slate-100 py-24 text-center dark:border-slate-900 bg-white dark:bg-background">
       {/* Brand / Logo Section */}
-      <div className="flex items-center justify-center gap-4 text-4xl font-medium tracking-tighter text-slate-200 dark:text-slate-800 transition-colors hover:text-slate-300">
+      <div className="flex items-center justify-center gap-4 text-4xl font-medium tracking-tighter text-slate-200 dark:text-slate-800 transition-colors hover:text-slate-300 dark:hover:text-slate-700">
         <HugeiconsIcon icon={Airplane01Icon} size={36} className="rotate-45" />
         <span className="font-heading uppercase tracking-widest text-shadow-premium">
           {t("header.brand")}

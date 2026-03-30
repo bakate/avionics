@@ -38,6 +38,7 @@
     "hub": {
       "book": "Réserver un vol",
       "trips": "Mes Voyages",
+      "viewAll": "Voir tous mes voyages",
       "comingSoon": "Cette fonctionnalité arrive bientôt dans la prochaine version d'Avionics. Restez à l'écoute !",
       "backToBooking": "Retour à la réservation"
     },
@@ -366,6 +367,11 @@
     "viewAll": "Voir Tout",
     "passenger": "Passager",
     "passengers": "Passagers"
+  },
+  "cabin": {
+    "economy": "Économie",
+    "business": "Affaires",
+    "first": "La Première"
   },
   "notFound": {
     "title": "404",

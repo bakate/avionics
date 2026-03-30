@@ -70,17 +70,14 @@ export const BookingApiLive = HttpApiBuilder.group(
     handlers
       .handle("list", ({ urlParams }) =>
         Effect.gen(function* () {
-          const service = yield* BookingService;
+          const queries = yield* BookingQueries;
 
           // Prevent global PII leak: only list if email is provided
           if (!urlParams.email) {
             return [];
           }
 
-          const bookings = yield* service.findAll({ email: urlParams.email });
-          return bookings
-            .filter((b) => b.passengers.length > 0 && b.segments?.length > 0)
-            .map(toBookingResponse);
+          return yield* queries.findByEmail(urlParams.email);
         }).pipe(ensureBookingContract()),
       )
       .handle("book", ({ payload }) =>

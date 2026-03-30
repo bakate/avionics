@@ -368,6 +368,11 @@
     "passenger": "Passenger",
     "passengers": "Passengers"
   },
+  "cabin": {
+    "economy": "Economy",
+    "business": "Business",
+    "first": "First"
+  },
   "notFound": {
     "title": "404",
     "message": "Oops! The page you're looking for doesn't exist.",

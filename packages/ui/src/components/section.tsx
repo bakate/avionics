@@ -9,6 +9,20 @@ interface SectionProps {
   spacing?: "none" | "sm" | "md" | "lg" | "xl";
 }
 
+const bgStyles = {
+  default: "bg-background",
+  muted: "bg-muted/30 dark:bg-muted/10",
+  full: "bg-primary text-primary-foreground",
+};
+
+const spacingStyles = {
+  none: "py-0",
+  sm: "py-8 sm:py-12",
+  md: "py-16 sm:py-24",
+  lg: "py-24 sm:py-32",
+  xl: "py-32 sm:py-48",
+};
+
 export const Section = ({
   children,
   className,
@@ -16,20 +30,6 @@ export const Section = ({
   variant = "default",
   spacing = "md",
 }: SectionProps) => {
-  const bgStyles = {
-    default: "bg-background",
-    muted: "bg-muted/30 dark:bg-muted/10",
-    full: "bg-primary text-primary-foreground",
-  };
-
-  const spacingStyles = {
-    none: "py-0",
-    sm: "py-8 sm:py-12",
-    md: "py-16 sm:py-24",
-    lg: "py-24 sm:py-32",
-    xl: "py-32 sm:py-48",
-  };
-
   return (
     <section
       className={cn(bgStyles[variant], spacingStyles[spacing], className)}

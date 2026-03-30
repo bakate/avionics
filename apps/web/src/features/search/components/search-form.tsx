@@ -106,7 +106,16 @@ export const SearchForm = ({
   // Update form when defaultValues changes (e.g. from DestinationCard)
   useEffect(() => {
     if (defaultValues) {
-      form.reset(defaultValues);
+      const currentValues = form.getValues();
+      const hasMeaningfulChange = Object.entries(defaultValues).some(
+        ([key, value]) =>
+          JSON.stringify(value) !==
+          JSON.stringify(currentValues[key as keyof SearchFormInput]),
+      );
+
+      if (hasMeaningfulChange) {
+        form.reset({ ...currentValues, ...defaultValues });
+      }
     }
   }, [defaultValues, form]);
 
@@ -347,9 +356,12 @@ export const SearchForm = ({
                       pField.value.adults +
                       pField.value.children +
                       pField.value.infants;
-                    const cabinLabel =
-                      cabinOptions.find((o) => o.value === cField.value)
-                        ?.label ?? "Economy";
+                    const cabinValue = (
+                      cField.value ?? "ECONOMY"
+                    ).toLowerCase();
+                    const cabinLabel = t(
+                      `cabin.${cabinValue as "economy" | "business" | "first"}`,
+                    );
 
                     return (
                       <Popover>
@@ -447,7 +459,9 @@ export const SearchForm = ({
                                         : "hover:bg-slate-50 dark:hover:bg-white/5",
                                     )}
                                   >
-                                    {opt.label}
+                                    {t(
+                                      `cabin.${opt.value.toLowerCase() as "economy" | "business" | "first"}`,
+                                    )}
                                     {cField.value === opt.value && (
                                       <div className="size-1.5 rounded-full bg-white" />
                                     )}
@@ -471,7 +485,7 @@ export const SearchForm = ({
               type="submit"
               disabled={busy}
               aria-label={busy ? t("search.searching") : t("search.submit")}
-              className="relative h-16 w-16 overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-royal-blue to-blue-800 p-0 text-white shadow-premium-shadow transition-all duration-500 hover:scale-105 hover:shadow-royal-blue/30 active:scale-95 disabled:opacity-50"
+              className="group relative h-16 w-16 overflow-hidden rounded-2xl border border-white/10 bg-linear-to-br from-royal-blue to-blue-800 p-0 text-white shadow-premium-shadow transition-all duration-500 hover:scale-105 hover:shadow-royal-blue/30 active:scale-95 disabled:opacity-50"
             >
               <div className="absolute inset-0 bg-linear-to-tr from-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
               {busy ? (

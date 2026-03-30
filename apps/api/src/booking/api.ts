@@ -45,7 +45,7 @@ export class BookingGroup extends HttpApiGroup.make("bookings")
   .add(
     HttpApiEndpoint.get("list", "/")
       .setUrlParams(Schema.Struct({ email: Schema.optional(Schema.String) }))
-      .addSuccess(Schema.Array(BookingResponse))
+      .addSuccess(Schema.Array(BookingSummary))
       .addError(Errors.BookingPersistenceError, { status: 500 }),
   )
   .add(
