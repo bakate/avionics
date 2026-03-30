@@ -200,12 +200,7 @@ export const SummaryScreen = () => {
                     </div>
                     <div className="font-bold text-lg text-foreground">
                       {t(
-                        `passengers.genderTypes.${
-                          p.gender.toLowerCase() === "male" ||
-                          p.gender.toLowerCase() === "female"
-                            ? (p.gender.toLowerCase() as "male" | "female")
-                            : "other"
-                        }`,
+                        `passengers.genderTypes.${p.gender.toLowerCase() as "male" | "female"}`,
                       )}{" "}
                       {p.firstName} {p.lastName}
                     </div>
@@ -363,31 +358,33 @@ export const SummaryScreen = () => {
             </Card>
 
             {/* Demo Help Card */}
-            <SectionCard
-              title={t("payment.demoGuide")}
-              className="mt-6 border-primary/20 bg-primary/5 shadow-sm overflow-hidden"
-              icon={<HugeiconsIcon icon={Airplane01Icon} size={18} />}
-            >
-              <p className="text-sm text-muted-foreground mb-2">
-                {t("payment.demoPrompt")}
-              </p>
-              <div className="bg-background rounded-lg border border-primary/10 p-3 space-y-2 font-mono text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    {t("payment.cardNumber")}:
-                  </span>
-                  <span className="font-bold text-primary">
-                    4242 4242 4242 4242
-                  </span>
+            {import.meta.env.MODE !== "production" ? (
+              <SectionCard
+                title={t("payment.demoGuide")}
+                className="mt-6 border-primary/20 bg-primary/5 shadow-sm overflow-hidden"
+                icon={<HugeiconsIcon icon={Airplane01Icon} size={18} />}
+              >
+                <p className="text-sm text-muted-foreground mb-2">
+                  {t("payment.demoPrompt")}
+                </p>
+                <div className="bg-background rounded-lg border border-primary/10 p-3 space-y-2 font-mono text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      {t("payment.cardNumber")}:
+                    </span>
+                    <span className="font-bold text-primary">
+                      4242 4242 4242 4242
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      {t("payment.cardExpCvc")}:
+                    </span>
+                    <span className="font-bold text-primary">01/32 - 123</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    {t("payment.cardExpCvc")}:
-                  </span>
-                  <span className="font-bold text-primary">01/32 - 123</span>
-                </div>
-              </div>
-            </SectionCard>
+              </SectionCard>
+            ) : null}
           </div>
         </div>
       </div>
