@@ -305,7 +305,8 @@
     "pick_a_date": "Choisir une date",
     "genderTypes": {
       "male": "Monsieur",
-      "female": "Madame"
+      "female": "Madame",
+      "other": "M./Mme"
     },
     "dob": "Date de naissance",
     "emailLabel": "Email",
@@ -327,6 +328,7 @@
     "confirm": "Procéder au paiement",
     "processing": "Traitement en cours...",
     "error": "Le paiement a échoué. Veuillez réessayer.",
+    "errorGeneric": "Une erreur est survenue lors du paiement. Veuillez réessayer.",
     "retry": "Réessayer",
     "expired": "Votre réservation a expiré. Veuillez recommencer la recherche.",
     "demoGuide": "Guide de Démo",

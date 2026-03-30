@@ -306,7 +306,8 @@
     "pick_a_date": "Pick a date",
     "genderTypes": {
       "male": "Mr",
-      "female": "Mrs"
+      "female": "Mrs",
+      "other": "Mx"
     },
     "dob": "Date of Birth",
     "emailLabel": "Email",
@@ -328,6 +329,7 @@
     "confirm": "Proceed to Payment",
     "processing": "Processing...",
     "error": "Payment failed. Please try again.",
+    "errorGeneric": "A payment error occurred. Please try again later.",
     "retry": "Retry",
     "expired": "Your reservation has expired. Please start a new search.",
     "demoGuide": "Demo Guide",

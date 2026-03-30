@@ -200,7 +200,12 @@ export const SummaryScreen = () => {
                     </div>
                     <div className="font-bold text-lg text-foreground">
                       {t(
-                        `passengers.genderTypes.${p.gender.toLowerCase() as "male" | "female"}`,
+                        `passengers.genderTypes.${
+                          p.gender.toLowerCase() === "male" ||
+                          p.gender.toLowerCase() === "female"
+                            ? (p.gender.toLowerCase() as "male" | "female")
+                            : "other"
+                        }`,
                       )}{" "}
                       {p.firstName} {p.lastName}
                     </div>
@@ -326,7 +331,12 @@ export const SummaryScreen = () => {
 
                 {context.error && (
                   <div className="mt-6 p-4 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold">
-                    {t(context.error as "payment.errorCancelled")}
+                    {t(
+                      context.error === "errorCancelled" ||
+                        context.error === "payment.errorCancelled"
+                        ? "payment.errorCancelled"
+                        : "payment.errorGeneric",
+                    )}
                   </div>
                 )}
 
