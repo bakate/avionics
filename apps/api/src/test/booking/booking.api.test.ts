@@ -11,10 +11,7 @@ import { NodeContext, NodeHttpServer } from "@effect/platform-node";
 import { faker } from "@faker-js/faker";
 import { BookingRepository } from "@workspace/application/booking.repository";
 import { BookingService } from "@workspace/application/booking.service";
-import {
-  BookingQueries,
-  type BookingQueriesPort,
-} from "@workspace/application/booking-queries";
+import { BookingQueries } from "@workspace/application/booking-queries";
 import { CancellationService } from "@workspace/application/cancellation.service";
 import { InventoryRepository } from "@workspace/application/inventory.repository";
 import { InventoryService } from "@workspace/application/inventory.service";
@@ -24,11 +21,13 @@ import {
 } from "@workspace/application/inventory-queries";
 import { NotificationGateway } from "@workspace/application/notification.gateway";
 import { OutboxRepository } from "@workspace/application/outbox.repository";
+import { BookingSummary } from "@workspace/application/read-models";
 import { TicketRepository } from "@workspace/application/ticket.repository";
 import { UnitOfWork } from "@workspace/application/unit-of-work";
 import { Booking, PnrStatus } from "@workspace/domain/booking";
 import { FlightInventory, SeatBucket } from "@workspace/domain/inventory";
 import {
+  type AirportCode,
   BookingId,
   CabinClass,
   EmailSchema,
@@ -195,13 +194,40 @@ const MockConfigProvider = Layer.setConfigProvider(
   ),
 );
 
-const BookingQueriesMock = Layer.succeed(BookingQueries, {
-  getSummaryByPnr: () => Effect.die(new Error("Not implemented")),
-  getPassengerHistory: () => Effect.die(new Error("Not implemented")),
-  searchByPassengerName: () => Effect.die(new Error("Not implemented")),
-  listBookings: () => Effect.die(new Error("Not implemented")),
-  findExpiredBookings: () => Effect.die(new Error("Not implemented")),
-} satisfies BookingQueriesPort);
+const BookingQueriesMock = Layer.effect(
+  BookingQueries,
+  Effect.gen(function* () {
+    const repo = yield* BookingRepository;
+    return BookingQueries.of({
+      getSummaryByPnr: () => Effect.die(new Error("Not implemented")),
+      getPassengerHistory: () => Effect.die(new Error("Not implemented")),
+      searchByPassengerName: () => Effect.die(new Error("Not implemented")),
+      listBookings: () => Effect.die(new Error("Not implemented")),
+      findExpiredBookings: () => Effect.die(new Error("Not implemented")),
+      findByEmail: (email: string) =>
+        repo.findAll().pipe(
+          Effect.map((bookings) =>
+            bookings
+              .filter((b) => b.passengers.some((p) => p.email === email))
+              .map(
+                (b) =>
+                  new BookingSummary({
+                    id: b.id,
+                    pnrCode: b.pnrCode,
+                    status: b.status,
+                    origin: "CDG" as AirportCode,
+                    destination: "JFK" as AirportCode,
+                    passengerCount: b.passengers.length,
+                    totalPrice: b.segments[0]?.price ?? Money.of(0, "EUR"),
+                    createdAt: b.createdAt,
+                    expiresAt: b.expiresAt,
+                  }),
+              ),
+          ),
+        ),
+    });
+  }),
+);
 
 const InventoryQueriesMock = Layer.succeed(InventoryQueries, {
   getFlightAvailability: () => Effect.die(new Error("Not implemented")),
@@ -359,9 +385,7 @@ describe("Booking API Integration (Multi-Passenger)", () => {
       expect(bookings.length).toBeGreaterThanOrEqual(1);
       const found = bookings.find((b) => b.id === bookingId);
       expect(found).toBeDefined();
-      expect(found?.passengers).toHaveLength(2);
-      expect(found?.passengers[0].type).toBe(PassengerType.ADULT);
-      expect(found?.passengers[1].type).toBe(PassengerType.SENIOR);
+      expect(found?.passengerCount).toBe(2);
     });
 
     await Effect.runPromise(

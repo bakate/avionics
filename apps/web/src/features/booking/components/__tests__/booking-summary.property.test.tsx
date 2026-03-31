@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { BookingSummaryCard } from "@/features/booking/components/booking-summary";
 
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: "en" } }),
   initReactI18next: { type: "3rdParty", init: vi.fn() },
 }));
 
@@ -68,7 +68,7 @@ describe("BookingSummaryCard Property Tests", () => {
 
           // Verify Status is displayed (case-insensitive or matching translation key)
           expect(
-            screen.getByText(`booking.${booking.status.toLowerCase()}`),
+            screen.getByText(`booking.status.${booking.status.toLowerCase()}`),
           ).toBeDefined();
 
           // Verify Passenger count is displayed - note the translation fallback rendering

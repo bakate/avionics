@@ -90,6 +90,8 @@ describe("BookingSummary Property Tests", () => {
                 id: bookingId,
                 pnrCode,
                 status: "Held",
+                origin: "CDG",
+                destination: "JFK",
                 passengerCount,
                 totalPrice: {
                   amount: breakdown.totalPrice.amount,

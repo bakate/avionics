@@ -7,7 +7,7 @@ import { PassengersScreen } from "../passengers.screen";
 
 vi.mock("../../hooks/use-booking-machine");
 vi.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: (key: string) => key, i18n: { language: "en" } }),
   initReactI18next: { type: "3rdParty", init: vi.fn() },
 }));
 
@@ -21,13 +21,16 @@ vi.mock("../../components/passenger-form", () => ({
 const searchParamsArb = fc.record({
   origin: fc.constant("CDG"),
   destination: fc.constant("JFK"),
-  departureDate: fc.date().map((d) => d.toISOString().split("T")[0]),
-  returnDate: fc
-    .option(
-      fc.date().map((d) => d.toISOString().split("T")[0]),
-      { nil: undefined },
-    )
-    .map((d) => d || undefined),
+  departureDate: fc
+    .date({ min: new Date(), max: new Date("2030-01-01") })
+    .map((d) => d.toISOString().split("T")[0]),
+  returnDate: fc.option(
+    fc
+      .date({ min: new Date(), max: new Date("2030-01-01") })
+      .map((d) => d.toISOString().split("T")[0]),
+    { nil: undefined },
+  ),
+
   passengers: fc.record({
     adults: fc.integer({ min: 1, max: 4 }),
     children: fc.integer({ min: 0, max: 4 }),

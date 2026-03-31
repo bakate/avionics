@@ -212,18 +212,18 @@
                       {
                         "flightId": "CDG-DSS-d161s0",
                         "cabinClass": "ECONOMY",
-                        "seatNumber": "28F"
+                        "seatNumber": "6B"
                       }
                     ],
                     "passengers": [
                       {
-                        "id": "32e7defc-4a79-4a74-a483-b4613384c162",
-                        "firstName": "Giovanna",
-                        "lastName": "King",
-                        "email": "giovanna_king@hotmail.com",
-                        "dateOfBirth": "2025-11-25T21:32:58.502Z",
+                        "id": "4135c1ec-a7dd-4313-a0c3-6c6d042ad397",
+                        "firstName": "Macey",
+                        "lastName": "Roberts",
+                        "email": "macey.roberts@gmail.com",
+                        "dateOfBirth": "1994-08-06T15:09:47.128Z",
                         "gender": "MALE",
-                        "type": "INFANT"
+                        "type": "ADULT"
                       }
                     ],
                     "successUrl": "https://avionics-url.com/success",
