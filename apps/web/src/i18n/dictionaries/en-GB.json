@@ -404,6 +404,13 @@
       "targetFlightId": "Target Flight ID",
       "targetFlightIdPlaceholder": "e.g. flight-123",
       "targetFlightIdHelp": "Pick a flight ID (you can find one via the regular search)",
+      "targetAsset": "Target Asset",
+      "loadIntensity": "Load Intensity",
+      "systemIntelligence": "System Intelligence",
+      "status": "Status",
+      "pressurizing": "Pressurising...",
+      "systemReady": "System Ready",
+      "controlUnit": "Control Unit",
       "requestCount": "Concurrent Requests (N)",
       "requestCountHelp": "Number of identical booking commands to fire simultaneously",
       "reset": "Reset",
@@ -428,7 +435,8 @@
       "noFlights": "No available flights found.",
       "flightInfo": "{{origin}} to {{destination}}",
       "seatsLeft": "{{count}} seat left",
-      "seatsLeft_other": "{{count}} seats left"
+      "seatsLeft_other": "{{count}} seats left",
+      "effectSolidified": "Effect Solidified"
     }
   },
   "errors": {

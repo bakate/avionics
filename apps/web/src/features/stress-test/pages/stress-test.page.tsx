@@ -94,6 +94,7 @@ interface StatCardProps {
   label: string;
   value: number;
   colorScheme: "neutral" | "green" | "orange" | "red";
+  effectLabel?: string;
 }
 
 const colorSchemes: Record<
@@ -145,7 +146,13 @@ const colorSchemes: Record<
   },
 };
 
-function StatCard({ icon, label, value, colorScheme }: StatCardProps) {
+function StatCard({
+  icon,
+  label,
+  value,
+  colorScheme,
+  effectLabel,
+}: StatCardProps) {
   const colors = colorSchemes[colorScheme];
   return (
     <div
@@ -194,9 +201,9 @@ function StatCard({ icon, label, value, colorScheme }: StatCardProps) {
       </div>
 
       {/* Special tag for Effect mechanism */}
-      {colorScheme === "orange" && value > 0 && (
+      {colorScheme === "orange" && value > 0 && effectLabel && (
         <div className="absolute top-4 right-6 rounded-full bg-amber-500 px-2 py-0.5 text-[8px] font-bold text-white uppercase tracking-tighter animate-bounce">
-          Effect Solidified
+          {effectLabel}
         </div>
       )}
     </div>
@@ -228,7 +235,7 @@ export function StressTestPage() {
         <div className="space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full border border-royal-blue/10 bg-royal-blue/5 px-3 py-1 text-[10px] font-bold tracking-widest text-royal-blue uppercase dark:border-royal-blue/20">
             <span className="size-1.5 animate-pulse rounded-full bg-royal-blue" />
-            System Intelligence
+            {t("demo.stressTest.systemIntelligence")}
           </div>
           <Heading
             title={t("demo.stressTest.title")}
@@ -240,10 +247,12 @@ export function StressTestPage() {
         <div className="hidden shrink-0 rounded-3xl bg-royal-blue px-6 py-4 text-white shadow-2xl dark:bg-royal-blue/90 lg:flex items-center gap-4">
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">
-              Status
+              {t("demo.stressTest.status")}
             </span>
             <span className="font-semibold">
-              {isRunning ? "Pressurizing..." : "System Ready"}
+              {isRunning
+                ? t("demo.stressTest.pressurizing")
+                : t("demo.stressTest.systemReady")}
             </span>
           </div>
           <div
@@ -273,7 +282,7 @@ export function StressTestPage() {
             <div className="relative mb-10 flex items-center justify-between">
               <div className="space-y-1">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                  Control Unit
+                  {t("demo.stressTest.controlUnit")}
                 </h3>
                 <div className="h-0.5 w-6 bg-royal-blue" />
               </div>
@@ -290,7 +299,7 @@ export function StressTestPage() {
                   htmlFor="flightId"
                   className="text-[10px] font-bold uppercase tracking-widest opacity-40"
                 >
-                  Target Asset
+                  {t("demo.stressTest.targetAsset")}
                 </Label>
                 <div className="rounded-2xl bg-slate-50 p-1 dark:bg-slate-800">
                   <Input
@@ -308,7 +317,7 @@ export function StressTestPage() {
                   htmlFor="requestCount"
                   className="text-[10px] font-bold uppercase tracking-widest opacity-40"
                 >
-                  Load Intensity
+                  {t("demo.stressTest.loadIntensity")}
                 </Label>
                 <div className="relative rounded-2xl bg-slate-50 p-1 dark:bg-slate-800">
                   <Input
@@ -401,6 +410,7 @@ export function StressTestPage() {
                     label={t("demo.stressTest.optLocking")}
                     value={results.optimisticLocking}
                     colorScheme="orange"
+                    effectLabel={t("demo.stressTest.effectSolidified")}
                   />
                   <StatCard
                     icon={Alert02Icon}

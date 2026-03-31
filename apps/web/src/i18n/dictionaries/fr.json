@@ -404,6 +404,13 @@
       "targetFlightId": "ID du vol ciblé",
       "targetFlightIdPlaceholder": "ex: flight-123",
       "targetFlightIdHelp": "Choisissez un ID de vol existant",
+      "targetAsset": "Asset Ciblé",
+      "loadIntensity": "Intensité de Charge",
+      "systemIntelligence": "Intelligence Système",
+      "status": "Statut",
+      "pressurizing": "Mise sous pression...",
+      "systemReady": "Système Prêt",
+      "controlUnit": "Unité de Contrôle",
       "requestCount": "Requêtes simultanées (N)",
       "requestCountHelp": "Nombre de commandes de réservation identiques à envoyer en même temps",
       "reset": "Réinitialiser",
@@ -428,7 +435,8 @@
       "noFlights": "Aucun vol trouvé.",
       "flightInfo": "{{origin}} vers {{destination}}",
       "seatsLeft": "{{count}} place restante",
-      "seatsLeft_other": "{{count}} places restantes"
+      "seatsLeft_other": "{{count}} places restantes",
+      "effectSolidified": "Effect Solidifié"
     }
   },
   "errors": {
