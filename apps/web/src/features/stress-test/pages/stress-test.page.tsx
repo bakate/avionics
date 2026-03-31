@@ -335,9 +335,6 @@ export function StressTestPage() {
                     disabled={isRunning}
                     className="border-none bg-transparent font-bold text-royal-blue shadow-none focus-visible:ring-0"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-royal-blue/30 uppercase">
-                    REQ
-                  </span>
                 </div>
               </div>
 
